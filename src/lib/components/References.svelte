@@ -59,6 +59,7 @@
 	let newLibraryName = '';
 	let waveformProgress: WaveformProgress | null = null;
 	let isAnalyzing = false;
+	let showPlayerModal = false;
 
 	// Marker creation
 	let newMarkerLabel = '';
@@ -127,6 +128,7 @@
 		selectedTrackId = track.id;
 		selectedTrack = track;
 		showAnalysisPanel = true;
+		showPlayerModal = true;
 
 		// Load audio from IndexedDB
 		const result = await getBlob(track.blobId);
@@ -382,6 +384,15 @@
 		isPlaying = false;
 	}
 
+	function closePlayerModal() {
+		showPlayerModal = false;
+		showAnalysisPanel = false;
+		stopPlayback();
+		selectedTrackId = null;
+		selectedTrack = null;
+		selectedTrackArrayBuffer = null;
+	}
+
 	function handleSeek(time: number) {
 		if (audio) {
 			audio.currentTime = time;
@@ -554,22 +565,46 @@
 				{/if}
 			</div>
 
-			<!-- Player -->
 			{#if selectedTrack}
-				<div class="player">
-					<div class="player-header">
-						<span class="now-playing">{selectedTrack.name}</span>
+				<div class="player-status">
+					<span>🎵 Now loaded: {selectedTrack.name}</span>
+					<button class="btn btn-small" onclick={() => showPlayerModal = true}>
+						Open Player
+					</button>
+				</div>
+			{/if}
+		{:else}
+			<div class="empty-state">
+				<p>Select a library or create a new one</p>
+			</div>
+		{/if}
+	</div>
+
+	<!-- Full-Window Player Modal -->
+	{#if showPlayerModal && selectedTrack}
+		<div class="player-modal-backdrop" onclick={closePlayerModal} role="presentation">
+			<!-- svelte-ignore a11y_no_static_element_interactions -->
+			<!-- svelte-ignore a11y_click_events_have_key_events -->
+			<div class="player-modal" onclick={(e) => e.stopPropagation()}>
+				<!-- Modal Header -->
+				<div class="modal-header">
+					<div class="modal-title">
+						<h2>🎵 {selectedTrack.name}</h2>
 						{#if selectedTrack.analysis}
 							<span class="analysis-badge">
 								{#if selectedTrack.analysis.bpm}~{selectedTrack.analysis.bpm} BPM{/if}
 								{#if selectedTrack.analysis.key} · {selectedTrack.analysis.key}{/if}
-								<span class="heuristic">(heuristic)</span>
+								<span class="heuristic">(auto-detected)</span>
 							</span>
 						{/if}
 					</div>
+					<button class="modal-close" onclick={closePlayerModal}>✕</button>
+				</div>
 
+				<!-- Modal Content -->
+				<div class="modal-content">
 					<!-- Audio Analysis Panel -->
-					{#if showAnalysisPanel && selectedTrack && selectedTrackArrayBuffer}
+					{#if showAnalysisPanel && selectedTrackArrayBuffer}
 						<AudioAnalysisPanel
 							track={selectedTrack}
 							arrayBuffer={selectedTrackArrayBuffer}
@@ -599,46 +634,56 @@
 						/>
 					{/if}
 
-					{#if waveformProgress}
-						<div class="progress-bar">
-							<div class="progress-fill" style="width: {waveformProgress.progress * 100}%"></div>
-							<span class="progress-text">{waveformProgress.stage}...</span>
-						</div>
-					{:else}
-						<Waveform
-							waveform={selectedTrack.waveform}
-							{currentTime}
-							{duration}
-							annotations={selectedTrack.annotations}
-							onSeek={handleSeek}
-							onAddMarker={startAddMarker}
-						/>
-					{/if}
-
-					<div class="transport">
-						<button class="btn-transport" onclick={togglePlayback}>
-							{isPlaying ? '⏸' : '▶'}
-						</button>
-						<button class="btn-transport" onclick={stopPlayback}>⏹</button>
-						<button class="btn-transport" onclick={addMarkerAtPlayhead} title="Add marker (M)">
-							🏷
-						</button>
-
-						<div class="volume-control">
-							<span>🔊</span>
-							<input
-								type="range"
-								min="0"
-								max="1"
-								step="0.01"
-								value={volume}
-								oninput={handleVolumeChange}
-								class="volume-slider"
+					<!-- Waveform Section -->
+					<div class="waveform-section">
+						{#if waveformProgress}
+							<div class="progress-bar">
+								<div class="progress-fill" style="width: {waveformProgress.progress * 100}%"></div>
+								<span class="progress-text">{waveformProgress.stage}...</span>
+							</div>
+						{:else}
+							<Waveform
+								waveform={selectedTrack.waveform}
+								{currentTime}
+								{duration}
+								annotations={selectedTrack.annotations}
+								onSeek={handleSeek}
+								onAddMarker={startAddMarker}
 							/>
+						{/if}
+					</div>
+
+					<!-- Transport Controls -->
+					<div class="transport-section">
+						<div class="transport">
+							<button class="btn-transport" onclick={togglePlayback}>
+								{isPlaying ? '⏸' : '▶'}
+							</button>
+							<button class="btn-transport" onclick={stopPlayback}>⏹</button>
+							<button class="btn-transport" onclick={addMarkerAtPlayhead} title="Add marker (M)">
+								🏷
+							</button>
+
+							<div class="time-display">
+								<span>{formatTime(currentTime)} / {formatTime(duration)}</span>
+							</div>
+
+							<div class="volume-control">
+								<span>🔊</span>
+								<input
+									type="range"
+									min="0"
+									max="1"
+									step="0.01"
+									value={volume}
+									oninput={handleVolumeChange}
+									class="volume-slider"
+								/>
+							</div>
 						</div>
 					</div>
 
-					<!-- Markers list -->
+					<!-- Markers Section -->
 					{#if selectedTrack.annotations?.markers.length}
 						<div class="markers-section">
 							<h4>Markers</h4>
@@ -657,13 +702,9 @@
 						</div>
 					{/if}
 				</div>
-			{/if}
-		{:else}
-			<div class="empty-state">
-				<p>Select a library or create a new one</p>
 			</div>
-		{/if}
-	</div>
+		</div>
+	{/if}
 
 	<!-- Marker Input Modal -->
 	{#if showMarkerInput}
@@ -837,33 +878,6 @@
 		gap: 4px;
 	}
 
-	.player {
-		border-top: 1px solid var(--border);
-		padding: 16px;
-		background: var(--card);
-	}
-
-	.player-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		margin-bottom: 12px;
-	}
-
-	.now-playing {
-		font-weight: 500;
-		font-size: 14px;
-	}
-
-	.analysis-badge {
-		font-size: 12px;
-		color: var(--muted);
-	}
-
-	.heuristic {
-		font-size: 10px;
-		opacity: 0.7;
-	}
 
 	.progress-bar {
 		position: relative;
@@ -1060,6 +1074,113 @@
 		display: flex;
 		gap: 8px;
 		justify-content: flex-end;
+	}
+
+	/* Player Modal Styles */
+	.player-modal-backdrop {
+		position: fixed;
+		inset: 0;
+		background: rgba(0, 0, 0, 0.8);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 1001;
+		padding: 20px;
+	}
+
+	.player-modal {
+		background: var(--card);
+		border: 1px solid var(--border);
+		border-radius: 16px;
+		width: 100%;
+		height: 100%;
+		max-width: 1200px;
+		max-height: 900px;
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
+	}
+
+	.modal-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 20px 24px;
+		border-bottom: 1px solid var(--border);
+		background: var(--bg);
+	}
+
+	.modal-title h2 {
+		margin: 0;
+		font-size: 20px;
+		color: var(--fg);
+	}
+
+`	.analysis-badge {
+		font-size: 12px;
+		color: var(--muted);
+		margin-left: 12px;
+	}
+
+	.heuristic {
+		font-size: 10px;
+		opacity: 0.7;
+	}
+
+	.modal-close {
+		background: none;
+		border: none;
+		font-size: 20px;
+		cursor: pointer;
+		color: var(--muted);
+		padding: 8px;
+		border-radius: 6px;
+	}
+
+	.modal-close:hover {
+		background: var(--accent);
+		color: var(--fg);
+	}
+
+	.modal-content {
+		flex: 1;
+		padding: 24px;
+		overflow-y: auto;
+		display: flex;
+		flex-direction: column;
+		gap: 24px;
+	}
+
+	.waveform-section {
+		background: var(--bg);
+		border: 1px solid var(--border);
+		border-radius: 12px;
+		padding: 16px;
+	}
+
+	.transport-section {
+		background: var(--bg);
+		border: 1px solid var(--border);
+		border-radius: 12px;
+		padding: 16px;
+	}
+
+	.time-display {
+		font-family: monospace;
+		font-size: 14px;
+		color: var(--muted);
+		margin-left: 16px;
+	}
+
+	.player-status {
+		background: var(--accent);
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		padding: 12px 16px;
+		margin: 8px;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
 	}
 </style>
 
