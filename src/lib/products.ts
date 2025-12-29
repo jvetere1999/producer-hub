@@ -6,21 +6,24 @@ export const products: Product[] = [
         name: 'Serum 2',
         vendor: 'Xfer Records',
         category: 'Plugin',
-        website: 'https://xferrecords.com/products/serum'
+        website: 'https://xferrecords.com/products/serum',
+        icon: '/icons/products/serum2.svg'
     },
     {
         productId: 'ableton12suite',
         name: 'Ableton Live 12 Suite',
         vendor: 'Ableton',
         category: 'DAW',
-        website: 'https://www.ableton.com/en/live/'
+        website: 'https://www.ableton.com/en/live/',
+        icon: '/icons/products/ableton.svg'
     },
     {
         productId: 'reasonrack',
         name: 'Reason Rack',
         vendor: 'Reason Studios',
-        category: 'Rack',
-        website: 'https://www.reasonstudios.com/'
+        category: 'DAW',
+        website: 'https://www.reasonstudios.com/',
+        icon: '/icons/products/reason.svg'
     }
 ];
 

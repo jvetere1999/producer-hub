@@ -1,5 +1,11 @@
 [
   {"type":"directory","name":".","contents":[
+    {"type":"directory","name":".github","contents":[
+      {"type":"directory","name":"workflows","contents":[
+        {"type":"file","name":"ci.yml"},
+        {"type":"file","name":"e2e.yml"}
+      ]}
+    ]},
     {"type":"file","name":".gitignore"},
     {"type":"directory","name":".idea","contents":[
       {"type":"file","name":".gitignore"},
@@ -10,6 +16,7 @@
       {"type":"file","name":"dbnavigator.xml"},
       {"type":"file","name":"material_theme_project_new.xml"},
       {"type":"file","name":"modules.xml"},
+      {"type":"file","name":"vcs.xml"},
       {"type":"file","name":"workspace.xml"}
     ]},
     {"type":"file","name":".npmrc"},
@@ -25,6 +32,15 @@
             {"type":"file","name":"2.js"}
           ]}
         ]},
+        {"type":"directory","name":"client-optimized","contents":[
+          {"type":"file","name":"app.js"},
+          {"type":"file","name":"matchers.js"},
+          {"type":"directory","name":"nodes","contents":[
+            {"type":"file","name":"0.js"},
+            {"type":"file","name":"1.js"},
+            {"type":"file","name":"2.js"}
+          ]}
+        ]},
         {"type":"file","name":"root.js"},
         {"type":"file","name":"root.svelte"},
         {"type":"directory","name":"server","contents":[
@@ -32,6 +48,145 @@
         ]}
       ]},
       {"type":"file","name":"non-ambient.d.ts"},
+      {"type":"directory","name":"output","contents":[
+        {"type":"directory","name":"client","contents":[
+          {"type":"directory","name":".vite","contents":[
+            {"type":"file","name":"manifest.json"}
+          ]},
+          {"type":"directory","name":"_app","contents":[
+            {"type":"directory","name":"immutable","contents":[
+              {"type":"directory","name":"assets","contents":[
+                {"type":"file","name":"2.hTpWK6-S.css"}
+              ]},
+              {"type":"directory","name":"chunks","contents":[
+                {"type":"file","name":"BFjHyzGn.js"},
+                {"type":"file","name":"BIHI7g3E.js"},
+                {"type":"file","name":"BIl4cyR9.js"},
+                {"type":"file","name":"BK7JzSmC.js"},
+                {"type":"file","name":"BjoquiTG.js"},
+                {"type":"file","name":"CtZH2lrW.js"},
+                {"type":"file","name":"D4Zdic53.js"},
+                {"type":"file","name":"DYXi_Yn6.js"},
+                {"type":"file","name":"PPVm8Dsz.js"}
+              ]},
+              {"type":"directory","name":"entry","contents":[
+                {"type":"file","name":"app.CtP0Yxvz.js"},
+                {"type":"file","name":"start.DcUbabGU.js"}
+              ]},
+              {"type":"directory","name":"nodes","contents":[
+                {"type":"file","name":"0.DpabFLSg.js"},
+                {"type":"file","name":"1.C7Zj9kc1.js"},
+                {"type":"file","name":"2.Bts29WvG.js"}
+              ]}
+            ]},
+            {"type":"file","name":"version.json"}
+          ]},
+          {"type":"file","name":"favicon.svg"},
+          {"type":"directory","name":"icons","contents":[
+            {"type":"file","name":"apple-icon-180.png"},
+            {"type":"file","name":"apple-splash-1125-2436.jpg"},
+            {"type":"file","name":"apple-splash-1136-640.jpg"},
+            {"type":"file","name":"apple-splash-1170-2532.jpg"},
+            {"type":"file","name":"apple-splash-1179-2556.jpg"},
+            {"type":"file","name":"apple-splash-1206-2622.jpg"},
+            {"type":"file","name":"apple-splash-1242-2208.jpg"},
+            {"type":"file","name":"apple-splash-1242-2688.jpg"},
+            {"type":"file","name":"apple-splash-1260-2736.jpg"},
+            {"type":"file","name":"apple-splash-1284-2778.jpg"},
+            {"type":"file","name":"apple-splash-1290-2796.jpg"},
+            {"type":"file","name":"apple-splash-1320-2868.jpg"},
+            {"type":"file","name":"apple-splash-1334-750.jpg"},
+            {"type":"file","name":"apple-splash-1488-2266.jpg"},
+            {"type":"file","name":"apple-splash-1536-2048.jpg"},
+            {"type":"file","name":"apple-splash-1620-2160.jpg"},
+            {"type":"file","name":"apple-splash-1640-2360.jpg"},
+            {"type":"file","name":"apple-splash-1668-2224.jpg"},
+            {"type":"file","name":"apple-splash-1668-2388.jpg"},
+            {"type":"file","name":"apple-splash-1792-828.jpg"},
+            {"type":"file","name":"apple-splash-2048-1536.jpg"},
+            {"type":"file","name":"apple-splash-2048-2732.jpg"},
+            {"type":"file","name":"apple-splash-2160-1620.jpg"},
+            {"type":"file","name":"apple-splash-2208-1242.jpg"},
+            {"type":"file","name":"apple-splash-2224-1668.jpg"},
+            {"type":"file","name":"apple-splash-2266-1488.jpg"},
+            {"type":"file","name":"apple-splash-2360-1640.jpg"},
+            {"type":"file","name":"apple-splash-2388-1668.jpg"},
+            {"type":"file","name":"apple-splash-2436-1125.jpg"},
+            {"type":"file","name":"apple-splash-2532-1170.jpg"},
+            {"type":"file","name":"apple-splash-2556-1179.jpg"},
+            {"type":"file","name":"apple-splash-2622-1206.jpg"},
+            {"type":"file","name":"apple-splash-2688-1242.jpg"},
+            {"type":"file","name":"apple-splash-2732-2048.jpg"},
+            {"type":"file","name":"apple-splash-2736-1260.jpg"},
+            {"type":"file","name":"apple-splash-2778-1284.jpg"},
+            {"type":"file","name":"apple-splash-2796-1290.jpg"},
+            {"type":"file","name":"apple-splash-2868-1320.jpg"},
+            {"type":"file","name":"apple-splash-640-1136.jpg"},
+            {"type":"file","name":"apple-splash-750-1334.jpg"},
+            {"type":"file","name":"apple-splash-828-1792.jpg"},
+            {"type":"file","name":"icon-192.png"},
+            {"type":"file","name":"icon-512-maskable.png"},
+            {"type":"file","name":"icon-512.png"},
+            {"type":"file","name":"icon.svg"},
+            {"type":"file","name":"manifest-icon-192.maskable.png"},
+            {"type":"file","name":"manifest-icon-512.maskable.png"}
+          ]},
+          {"type":"file","name":"manifest.webmanifest"},
+          {"type":"file","name":"robots.txt"},
+          {"type":"file","name":"sw.js"},
+          {"type":"file","name":"workbox-8c29f6e4.js"}
+        ]},
+        {"type":"directory","name":"prerendered","contents":[
+          {"type":"directory","name":"dependencies","contents":[
+            {"type":"directory","name":"_app","contents":[
+              {"type":"file","name":"env.js"}
+            ]}
+          ]}
+        ]},
+        {"type":"directory","name":"server","contents":[
+          {"type":"directory","name":".vite","contents":[
+            {"type":"file","name":"manifest.json"}
+          ]},
+          {"type":"directory","name":"_app","contents":[
+            {"type":"directory","name":"immutable","contents":[
+              {"type":"directory","name":"assets","contents":[
+                {"type":"file","name":"_page.hTpWK6-S.css"}
+              ]}
+            ]}
+          ]},
+          {"type":"directory","name":"chunks","contents":[
+            {"type":"file","name":"context.js"},
+            {"type":"file","name":"environment.js"},
+            {"type":"file","name":"equality.js"},
+            {"type":"file","name":"exports.js"},
+            {"type":"file","name":"index.js"},
+            {"type":"file","name":"internal.js"},
+            {"type":"file","name":"shared.js"},
+            {"type":"file","name":"utils.js"}
+          ]},
+          {"type":"directory","name":"entries","contents":[
+            {"type":"directory","name":"fallbacks","contents":[
+              {"type":"file","name":"error.svelte.js"}
+            ]},
+            {"type":"directory","name":"pages","contents":[
+              {"type":"file","name":"_layout.svelte.js"},
+              {"type":"file","name":"_page.svelte.js"}
+            ]}
+          ]},
+          {"type":"file","name":"index.js"},
+          {"type":"file","name":"internal.js"},
+          {"type":"file","name":"manifest-full.js"},
+          {"type":"file","name":"manifest.js"},
+          {"type":"file","name":"manifest.webmanifest"},
+          {"type":"directory","name":"nodes","contents":[
+            {"type":"file","name":"0.js"},
+            {"type":"file","name":"1.js"},
+            {"type":"file","name":"2.js"}
+          ]},
+          {"type":"file","name":"remote-entry.js"},
+          {"type":"directory","name":"stylesheets"}
+        ]}
+      ]},
       {"type":"file","name":"tsconfig.json"},
       {"type":"directory","name":"types","contents":[
         {"type":"file","name":"route_meta_data.json"},
@@ -42,31 +197,208 @@
         ]}
       ]}
     ]},
+    {"type":"file","name":"CONTRIBUTING.md"},
+    {"type":"file","name":"QUICK_REFERENCE.md"},
     {"type":"file","name":"README.md"},
+    {"type":"file","name":"TESTING.md"},
+    {"type":"file","name":"TESTING_UPDATES.md"},
+    {"type":"directory","name":"build","contents":[
+      {"type":"file","name":"200.html"},
+      {"type":"directory","name":"_app","contents":[
+        {"type":"file","name":"env.js"},
+        {"type":"directory","name":"immutable","contents":[
+          {"type":"directory","name":"assets","contents":[
+            {"type":"file","name":"2.hTpWK6-S.css"}
+          ]},
+          {"type":"directory","name":"chunks","contents":[
+            {"type":"file","name":"BFjHyzGn.js"},
+            {"type":"file","name":"BIHI7g3E.js"},
+            {"type":"file","name":"BIl4cyR9.js"},
+            {"type":"file","name":"BK7JzSmC.js"},
+            {"type":"file","name":"BjoquiTG.js"},
+            {"type":"file","name":"CtZH2lrW.js"},
+            {"type":"file","name":"D4Zdic53.js"},
+            {"type":"file","name":"DYXi_Yn6.js"},
+            {"type":"file","name":"PPVm8Dsz.js"}
+          ]},
+          {"type":"directory","name":"entry","contents":[
+            {"type":"file","name":"app.CtP0Yxvz.js"},
+            {"type":"file","name":"start.DcUbabGU.js"}
+          ]},
+          {"type":"directory","name":"nodes","contents":[
+            {"type":"file","name":"0.DpabFLSg.js"},
+            {"type":"file","name":"1.C7Zj9kc1.js"},
+            {"type":"file","name":"2.Bts29WvG.js"}
+          ]}
+        ]},
+        {"type":"file","name":"version.json"}
+      ]},
+      {"type":"file","name":"favicon.svg"},
+      {"type":"directory","name":"icons","contents":[
+        {"type":"file","name":"apple-icon-180.png"},
+        {"type":"file","name":"apple-splash-1125-2436.jpg"},
+        {"type":"file","name":"apple-splash-1136-640.jpg"},
+        {"type":"file","name":"apple-splash-1170-2532.jpg"},
+        {"type":"file","name":"apple-splash-1179-2556.jpg"},
+        {"type":"file","name":"apple-splash-1206-2622.jpg"},
+        {"type":"file","name":"apple-splash-1242-2208.jpg"},
+        {"type":"file","name":"apple-splash-1242-2688.jpg"},
+        {"type":"file","name":"apple-splash-1260-2736.jpg"},
+        {"type":"file","name":"apple-splash-1284-2778.jpg"},
+        {"type":"file","name":"apple-splash-1290-2796.jpg"},
+        {"type":"file","name":"apple-splash-1320-2868.jpg"},
+        {"type":"file","name":"apple-splash-1334-750.jpg"},
+        {"type":"file","name":"apple-splash-1488-2266.jpg"},
+        {"type":"file","name":"apple-splash-1536-2048.jpg"},
+        {"type":"file","name":"apple-splash-1620-2160.jpg"},
+        {"type":"file","name":"apple-splash-1640-2360.jpg"},
+        {"type":"file","name":"apple-splash-1668-2224.jpg"},
+        {"type":"file","name":"apple-splash-1668-2388.jpg"},
+        {"type":"file","name":"apple-splash-1792-828.jpg"},
+        {"type":"file","name":"apple-splash-2048-1536.jpg"},
+        {"type":"file","name":"apple-splash-2048-2732.jpg"},
+        {"type":"file","name":"apple-splash-2160-1620.jpg"},
+        {"type":"file","name":"apple-splash-2208-1242.jpg"},
+        {"type":"file","name":"apple-splash-2224-1668.jpg"},
+        {"type":"file","name":"apple-splash-2266-1488.jpg"},
+        {"type":"file","name":"apple-splash-2360-1640.jpg"},
+        {"type":"file","name":"apple-splash-2388-1668.jpg"},
+        {"type":"file","name":"apple-splash-2436-1125.jpg"},
+        {"type":"file","name":"apple-splash-2532-1170.jpg"},
+        {"type":"file","name":"apple-splash-2556-1179.jpg"},
+        {"type":"file","name":"apple-splash-2622-1206.jpg"},
+        {"type":"file","name":"apple-splash-2688-1242.jpg"},
+        {"type":"file","name":"apple-splash-2732-2048.jpg"},
+        {"type":"file","name":"apple-splash-2736-1260.jpg"},
+        {"type":"file","name":"apple-splash-2778-1284.jpg"},
+        {"type":"file","name":"apple-splash-2796-1290.jpg"},
+        {"type":"file","name":"apple-splash-2868-1320.jpg"},
+        {"type":"file","name":"apple-splash-640-1136.jpg"},
+        {"type":"file","name":"apple-splash-750-1334.jpg"},
+        {"type":"file","name":"apple-splash-828-1792.jpg"},
+        {"type":"file","name":"icon-192.png"},
+        {"type":"file","name":"icon-512-maskable.png"},
+        {"type":"file","name":"icon-512.png"},
+        {"type":"file","name":"icon.svg"},
+        {"type":"file","name":"manifest-icon-192.maskable.png"},
+        {"type":"file","name":"manifest-icon-512.maskable.png"}
+      ]},
+      {"type":"file","name":"manifest.webmanifest"},
+      {"type":"file","name":"robots.txt"},
+      {"type":"file","name":"sw.js"},
+      {"type":"file","name":"workbox-8c29f6e4.js"}
+    ]},
+    {"type":"directory","name":"docs","contents":[
+      {"type":"file","name":"CONTRIBUTING.md"},
+      {"type":"file","name":"QUICK_REFERENCE.md"},
+      {"type":"file","name":"TESTING.md"}
+    ]},
     {"type":"file","name":"package-lock.json"},
     {"type":"file","name":"package.json"},
+    {"type":"directory","name":"playwright-report","contents":[
+      {"type":"directory","name":"data","contents":[
+        {"type":"file","name":"5becf2b8c3abc40be1e6572701aeebae342d7ce6.md"},
+        {"type":"file","name":"fa51d8b57e123690de6df1f5e35d867946b8d451.png"}
+      ]},
+      {"type":"file","name":"index.html"}
+    ]},
+    {"type":"file","name":"playwright.config.ts"},
+    {"type":"directory","name":"scripts","contents":[
+      {"type":"file","name":"gen-icons.mjs"}
+    ]},
     {"type":"directory","name":"src","contents":[
       {"type":"file","name":"app.d.ts"},
       {"type":"file","name":"app.html"},
       {"type":"directory","name":"lib","contents":[
-        {"type":"directory","name":"assets","contents":[
-          {"type":"file","name":"favicon.svg"}
+        {"type":"directory","name":"components"},
+        {"type":"directory","name":"data","contents":[
+          {"type":"file","name":"ableton12suite.ts"},
+          {"type":"file","name":"reasonrack.ts"},
+          {"type":"file","name":"serum2.ts"}
         ]},
-        {"type":"file","name":"index.ts"}
+        {"type":"file","name":"favorites.ts"},
+        {"type":"file","name":"index.ts"},
+        {"type":"file","name":"platform.ts"},
+        {"type":"file","name":"products.ts"},
+        {"type":"file","name":"search.ts"},
+        {"type":"file","name":"shortcuts.ts"},
+        {"type":"file","name":"theme.ts"},
+        {"type":"file","name":"types.ts"}
       ]},
       {"type":"directory","name":"routes","contents":[
         {"type":"file","name":"+layout.svelte"},
         {"type":"file","name":"+page.svelte"}
-      ]}
+      ]},
+      {"type":"file","name":"vite-env.d.ts"}
     ]},
     {"type":"directory","name":"static","contents":[
+      {"type":"file","name":"favicon.svg"},
+      {"type":"directory","name":"icons","contents":[
+        {"type":"file","name":"apple-icon-180.png"},
+        {"type":"file","name":"apple-splash-1125-2436.jpg"},
+        {"type":"file","name":"apple-splash-1136-640.jpg"},
+        {"type":"file","name":"apple-splash-1170-2532.jpg"},
+        {"type":"file","name":"apple-splash-1179-2556.jpg"},
+        {"type":"file","name":"apple-splash-1206-2622.jpg"},
+        {"type":"file","name":"apple-splash-1242-2208.jpg"},
+        {"type":"file","name":"apple-splash-1242-2688.jpg"},
+        {"type":"file","name":"apple-splash-1260-2736.jpg"},
+        {"type":"file","name":"apple-splash-1284-2778.jpg"},
+        {"type":"file","name":"apple-splash-1290-2796.jpg"},
+        {"type":"file","name":"apple-splash-1320-2868.jpg"},
+        {"type":"file","name":"apple-splash-1334-750.jpg"},
+        {"type":"file","name":"apple-splash-1488-2266.jpg"},
+        {"type":"file","name":"apple-splash-1536-2048.jpg"},
+        {"type":"file","name":"apple-splash-1620-2160.jpg"},
+        {"type":"file","name":"apple-splash-1640-2360.jpg"},
+        {"type":"file","name":"apple-splash-1668-2224.jpg"},
+        {"type":"file","name":"apple-splash-1668-2388.jpg"},
+        {"type":"file","name":"apple-splash-1792-828.jpg"},
+        {"type":"file","name":"apple-splash-2048-1536.jpg"},
+        {"type":"file","name":"apple-splash-2048-2732.jpg"},
+        {"type":"file","name":"apple-splash-2160-1620.jpg"},
+        {"type":"file","name":"apple-splash-2208-1242.jpg"},
+        {"type":"file","name":"apple-splash-2224-1668.jpg"},
+        {"type":"file","name":"apple-splash-2266-1488.jpg"},
+        {"type":"file","name":"apple-splash-2360-1640.jpg"},
+        {"type":"file","name":"apple-splash-2388-1668.jpg"},
+        {"type":"file","name":"apple-splash-2436-1125.jpg"},
+        {"type":"file","name":"apple-splash-2532-1170.jpg"},
+        {"type":"file","name":"apple-splash-2556-1179.jpg"},
+        {"type":"file","name":"apple-splash-2622-1206.jpg"},
+        {"type":"file","name":"apple-splash-2688-1242.jpg"},
+        {"type":"file","name":"apple-splash-2732-2048.jpg"},
+        {"type":"file","name":"apple-splash-2736-1260.jpg"},
+        {"type":"file","name":"apple-splash-2778-1284.jpg"},
+        {"type":"file","name":"apple-splash-2796-1290.jpg"},
+        {"type":"file","name":"apple-splash-2868-1320.jpg"},
+        {"type":"file","name":"apple-splash-640-1136.jpg"},
+        {"type":"file","name":"apple-splash-750-1334.jpg"},
+        {"type":"file","name":"apple-splash-828-1792.jpg"},
+        {"type":"file","name":"icon-192.png"},
+        {"type":"file","name":"icon-512-maskable.png"},
+        {"type":"file","name":"icon-512.png"},
+        {"type":"file","name":"icon.svg"},
+        {"type":"file","name":"manifest-icon-192.maskable.png"},
+        {"type":"file","name":"manifest-icon-512.maskable.png"}
+      ]},
       {"type":"file","name":"robots.txt"}
     ]},
     {"type":"file","name":"svelte.config.js"},
+    {"type":"directory","name":"test-results","contents":[
+      {"type":"file","name":".last-run.json"},
+      {"type":"directory","name":"homepage-search-with-no-results-shows-message-chromium","contents":[
+        {"type":"file","name":"error-context.md"},
+        {"type":"file","name":"test-failed-1.png"}
+      ]}
+    ]},
+    {"type":"directory","name":"tests","contents":[
+      {"type":"file","name":"homepage.spec.ts"}
+    ]},
     {"type":"file","name":"tree.json"},
     {"type":"file","name":"tsconfig.json"},
     {"type":"file","name":"vite.config.ts"}
   ]}
 ,
-  {"type":"report","directories":15,"files":38}
+  {"type":"report","directories":60,"files":282}
 ]

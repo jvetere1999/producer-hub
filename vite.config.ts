@@ -30,10 +30,13 @@ export default defineConfig({
 			},
 			workbox: {
 				cleanupOutdatedCaches: true,
-				navigateFallback: '200.html'
+				navigateFallback: '200.html',
+				globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}']
 			},
 			devOptions: {
-				enabled: true
+				enabled: true,
+				navigateFallback: undefined,
+				suppressWarnings: true
 			}
 		})
 	]

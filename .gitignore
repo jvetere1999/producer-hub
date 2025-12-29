@@ -49,3 +49,8 @@ logs/
 # Misc
 *.swp
 *.swo
+
+# Temp files
+temp/
+*.tmp
+
