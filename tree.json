@@ -2,7 +2,8 @@
   {"type":"directory","name":".","contents":[
     {"type":"directory","name":".github","contents":[
       {"type":"directory","name":"workflows","contents":[
-        {"type":"file","name":"ci.yml"},
+        {"type":"file","name":"buildtest.yml"},
+        {"type":"file","name":"deploy.yml"},
         {"type":"file","name":"e2e.yml"}
       ]}
     ]},
@@ -20,6 +21,7 @@
       {"type":"file","name":"workspace.xml"}
     ]},
     {"type":"file","name":".npmrc"},
+    {"type":"file","name":".nvmrc"},
     {"type":"directory","name":".svelte-kit","contents":[
       {"type":"file","name":"ambient.d.ts"},
       {"type":"directory","name":"generated","contents":[
@@ -56,27 +58,27 @@
           {"type":"directory","name":"_app","contents":[
             {"type":"directory","name":"immutable","contents":[
               {"type":"directory","name":"assets","contents":[
-                {"type":"file","name":"2.hTpWK6-S.css"}
+                {"type":"file","name":"2.60lxVeK6.css"}
               ]},
               {"type":"directory","name":"chunks","contents":[
-                {"type":"file","name":"BFjHyzGn.js"},
                 {"type":"file","name":"BIHI7g3E.js"},
                 {"type":"file","name":"BIl4cyR9.js"},
-                {"type":"file","name":"BK7JzSmC.js"},
-                {"type":"file","name":"BjoquiTG.js"},
-                {"type":"file","name":"CtZH2lrW.js"},
-                {"type":"file","name":"D4Zdic53.js"},
-                {"type":"file","name":"DYXi_Yn6.js"},
-                {"type":"file","name":"PPVm8Dsz.js"}
+                {"type":"file","name":"C-bdVlMG.js"},
+                {"type":"file","name":"CMmjExpX.js"},
+                {"type":"file","name":"Cnb3afL8.js"},
+                {"type":"file","name":"CpUV5qyV.js"},
+                {"type":"file","name":"DxTIjGhR.js"},
+                {"type":"file","name":"PPVm8Dsz.js"},
+                {"type":"file","name":"_pdX6WcP.js"}
               ]},
               {"type":"directory","name":"entry","contents":[
-                {"type":"file","name":"app.CtP0Yxvz.js"},
-                {"type":"file","name":"start.DcUbabGU.js"}
+                {"type":"file","name":"app.DFsuv2LF.js"},
+                {"type":"file","name":"start.Biv6sC7Q.js"}
               ]},
               {"type":"directory","name":"nodes","contents":[
-                {"type":"file","name":"0.DpabFLSg.js"},
-                {"type":"file","name":"1.C7Zj9kc1.js"},
-                {"type":"file","name":"2.Bts29WvG.js"}
+                {"type":"file","name":"0.4NmbXgtF.js"},
+                {"type":"file","name":"1.DfkfiVrF.js"},
+                {"type":"file","name":"2.vLJSkmY2.js"}
               ]}
             ]},
             {"type":"file","name":"version.json"}
@@ -129,7 +131,13 @@
             {"type":"file","name":"icon-512.png"},
             {"type":"file","name":"icon.svg"},
             {"type":"file","name":"manifest-icon-192.maskable.png"},
-            {"type":"file","name":"manifest-icon-512.maskable.png"}
+            {"type":"file","name":"manifest-icon-512.maskable.png"},
+            {"type":"directory","name":"products","contents":[
+              {"type":"file","name":"ableton.svg"},
+              {"type":"file","name":"flstudio.svg"},
+              {"type":"file","name":"reason.svg"},
+              {"type":"file","name":"serum2.svg"}
+            ]}
           ]},
           {"type":"file","name":"manifest.webmanifest"},
           {"type":"file","name":"robots.txt"},
@@ -141,6 +149,9 @@
             {"type":"directory","name":"_app","contents":[
               {"type":"file","name":"env.js"}
             ]}
+          ]},
+          {"type":"directory","name":"pages","contents":[
+            {"type":"file","name":"index.html"}
           ]}
         ]},
         {"type":"directory","name":"server","contents":[
@@ -150,7 +161,7 @@
           {"type":"directory","name":"_app","contents":[
             {"type":"directory","name":"immutable","contents":[
               {"type":"directory","name":"assets","contents":[
-                {"type":"file","name":"_page.hTpWK6-S.css"}
+                {"type":"file","name":"_page.CVTXcysV.css"}
               ]}
             ]}
           ]},
@@ -162,13 +173,15 @@
             {"type":"file","name":"index.js"},
             {"type":"file","name":"internal.js"},
             {"type":"file","name":"shared.js"},
-            {"type":"file","name":"utils.js"}
+            {"type":"file","name":"utils.js"},
+            {"type":"file","name":"utils2.js"}
           ]},
           {"type":"directory","name":"entries","contents":[
             {"type":"directory","name":"fallbacks","contents":[
               {"type":"file","name":"error.svelte.js"}
             ]},
             {"type":"directory","name":"pages","contents":[
+              {"type":"file","name":"_layout.js"},
               {"type":"file","name":"_layout.svelte.js"},
               {"type":"file","name":"_page.svelte.js"}
             ]}
@@ -197,38 +210,34 @@
         ]}
       ]}
     ]},
-    {"type":"file","name":"CONTRIBUTING.md"},
-    {"type":"file","name":"QUICK_REFERENCE.md"},
+    {"type":"file","name":"LICENSE"},
     {"type":"file","name":"README.md"},
-    {"type":"file","name":"TESTING.md"},
-    {"type":"file","name":"TESTING_UPDATES.md"},
     {"type":"directory","name":"build","contents":[
-      {"type":"file","name":"200.html"},
       {"type":"directory","name":"_app","contents":[
         {"type":"file","name":"env.js"},
         {"type":"directory","name":"immutable","contents":[
           {"type":"directory","name":"assets","contents":[
-            {"type":"file","name":"2.hTpWK6-S.css"}
+            {"type":"file","name":"2.60lxVeK6.css"}
           ]},
           {"type":"directory","name":"chunks","contents":[
-            {"type":"file","name":"BFjHyzGn.js"},
             {"type":"file","name":"BIHI7g3E.js"},
             {"type":"file","name":"BIl4cyR9.js"},
-            {"type":"file","name":"BK7JzSmC.js"},
-            {"type":"file","name":"BjoquiTG.js"},
-            {"type":"file","name":"CtZH2lrW.js"},
-            {"type":"file","name":"D4Zdic53.js"},
-            {"type":"file","name":"DYXi_Yn6.js"},
-            {"type":"file","name":"PPVm8Dsz.js"}
+            {"type":"file","name":"C-bdVlMG.js"},
+            {"type":"file","name":"CMmjExpX.js"},
+            {"type":"file","name":"Cnb3afL8.js"},
+            {"type":"file","name":"CpUV5qyV.js"},
+            {"type":"file","name":"DxTIjGhR.js"},
+            {"type":"file","name":"PPVm8Dsz.js"},
+            {"type":"file","name":"_pdX6WcP.js"}
           ]},
           {"type":"directory","name":"entry","contents":[
-            {"type":"file","name":"app.CtP0Yxvz.js"},
-            {"type":"file","name":"start.DcUbabGU.js"}
+            {"type":"file","name":"app.DFsuv2LF.js"},
+            {"type":"file","name":"start.Biv6sC7Q.js"}
           ]},
           {"type":"directory","name":"nodes","contents":[
-            {"type":"file","name":"0.DpabFLSg.js"},
-            {"type":"file","name":"1.C7Zj9kc1.js"},
-            {"type":"file","name":"2.Bts29WvG.js"}
+            {"type":"file","name":"0.4NmbXgtF.js"},
+            {"type":"file","name":"1.DfkfiVrF.js"},
+            {"type":"file","name":"2.vLJSkmY2.js"}
           ]}
         ]},
         {"type":"file","name":"version.json"}
@@ -281,43 +290,113 @@
         {"type":"file","name":"icon-512.png"},
         {"type":"file","name":"icon.svg"},
         {"type":"file","name":"manifest-icon-192.maskable.png"},
-        {"type":"file","name":"manifest-icon-512.maskable.png"}
+        {"type":"file","name":"manifest-icon-512.maskable.png"},
+        {"type":"directory","name":"products","contents":[
+          {"type":"file","name":"ableton.svg"},
+          {"type":"file","name":"flstudio.svg"},
+          {"type":"file","name":"reason.svg"},
+          {"type":"file","name":"serum2.svg"}
+        ]}
       ]},
+      {"type":"file","name":"index.html"},
       {"type":"file","name":"manifest.webmanifest"},
       {"type":"file","name":"robots.txt"},
       {"type":"file","name":"sw.js"},
       {"type":"file","name":"workbox-8c29f6e4.js"}
     ]},
+    {"type":"directory","name":"dev-dist","contents":[
+      {"type":"file","name":"suppress-warnings.js"},
+      {"type":"file","name":"sw.js"},
+      {"type":"file","name":"workbox-5a5d9309.js"}
+    ]},
     {"type":"directory","name":"docs","contents":[
+      {"type":"file","name":"ARCHITECTURE.md"},
       {"type":"file","name":"CONTRIBUTING.md"},
+      {"type":"file","name":"INFOBASE.md"},
       {"type":"file","name":"QUICK_REFERENCE.md"},
-      {"type":"file","name":"TESTING.md"}
+      {"type":"file","name":"README.md"},
+      {"type":"file","name":"TESTING.md"},
+      {"type":"file","name":"WIKI.md"}
     ]},
     {"type":"file","name":"package-lock.json"},
     {"type":"file","name":"package.json"},
     {"type":"directory","name":"playwright-report","contents":[
       {"type":"directory","name":"data","contents":[
-        {"type":"file","name":"5becf2b8c3abc40be1e6572701aeebae342d7ce6.md"},
-        {"type":"file","name":"fa51d8b57e123690de6df1f5e35d867946b8d451.png"}
+        {"type":"file","name":"7d872e8ce848a70ffb7ed92c85d2befadeae8e2f.md"},
+        {"type":"file","name":"bcbe045c1bdc5c3e4a4273af732af3ccc9026ae3.png"}
       ]},
       {"type":"file","name":"index.html"}
     ]},
     {"type":"file","name":"playwright.config.ts"},
     {"type":"directory","name":"scripts","contents":[
+      {"type":"file","name":"add-descriptions-ableton.mjs"},
+      {"type":"file","name":"convert-reason.mjs"},
+      {"type":"file","name":"convert-serum-features.mjs"},
+      {"type":"file","name":"deploy-github-pages.sh"},
       {"type":"file","name":"gen-icons.mjs"}
     ]},
     {"type":"directory","name":"src","contents":[
       {"type":"file","name":"app.d.ts"},
       {"type":"file","name":"app.html"},
       {"type":"directory","name":"lib","contents":[
-        {"type":"directory","name":"components"},
+        {"type":"directory","name":"__tests__","contents":[
+          {"type":"file","name":"filter.test.ts"},
+          {"type":"file","name":"flstudio.test.ts"},
+          {"type":"file","name":"grouping.test.ts"},
+          {"type":"file","name":"hub-audio.test.ts"},
+          {"type":"file","name":"hub-encoding.test.ts"},
+          {"type":"file","name":"hub-storage.test.ts"},
+          {"type":"file","name":"infobase.test.ts"},
+          {"type":"file","name":"keys.test.ts"},
+          {"type":"file","name":"obfuscate.test.ts"},
+          {"type":"file","name":"powerFeatures.test.ts"},
+          {"type":"file","name":"rawShortcuts.test.ts"},
+          {"type":"file","name":"validation.test.ts"}
+        ]},
+        {"type":"directory","name":"components","contents":[
+          {"type":"file","name":"AudioAnalysisPanel.svelte"},
+          {"type":"file","name":"Collections.svelte"},
+          {"type":"file","name":"CommandPalette.svelte"},
+          {"type":"file","name":"GlobalSearch.svelte"},
+          {"type":"file","name":"Inbox.svelte"},
+          {"type":"file","name":"InfoBase.svelte"},
+          {"type":"file","name":"KeyCaps.svelte"},
+          {"type":"file","name":"Projects.svelte"},
+          {"type":"file","name":"References.svelte"},
+          {"type":"file","name":"Waveform.svelte"}
+        ]},
         {"type":"directory","name":"data","contents":[
           {"type":"file","name":"ableton12suite.ts"},
+          {"type":"file","name":"flstudio.ts"},
+          {"type":"directory","name":"importers","contents":[
+            {"type":"file","name":"rawShortcuts.ts"}
+          ]},
           {"type":"file","name":"reasonrack.ts"},
-          {"type":"file","name":"serum2.ts"}
+          {"type":"file","name":"serum2PowerFeatures.ts"}
         ]},
+        {"type":"file","name":"entries.ts"},
         {"type":"file","name":"favorites.ts"},
+        {"type":"file","name":"filter.ts"},
+        {"type":"file","name":"grouping.ts"},
+        {"type":"directory","name":"hub","contents":[
+          {"type":"file","name":"audio.ts"},
+          {"type":"file","name":"commands.ts"},
+          {"type":"file","name":"encoding.ts"},
+          {"type":"file","name":"idb.ts"},
+          {"type":"file","name":"index.ts"},
+          {"type":"file","name":"search.ts"},
+          {"type":"file","name":"storage.ts"},
+          {"type":"file","name":"types.ts"}
+        ]},
         {"type":"file","name":"index.ts"},
+        {"type":"directory","name":"infobase","contents":[
+          {"type":"file","name":"obfuscate.ts"},
+          {"type":"file","name":"storage.ts"},
+          {"type":"file","name":"types.ts"}
+        ]},
+        {"type":"directory","name":"keys","contents":[
+          {"type":"file","name":"parse.ts"}
+        ]},
         {"type":"file","name":"platform.ts"},
         {"type":"file","name":"products.ts"},
         {"type":"file","name":"search.ts"},
@@ -326,6 +405,7 @@
         {"type":"file","name":"types.ts"}
       ]},
       {"type":"directory","name":"routes","contents":[
+        {"type":"file","name":"+layout.js"},
         {"type":"file","name":"+layout.svelte"},
         {"type":"file","name":"+page.svelte"}
       ]},
@@ -380,25 +460,42 @@
         {"type":"file","name":"icon-512.png"},
         {"type":"file","name":"icon.svg"},
         {"type":"file","name":"manifest-icon-192.maskable.png"},
-        {"type":"file","name":"manifest-icon-512.maskable.png"}
+        {"type":"file","name":"manifest-icon-512.maskable.png"},
+        {"type":"directory","name":"products","contents":[
+          {"type":"file","name":"ableton.svg"},
+          {"type":"file","name":"flstudio.svg"},
+          {"type":"file","name":"reason.svg"},
+          {"type":"file","name":"serum2.svg"}
+        ]}
       ]},
+      {"type":"file","name":"manifest.webmanifest"},
       {"type":"file","name":"robots.txt"}
     ]},
     {"type":"file","name":"svelte.config.js"},
+    {"type":"directory","name":"temp","contents":[
+      {"type":"file","name":"fl studio raw.json"},
+      {"type":"file","name":"logic pro raw.json"},
+      {"type":"file","name":"prompts"},
+      {"type":"file","name":"raw abelton.json"},
+      {"type":"file","name":"rawSerym2PowerFeatures.json"},
+      {"type":"file","name":"reason Raw.json"}
+    ]},
     {"type":"directory","name":"test-results","contents":[
       {"type":"file","name":".last-run.json"},
-      {"type":"directory","name":"homepage-search-with-no-results-shows-message-chromium","contents":[
+      {"type":"directory","name":"hub-Inbox-and-Promote-shou-de70d-nbox-and-promote-to-project-chromium","contents":[
         {"type":"file","name":"error-context.md"},
         {"type":"file","name":"test-failed-1.png"}
       ]}
     ]},
     {"type":"directory","name":"tests","contents":[
-      {"type":"file","name":"homepage.spec.ts"}
+      {"type":"file","name":"homepage.spec.ts"},
+      {"type":"file","name":"hub.spec.ts"}
     ]},
     {"type":"file","name":"tree.json"},
     {"type":"file","name":"tsconfig.json"},
-    {"type":"file","name":"vite.config.ts"}
+    {"type":"file","name":"vite.config.ts"},
+    {"type":"file","name":"vitest.config.ts"}
   ]}
 ,
-  {"type":"report","directories":60,"files":282}
+  {"type":"report","directories":71,"files":356}
 ]

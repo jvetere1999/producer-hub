@@ -24,6 +24,14 @@ export const products: Product[] = [
         category: 'DAW',
         website: 'https://www.reasonstudios.com/',
         icon: '/icons/products/reason.svg'
+    },
+    {
+        productId: 'flstudio',
+        name: 'FL Studio',
+        vendor: 'Image-Line',
+        category: 'DAW',
+        website: 'https://www.image-line.com/fl-studio/',
+        icon: '/icons/products/flstudio.svg'
     }
 ];
 
