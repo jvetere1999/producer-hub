@@ -47,12 +47,29 @@ jobs:
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v4
+        with:
+          enablement: true
+
+      - name: Debug Pages Configuration
+        run: |
+          echo "Pages base path: ${{ steps.pages.outputs.base_path }}"
+          echo "Pages base url: ${{ steps.pages.outputs.base_url }}"
+          echo "Pages origin: ${{ steps.pages.outputs.origin }}"
 
       - name: Build with SvelteKit
         run: |
+          echo "Building with BASE_PATH: ${{ steps.pages.outputs.base_path }}"
           npm run build
         env:
           BASE_PATH: ${{ steps.pages.outputs.base_path }}
+
+      - name: Verify build output
+        run: |
+          echo "Build directory contents:"
+          ls -la build/
+          echo "Checking for required files:"
+          test -f build/index.html && echo "✓ index.html found" || echo "✗ index.html missing"
+          test -d build/_app && echo "✓ _app directory found" || echo "✗ _app directory missing"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
