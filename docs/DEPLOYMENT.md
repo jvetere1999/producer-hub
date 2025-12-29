@@ -411,3 +411,30 @@ After deploying to GitHub Pages:
 2. DevTools → Application → Service Workers → Update
 3. Clear site data and reload
 
+### Build Fails with 404 During Prerendering
+
+**Symptom:** Build fails with errors like:
+```
+[404] GET /icons/products/ableton.svg
+Error: 404 /icons/products/ableton.svg (linked from /)
+```
+
+**Cause:** SvelteKit's prerenderer validates all linked assets. During SSR, the `assets` path may be empty, causing icon paths to resolve incorrectly.
+
+**Solution:** We use `handleHttpError` in `svelte.config.js` to ignore expected 404s for static assets:
+
+```javascript
+prerender: {
+    entries: ['*'],
+    handleHttpError: ({ path, message }) => {
+        // Ignore 404s for product icons during prerendering
+        if (path.includes('icons/products/')) {
+            console.warn(`[prerender] Ignoring expected 404: ${path}`);
+            return;
+        }
+        throw new Error(message);
+    }
+}
+```
+
+**Why this is safe:** The icons exist in `static/icons/products/` and will be properly served in production. The prerenderer just can't resolve them during the build phase.
