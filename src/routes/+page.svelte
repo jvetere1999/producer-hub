@@ -96,6 +96,36 @@
     let stopKeyboard = () => {};
 
     // ============================================
+    // Tab Persistence
+    // ============================================
+
+    const TAB_STORAGE_KEY = 'producerhub_active_tab';
+    const VALID_TABS = ['shortcuts', 'infobase', 'projects', 'inbox', 'references', 'collections', 'search'] as const;
+
+    function loadActiveTab(): typeof activeTab {
+        try {
+            const stored = localStorage.getItem(TAB_STORAGE_KEY);
+            if (stored && VALID_TABS.includes(stored as any)) {
+                return stored as typeof activeTab;
+            }
+        } catch (e) {
+            // Ignore localStorage errors
+        }
+        return 'shortcuts';
+    }
+
+    function saveActiveTab(tab: typeof activeTab) {
+        try {
+            localStorage.setItem(TAB_STORAGE_KEY, tab);
+        } catch (e) {
+            // Ignore localStorage errors
+        }
+    }
+
+    // Save tab whenever it changes
+    $: saveActiveTab(activeTab);
+
+    // ============================================
     // Lifecycle
     // ============================================
 
@@ -106,6 +136,7 @@
         applyTheme(themeChoice);
         stopWatch = watchSystemTheme(themeChoice, () => applyTheme(themeChoice));
         keyOS = getKeyOSPreference();
+        activeTab = loadActiveTab();
 
         // Initialize hub commands
         registerDefaultCommands((tab) => {
@@ -812,7 +843,7 @@
                         <div class="card">
                             <div class="card-left">
                                 {#if s.productIcon}
-                                    <img class="product-icon" src={s.productIcon} alt={s.productName} data-testid="product-icon" />
+                                    <img class="product-icon" src={base + s.productIcon} alt={s.productName} data-testid="product-icon" />
                                 {/if}
                                 <div class="card-content">
                                     <div class="cmdRow">

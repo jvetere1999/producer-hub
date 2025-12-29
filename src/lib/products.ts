@@ -32,6 +32,14 @@ export const products: Product[] = [
         category: 'DAW',
         website: 'https://www.image-line.com/fl-studio/',
         icon: '/icons/products/flstudio.svg'
+    },
+    {
+        productId: 'logicpro',
+        name: 'Logic Pro',
+        vendor: 'Apple',
+        category: 'DAW',
+        website: 'https://www.apple.com/logic-pro/',
+        icon: '/icons/products/logicpro.svg'
     }
 ];
 

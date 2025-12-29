@@ -152,46 +152,6 @@
 		margin-left: auto;
 	}
 
-	.progress-container {
-		display: flex;
-		flex-direction: column;
-		gap: 0.75rem;
-	}
-
-	.progress-bar {
-		height: 4px;
-		background: var(--border-color);
-		border-radius: 2px;
-		overflow: hidden;
-	}
-
-	.progress-fill {
-		height: 100%;
-		background: linear-gradient(90deg, #3b82f6, #8b5cf6);
-		transition: width 0.2s ease;
-	}
-
-	.progress-text {
-		font-size: 0.875rem;
-		color: var(--text-secondary);
-		margin: 0;
-		text-align: center;
-	}
-
-	.btn-cancel {
-		padding: 0.5rem 1rem;
-		background: #ef4444;
-		color: white;
-		border: none;
-		border-radius: 4px;
-		cursor: pointer;
-		font-size: 0.875rem;
-		transition: background 0.2s;
-	}
-
-	.btn-cancel:hover {
-		background: #dc2626;
-	}
 
 	.spectrum-container {
 		display: flex;
@@ -351,17 +311,6 @@
 		font-size: 0.95rem;
 	}
 
-	.btn-analyze {
-		display: none; /* Hidden since analysis is now automatic */
-	}
-
-	.btn-analyze:hover:not(:disabled) {
-		display: none;
-	}
-
-	.btn-analyze:disabled {
-		display: none;
-	}
 
 	:global(:root) {
 		--bg-primary: #1a1a1c;

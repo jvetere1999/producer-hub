@@ -588,6 +588,61 @@
 			// Silent failure - don't interrupt user experience
 		}
 	}
+
+	// Refresh and check analysis status for all tracks
+	let isRefreshing = false;
+
+	async function refreshAnalysisStatus() {
+		if (!selectedLibrary || !selectedLibraryId || isRefreshing) return;
+
+		isRefreshing = true;
+
+		try {
+			// Re-load state from storage to get latest
+			state = loadReferences();
+			refreshLibraries();
+
+			// Count tracks that need analysis
+			const tracksNeedingAnalysis = selectedLibrary.tracks.filter(t => !t.analysis);
+			const tracksNeedingWaveform = selectedLibrary.tracks.filter(t => !t.waveform);
+
+			if (tracksNeedingAnalysis.length > 0 || tracksNeedingWaveform.length > 0) {
+				console.log(`Found ${tracksNeedingWaveform.length} tracks needing waveform, ${tracksNeedingAnalysis.length} tracks needing analysis`);
+
+				// Process tracks that need analysis
+				processingCount = tracksNeedingWaveform.length;
+				for (const track of tracksNeedingWaveform) {
+					await generateWaveformAndAnalysis(track.id);
+				}
+
+				// For tracks with waveform but no analysis, just run analysis
+				for (const track of tracksNeedingAnalysis.filter(t => t.waveform)) {
+					await analyzeTrack(track.id);
+				}
+			}
+
+			// Final refresh
+			state = loadReferences();
+			refreshLibraries();
+
+		} catch (e) {
+			console.error('Failed to refresh analysis status:', e);
+		} finally {
+			isRefreshing = false;
+		}
+	}
+
+	function getAnalysisStats(): { total: number; analyzed: number; withWaveform: number } {
+		if (!selectedLibrary) return { total: 0, analyzed: 0, withWaveform: 0 };
+
+		const total = selectedLibrary.tracks.length;
+		const analyzed = selectedLibrary.tracks.filter(t => t.analysis).length;
+		const withWaveform = selectedLibrary.tracks.filter(t => t.waveform).length;
+
+		return { total, analyzed, withWaveform };
+	}
+
+	$: analysisStats = getAnalysisStats();
 </script>
 
 <div class="references">
@@ -646,9 +701,36 @@
 					<button class="btn btn-small" onclick={handleImportFolder}>
 						◉ Import & Analyze
 					</button>
+					<button
+						class="btn btn-small"
+						onclick={refreshAnalysisStatus}
+						disabled={isRefreshing}
+						title="Refresh and check analysis status"
+					>
+						{isRefreshing ? '↻ Refreshing...' : '↻ Refresh'}
+					</button>
 					<button class="btn btn-small btn-danger" onclick={handleDeleteLibrary}>Delete</button>
 				</div>
 			</div>
+
+			<!-- Analysis Status -->
+			{#if selectedLibrary.tracks.length > 0}
+				<div class="analysis-status">
+					<span class="status-item">
+						◈ {analysisStats.withWaveform}/{analysisStats.total} waveforms
+					</span>
+					<span class="status-item">
+						◉ {analysisStats.analyzed}/{analysisStats.total} analyzed
+					</span>
+					{#if analysisStats.analyzed < analysisStats.total || analysisStats.withWaveform < analysisStats.total}
+						<button class="btn-link" onclick={refreshAnalysisStatus} disabled={isRefreshing}>
+							{isRefreshing ? 'Processing...' : 'Process remaining'}
+						</button>
+					{:else}
+						<span class="status-complete">✓ All complete</span>
+					{/if}
+				</div>
+			{/if}
 
 			<!-- Track List -->
 			<div class="track-list">
@@ -1398,6 +1480,45 @@
 			align-items: flex-start;
 			gap: 8px;
 		}
+	}
+
+	.analysis-status {
+		display: flex;
+		align-items: center;
+		gap: 16px;
+		padding: 8px 16px;
+		background: var(--card);
+		border-bottom: 1px solid var(--border);
+		font-size: 12px;
+	}
+
+	.status-item {
+		color: var(--muted);
+	}
+
+	.status-complete {
+		color: #22c55e;
+		font-weight: 500;
+	}
+
+	.btn-link {
+		background: none;
+		border: none;
+		color: #3b82f6;
+		cursor: pointer;
+		font-size: 12px;
+		padding: 0;
+		text-decoration: underline;
+	}
+
+	.btn-link:hover {
+		color: #2563eb;
+	}
+
+	.btn-link:disabled {
+		color: var(--muted);
+		cursor: not-allowed;
+		text-decoration: none;
 	}
 </style>
 
