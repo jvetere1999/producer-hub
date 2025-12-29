@@ -3,8 +3,11 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { computePeaks, getAmplitudeColor, formatTime, formatTimeWithMs } from '../hub/audio';
 import {
+	computePeaks,
+	getAmplitudeColor,
+	formatTime,
+	formatTimeWithMs,
 	createEmptyAnnotations,
 	addMarker,
 	updateMarker,
@@ -13,8 +16,8 @@ import {
 	removeRegion,
 	addAnnotationNote,
 	removeAnnotationNote
-} from '../hub/audio';
-import { decodeBase64 } from '../hub/encoding';
+} from '$lib/hub/audio';
+import { decodeBase64 } from '$lib/hub';
 
 describe('Waveform Peak Computation', () => {
 	function createMockAudioBuffer(samples: number[]): AudioBuffer {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeGroupTitle, resolveGroup, DEFAULT_GROUP } from '../grouping';
+import { normalizeGroupTitle, resolveGroup, DEFAULT_GROUP } from '$lib/grouping';
 
 describe('normalizeGroupTitle', () => {
     it('strips leading number with dot and space', () => {

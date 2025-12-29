@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import type { Shortcut } from '../types';
+import type { Shortcut } from '$lib';
 
 /**
  * Test that validation rejects invalid data.

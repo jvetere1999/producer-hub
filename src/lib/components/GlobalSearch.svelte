@@ -74,12 +74,12 @@
 
 	function getKindIcon(kind: SearchDocKind): string {
 		switch (kind) {
-			case 'project': return '📁';
-			case 'inbox': return '📥';
-			case 'reference': return '🎵';
-			case 'collection': return '🎨';
-			case 'infobaseNote': return '📝';
-			default: return '📎';
+			case 'project': return '◉';
+			case 'inbox': return '⬇';
+			case 'reference': return '◈';
+			case 'collection': return '⊞';
+			case 'infobaseNote': return '⊞';
+			default: return '◦';
 		}
 	}
 
@@ -226,6 +226,8 @@
 		padding: 16px;
 		max-width: 800px;
 		margin: 0 auto;
+		overflow: auto;
+		height: 100%;
 	}
 
 	.search-header {

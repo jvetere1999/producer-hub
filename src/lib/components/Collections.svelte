@@ -247,14 +247,41 @@
 		}
 	}
 
+	function handleItemClick(item: CollectionItem) {
+		selectedItemForPopup = item;
+		itemPopupData = {
+			name: getItemName(item),
+			type: item.refType,
+			refType: item.refType
+		};
+		showItemPopup = true;
+		isAnalyzingItem = true;
+
+		// Auto-trigger analysis/load for reference tracks
+		if (item.refType === 'referenceTrack') {
+			// Analysis will be shown in popup
+			setTimeout(() => {
+				isAnalyzingItem = false;
+			}, 500);
+		} else {
+			isAnalyzingItem = false;
+		}
+	}
+
+	function closeItemPopup() {
+		showItemPopup = false;
+		selectedItemForPopup = null;
+		itemPopupData = null;
+	}
+
 	function getItemIcon(type: CollectionRefType): string {
 		switch (type) {
-			case 'project': return '📁';
-			case 'referenceTrack': return '🎵';
-			case 'infobaseNote': return '📝';
-			case 'shortcut': return '⌨️';
-			case 'feature': return '✨';
-			default: return '📎';
+			case 'project': return '◉';
+			case 'referenceTrack': return '◈';
+			case 'infobaseNote': return '⊞';
+			case 'shortcut': return '⌨';
+			case 'feature': return '✦';
+			default: return '◦';
 		}
 	}
 
@@ -368,7 +395,7 @@
 				{:else}
 					<div class="items-grid">
 						{#each selectedCollection.items as item, index (item.id)}
-							<div class="item-card">
+							<div class="item-card" onclick={() => handleItemClick(item)}>
 								<div class="item-icon">{getItemIcon(item.refType)}</div>
 								<div class="item-info">
 									<span class="item-type">{item.refType}</span>
@@ -450,6 +477,45 @@
 			</div>
 		</div>
 	{/if}
+
+	<!-- Item Popup Panel -->
+	{#if showItemPopup && itemPopupData}
+		<div class="item-popup">
+			<div class="popup-header">
+				<div class="popup-title">
+					<span class="popup-icon">{getItemIcon(itemPopupData.refType)}</span>
+					<div class="popup-info">
+						<div class="popup-name">{itemPopupData.name}</div>
+						<div class="popup-type">{itemPopupData.refType}</div>
+					</div>
+				</div>
+				<button class="popup-close" onclick={closeItemPopup}>✕</button>
+			</div>
+
+			<div class="popup-content">
+				{#if isAnalyzingItem}
+					<div class="analyzing">
+						<div class="spinner"></div>
+						<p>Loading analysis...</p>
+					</div>
+				{:else}
+					<div class="popup-details">
+						<p class="detail-text">
+							{#if itemPopupData.refType === 'referenceTrack'}
+								Reference track loaded. Use the main References tab for playback and detailed analysis.
+							{:else if itemPopupData.refType === 'project'}
+								Project: {itemPopupData.name}
+							{:else if itemPopupData.refType === 'infobaseNote'}
+								Note: {itemPopupData.name}
+							{:else}
+								{itemPopupData.type}: {itemPopupData.name}
+							{/if}
+						</p>
+					</div>
+				{/if}
+			</div>
+		</div>
+	{/if}
 </div>
 
 <style>
@@ -457,6 +523,7 @@
 		display: flex;
 		height: 100%;
 		min-height: 500px;
+		overflow: auto;
 	}
 
 	.sidebar {
@@ -778,6 +845,136 @@
 		gap: 8px;
 		justify-content: flex-end;
 		margin-top: 16px;
+	}
+
+	.item-popup {
+		position: fixed;
+		top: 20px;
+		left: 50%;
+		transform: translateX(-50%);
+		background: var(--card);
+		border: 1px solid var(--border);
+		border-radius: 12px;
+		box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+		z-index: 2000;
+		max-width: 500px;
+		width: calc(100% - 40px);
+		animation: slideDown 0.3s ease-out;
+	}
+
+	@keyframes slideDown {
+		from {
+			opacity: 0;
+			transform: translateX(-50%) translateY(-20px);
+		}
+		to {
+			opacity: 1;
+			transform: translateX(-50%) translateY(0);
+		}
+	}
+
+	.popup-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 16px;
+		border-bottom: 1px solid var(--border);
+	}
+
+	.popup-title {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+	}
+
+	.popup-icon {
+		font-size: 24px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 40px;
+		height: 40px;
+		background: var(--muted);
+		border-radius: 8px;
+	}
+
+	.popup-info {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+
+	.popup-name {
+		font-weight: 600;
+		font-size: 14px;
+		color: var(--fg);
+	}
+
+	.popup-type {
+		font-size: 12px;
+		color: var(--muted);
+		text-transform: capitalize;
+	}
+
+	.popup-close {
+		background: none;
+		border: none;
+		color: var(--muted);
+		font-size: 20px;
+		cursor: pointer;
+		padding: 0;
+		width: 32px;
+		height: 32px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.popup-close:hover {
+		color: var(--fg);
+	}
+
+	.popup-content {
+		padding: 16px;
+		min-height: 60px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.analyzing {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 12px;
+		color: var(--muted);
+		font-size: 13px;
+	}
+
+	.spinner {
+		width: 20px;
+		height: 20px;
+		border: 2px solid var(--border);
+		border-top-color: var(--fg);
+		border-radius: 50%;
+		animation: spin 0.6s linear infinite;
+	}
+
+	@keyframes spin {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+
+	.popup-details {
+		width: 100%;
+	}
+
+	.detail-text {
+		margin: 0;
+		color: var(--fg);
+		font-size: 13px;
+		line-height: 1.5;
 	}
 </style>
 

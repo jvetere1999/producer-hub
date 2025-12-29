@@ -7,8 +7,8 @@
   @component
 -->
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
-	import type { WaveformData, AudioAnnotations, AudioAnnotationMarker, AudioAnnotationRegion } from '$lib/hub';
+	import { onMount } from 'svelte';
+	import type { WaveformData, AudioAnnotations } from '$lib/hub';
 	import { getAmplitudeColor, decodeBase64, formatTime } from '$lib/hub';
 
 	export let waveform: WaveformData | null = null;

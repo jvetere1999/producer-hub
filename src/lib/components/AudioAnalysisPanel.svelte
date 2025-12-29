@@ -78,9 +78,9 @@
 	}
 </script>
 
-<div class="analysis-panel">
-	<div class="panel-header">
-		<h3>🎵 Audio Analysis</h3>
+	<div class="analysis-panel">
+		<div class="panel-header">
+			<h3>◈ Audio Analysis</h3>
 		{#if track?.name}
 			<span class="track-name">{track.name}</span>
 		{/if}
@@ -175,7 +175,7 @@
 		<div class="no-analysis">
 			<p>No frequency spectrum analysis yet</p>
 			<button class="btn-analyze" onclick={generateAnalysis} disabled={isAnalyzing}>
-				🎵 Analyze Audio
+				◈ Analyze Audio
 			</button>
 		</div>
 	{/if}

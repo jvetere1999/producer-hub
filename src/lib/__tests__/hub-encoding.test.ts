@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { encodeBase64, decodeBase64, generateId, generateShortId, nowISO } from '../hub/encoding';
+import { encodeBase64, decodeBase64, generateId, generateShortId, nowISO } from '$lib/hub';
 
 describe('Base64 Encoding', () => {
 	it('should encode and decode ASCII text', () => {

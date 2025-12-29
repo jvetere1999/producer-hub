@@ -20,7 +20,7 @@ import type {
 	ProjectMilestone,
 	ProjectChecklistItem
 } from './types';
-import { generateId, nowISO, encodeBase64, decodeBase64 } from './encoding';
+import { generateId, nowISO, decodeBase64 } from './encoding';
 
 // ============================================
 // Storage Keys
@@ -165,9 +165,7 @@ export function listInboxItems(
 		.map((id) => state.items[id])
 		.filter(Boolean)
 		.filter((item) => {
-			if (!includeArchived && item.archived) return false;
-			if (!includePromoted && item.promotedProjectId) return false;
-			return true;
+			return (includeArchived || !item.archived) && (includePromoted || !item.promotedProjectId);
 		});
 }
 

@@ -1,4 +1,4 @@
-import type { Shortcut } from '../types';
+import type { Shortcut } from '$lib';
 
 /**
  * Ableton Live 12 Suite keyboard shortcuts.

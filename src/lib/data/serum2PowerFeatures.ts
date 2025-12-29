@@ -1,4 +1,4 @@
-import type { FeatureEntry } from '../entries';
+import type { FeatureEntry } from '$lib';
 
 /**
  * Serum 2 Power Features.

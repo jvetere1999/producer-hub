@@ -5,7 +5,7 @@
  * We test the pure functions without localStorage persistence.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
 	addInboxItem,
 	updateInboxItem,
@@ -23,9 +23,9 @@ import {
 	addCollectionItem,
 	removeCollectionItem,
 	exportProjectToMarkdown
-} from '../hub/storage';
-import { encodeBase64, decodeBase64 } from '../hub/encoding';
-import type { InboxState, ProjectsState, CollectionsState } from '../hub/types';
+} from '$lib/hub';
+import { encodeBase64, decodeBase64 } from '$lib/hub';
+import type { InboxState, ProjectsState, CollectionsState } from '$lib/hub';
 
 // Helper to create empty states
 function emptyInbox(): InboxState {
@@ -122,8 +122,7 @@ describe('Inbox Storage', () => {
 
 		// Manually make an item old
 		const id = state.order[0];
-		const oldDate = new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString();
-		state.items[id].createdAt = oldDate;
+		state.items[id].createdAt = new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString();
 
 		const stale = getStaleInboxItems(state, 14);
 		expect(stale).toHaveLength(1);
@@ -239,7 +238,7 @@ describe('Collections Storage', () => {
 describe('Export to Markdown', () => {
 	it('should export project to markdown', () => {
 		let state = emptyProjects();
-		const { state: s1, project } = createProject(state, {
+		const { project } = createProject(state, {
 			name: 'Export Test',
 			status: 'mix',
 			notesEncoded: encodeBase64('Some notes here'),

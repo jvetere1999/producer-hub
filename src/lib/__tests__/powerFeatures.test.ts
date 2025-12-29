@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { serum2PowerFeatures } from '../data/serum2PowerFeatures';
-import type { FeatureEntry } from '../entries';
+import { serum2PowerFeatures } from '$lib/data/serum2PowerFeatures';
+import type { FeatureEntry } from '$lib';
 
 describe('serum2PowerFeatures data module', () => {
     it('exports an array of FeatureEntry', () => {

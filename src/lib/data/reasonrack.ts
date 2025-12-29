@@ -1,4 +1,4 @@
-import type { Shortcut } from '../types';
+import type { Shortcut } from '$lib';
 
 /**
  * Reason 13 Keyboard Shortcuts

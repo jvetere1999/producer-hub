@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { filterShortcuts, groupShortcutsByGroup } from '../filter';
-import type { ShortcutWithProduct } from '../types';
+import { filterShortcuts, groupShortcutsByGroup } from '$lib/filter';
+import type { ShortcutWithProduct } from '$lib';
 
 // Test data factory
 function createShortcut(overrides: Partial<ShortcutWithProduct>): ShortcutWithProduct {

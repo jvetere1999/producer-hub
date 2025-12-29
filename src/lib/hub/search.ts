@@ -18,23 +18,22 @@ import type {
 } from './types';
 import { decodeBase64 } from './encoding';
 
-/**
- * Hub search index document shape.
- */
-interface HubDoc {
-	id: string;
-	kind: string;
-	title: string;
-	text: string;
-	tags: string;
-}
+// FlexSearch document index instance (cached)
+let hubIndex: any | null = null;
 
-/** Cached FlexSearch index instance */
-let hubIndex: any = null;
 /** Track indexed IDs for cache invalidation */
 let indexedDocIds = new Set<string>();
 /** Version counter for invalidation */
 let indexVersion = 0;
+
+// Document key parsing helpers
+export function parseHubResultId(id: string): { kind: SearchDocKind; realId: string } {
+	const [kind, ...rest] = id.split(':');
+	return {
+		kind: kind as SearchDocKind,
+		realId: rest.join(':')
+	};
+}
 
 /**
  * Builds or returns the cached hub FlexSearch index.
@@ -200,17 +199,6 @@ export function searchHub(
 }
 
 /**
- * Parses a hub search result ID to extract kind and original ID.
- */
-export function parseHubResultId(resultId: string): { kind: SearchDocKind; id: string } {
-	const [kind, ...rest] = resultId.split(':');
-	return {
-		kind: kind as SearchDocKind,
-		id: rest.join(':')
-	};
-}
-
-/**
  * Invalidates the hub search index cache.
  * Call after data changes.
  */
@@ -225,4 +213,3 @@ export function invalidateHubIndex(): void {
 export function getHubIndexVersion(): number {
 	return indexVersion;
 }
-

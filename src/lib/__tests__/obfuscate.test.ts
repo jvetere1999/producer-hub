@@ -4,10 +4,9 @@ import {
     deobfuscate,
     stateToMarkdown,
     parseMarkdown,
-    exportInfoBase,
     importInfoBase
 } from '../infobase/obfuscate';
-import type { InfoBaseState, KnowledgeNote } from '../infobase/types';
+import type { InfoBaseState } from '../infobase/types';
 
 // Mock localStorage and crypto
 const localStorageMock = (() => {
