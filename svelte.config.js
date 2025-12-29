@@ -1,24 +1,45 @@
-import adapter from '@sveltejs/adapter-static';
+import adapterStatic from '@sveltejs/adapter-static';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 const dev = process.env.NODE_ENV === 'development';
 
 /**
- * For GitHub Pages, set BASE_PATH="/<repo-name>" at build time.
- * Cloudflare Pages: leave BASE_PATH unset.
+ * Deployment target configuration:
+ * - GitHub Pages: set BASE_PATH="/<repo-name>" at build time
+ * - Cloudflare Pages: set DEPLOY_TARGET="cloudflare" (no base path needed)
+ * - Default: static adapter for GitHub Pages
  */
 const basePath = process.env.BASE_PATH ?? '';
+const deployTarget = process.env.DEPLOY_TARGET ?? 'static';
+
+// Select adapter based on deployment target
+function getAdapter() {
+	if (deployTarget === 'cloudflare') {
+		// Dynamic import for Cloudflare adapter (install with: npm i -D @sveltejs/adapter-cloudflare)
+		// For now, fall back to static adapter - uncomment when adapter-cloudflare is installed
+		// const adapterCloudflare = await import('@sveltejs/adapter-cloudflare');
+		// return adapterCloudflare.default();
+		return adapterStatic({
+			pages: 'build',
+			assets: 'build',
+			fallback: 'index.html' // SPA fallback for Cloudflare
+		});
+	}
+
+	// Default: static adapter for GitHub Pages
+	return adapterStatic({
+		pages: 'build',
+		assets: 'build',
+		fallback: null
+	});
+}
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
 	preprocess: vitePreprocess(),
 
 	kit: {
-		adapter: adapter({
-			pages: 'build',
-			assets: 'build',
-			fallback: null
-		}),
+		adapter: getAdapter(),
 		paths: {
 			base: dev ? '' : basePath,
 			assets: dev ? '' : basePath

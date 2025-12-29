@@ -21,13 +21,143 @@
 	<!-- No-flash theme initialization -->
 	<script>
 		(function () {
+			// Theme CSS variables for each theme - comprehensive set for full UI theming
+			var themes = {
+				'ableton-live-dark': {
+					mode: 'dark',
+					vars: {
+						'--bg-primary': '#1e1e1e', '--bg-secondary': '#2d2d2d', '--bg-tertiary': '#3d3d3d', '--bg-elevated': '#4d4d4d',
+						'--text-primary': '#ffffff', '--text-secondary': '#b3b3b3', '--text-muted': '#808080',
+						'--border-default': '#4d4d4d', '--border-subtle': '#3d3d3d',
+						'--surface-hover': '#3d3d3d', '--surface-active': '#4d4d4d',
+						'--accent-primary': '#ff764d', '--accent-secondary': '#50b8b8',
+						'--card-bg': '#2d2d2d', '--card-border': '#3d3d3d',
+						'--tab-active': '#ff764d', '--tab-inactive': '#808080',
+						'--button-bg': '#3d3d3d', '--button-hover': '#4d4d4d',
+						'--input-bg': '#2d2d2d', '--input-border': '#4d4d4d',
+						'--tag-bg': '#4d4d4d', '--tag-text': '#ffffff',
+						'--star-active': '#ffc107', '--star-inactive': '#808080'
+					}
+				},
+				'ableton-live-light': {
+					mode: 'light',
+					vars: {
+						'--bg-primary': '#f5f5f5', '--bg-secondary': '#e8e8e8', '--bg-tertiary': '#dbdbdb', '--bg-elevated': '#ffffff',
+						'--text-primary': '#1e1e1e', '--text-secondary': '#4d4d4d', '--text-muted': '#808080',
+						'--border-default': '#c1c1c1', '--border-subtle': '#dbdbdb',
+						'--surface-hover': '#dbdbdb', '--surface-active': '#cecece',
+						'--accent-primary': '#ff5500', '--accent-secondary': '#00a8a8',
+						'--card-bg': '#ffffff', '--card-border': '#dbdbdb',
+						'--tab-active': '#ff5500', '--tab-inactive': '#808080',
+						'--button-bg': '#e8e8e8', '--button-hover': '#dbdbdb',
+						'--input-bg': '#ffffff', '--input-border': '#c1c1c1',
+						'--tag-bg': '#dbdbdb', '--tag-text': '#1e1e1e',
+						'--star-active': '#e6a800', '--star-inactive': '#808080'
+					}
+				},
+				'ableton-mid-dark': {
+					mode: 'dark',
+					vars: {
+						'--bg-primary': '#282828', '--bg-secondary': '#353535', '--bg-tertiary': '#424242', '--bg-elevated': '#4f4f4f',
+						'--text-primary': '#f0f0f0', '--text-secondary': '#a8a8a8', '--text-muted': '#707070',
+						'--border-default': '#4f4f4f', '--border-subtle': '#424242',
+						'--surface-hover': '#424242', '--surface-active': '#4f4f4f',
+						'--accent-primary': '#8bb8e8', '--accent-secondary': '#b8d060',
+						'--card-bg': '#353535', '--card-border': '#424242',
+						'--tab-active': '#8bb8e8', '--tab-inactive': '#707070',
+						'--button-bg': '#424242', '--button-hover': '#4f4f4f',
+						'--input-bg': '#353535', '--input-border': '#4f4f4f',
+						'--tag-bg': '#4f4f4f', '--tag-text': '#f0f0f0',
+						'--star-active': '#e8c060', '--star-inactive': '#707070'
+					}
+				},
+				'ableton-mid-light': {
+					mode: 'light',
+					vars: {
+						'--bg-primary': '#d8d8d8', '--bg-secondary': '#c8c8c8', '--bg-tertiary': '#b8b8b8', '--bg-elevated': '#e8e8e8',
+						'--text-primary': '#1a1a1a', '--text-secondary': '#4a4a4a', '--text-muted': '#7a7a7a',
+						'--border-default': '#a0a0a0', '--border-subtle': '#b8b8b8',
+						'--surface-hover': '#b8b8b8', '--surface-active': '#a8a8a8',
+						'--accent-primary': '#5080c0', '--accent-secondary': '#80b040',
+						'--card-bg': '#e8e8e8', '--card-border': '#b8b8b8',
+						'--tab-active': '#5080c0', '--tab-inactive': '#7a7a7a',
+						'--button-bg': '#c8c8c8', '--button-hover': '#b8b8b8',
+						'--input-bg': '#e8e8e8', '--input-border': '#a0a0a0',
+						'--tag-bg': '#b8b8b8', '--tag-text': '#1a1a1a',
+						'--star-active': '#c09040', '--star-inactive': '#7a7a7a'
+					}
+				},
+				'ableton-disco': {
+					mode: 'dark',
+					vars: {
+						'--bg-primary': '#1a1a2e', '--bg-secondary': '#252542', '--bg-tertiary': '#303056', '--bg-elevated': '#3b3b6a',
+						'--text-primary': '#ffffff', '--text-secondary': '#b8b8d0', '--text-muted': '#7878a0',
+						'--border-default': '#46467e', '--border-subtle': '#3b3b6a',
+						'--surface-hover': '#303056', '--surface-active': '#3b3b6a',
+						'--accent-primary': '#ff6b9d', '--accent-secondary': '#64d2ff',
+						'--card-bg': '#252542', '--card-border': '#3b3b6a',
+						'--tab-active': '#ff6b9d', '--tab-inactive': '#7878a0',
+						'--button-bg': '#303056', '--button-hover': '#3b3b6a',
+						'--input-bg': '#252542', '--input-border': '#46467e',
+						'--tag-bg': '#3b3b6a', '--tag-text': '#ffffff',
+						'--star-active': '#f7dc6f', '--star-inactive': '#7878a0'
+					}
+				},
+				'ableton-mint': {
+					mode: 'dark',
+					vars: {
+						'--bg-primary': '#1a2e2a', '--bg-secondary': '#254240', '--bg-tertiary': '#305650', '--bg-elevated': '#3b6a60',
+						'--text-primary': '#ffffff', '--text-secondary': '#b8d0c8', '--text-muted': '#78a098',
+						'--border-default': '#467e70', '--border-subtle': '#3b6a60',
+						'--surface-hover': '#305650', '--surface-active': '#3b6a60',
+						'--accent-primary': '#6bffc8', '--accent-secondary': '#64b8ff',
+						'--card-bg': '#254240', '--card-border': '#3b6a60',
+						'--tab-active': '#6bffc8', '--tab-inactive': '#78a098',
+						'--button-bg': '#305650', '--button-hover': '#3b6a60',
+						'--input-bg': '#254240', '--input-border': '#467e70',
+						'--tag-bg': '#3b6a60', '--tag-text': '#ffffff',
+						'--star-active': '#ffd76b', '--star-inactive': '#78a098'
+					}
+				}
+			};
+
 			try {
-				var saved = localStorage.getItem('producer_hub_theme'); // 'light' | 'dark' | 'system' | null
-				var prefersDark =
-						window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-				var theme = saved && saved !== 'system' ? saved : prefersDark ? 'dark' : 'light';
-				document.documentElement.dataset.theme = theme;
-			} catch (e) {}
+				var newPrefs = localStorage.getItem('producer_hub_theme_prefs_v1');
+				var themeId = 'system';
+				var themeMode = 'dark';
+
+				if (newPrefs) {
+					var prefs = JSON.parse(newPrefs);
+					themeId = prefs.themeId || 'system';
+				} else {
+					// Fallback to old theme system
+					var saved = localStorage.getItem('producer_hub_theme');
+					if (saved && saved !== 'system') {
+						themeId = saved === 'light' ? 'ableton-live-light' : 'ableton-live-dark';
+					}
+				}
+
+				// Resolve system theme
+				if (themeId === 'system') {
+					var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+					themeId = prefersDark ? 'ableton-live-dark' : 'ableton-live-light';
+				}
+
+				var theme = themes[themeId] || themes['ableton-live-dark'];
+				themeMode = theme.mode;
+
+				// Apply theme mode
+				document.documentElement.dataset.theme = themeMode;
+				document.documentElement.dataset.themeId = themeId;
+
+				// Apply CSS variables
+				var root = document.documentElement;
+				for (var key in theme.vars) {
+					root.style.setProperty(key, theme.vars[key]);
+				}
+			} catch (e) {
+				document.documentElement.dataset.theme = 'dark';
+			}
 		})();
 	</script>
 

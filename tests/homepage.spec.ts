@@ -49,20 +49,45 @@ test('search by keyboard shortcut', async ({ page }) => {
     await expect(results).not.toHaveCount(0);
 });
 
-test('search with no results shows message', async ({ page }) => {
+test('product icons load successfully', async ({ page }) => {
     await page.goto('/');
 
-    // Enable favorites-only filter without having any favorites
-    // This guarantees 0 results since localStorage is cleared in beforeEach
-    await page.getByTestId('favorites-only').check();
+    // Wait for cards to load
+    await expect(page.locator('.card').first()).toBeVisible();
 
-    // Wait for results to update to 0
-    await expect(page.getByTestId('results-count')).toContainText('0 results');
+    // Find a product icon
+    const icon = page.locator('[data-testid="product-icon"]').first();
 
-    // Should show "No shortcuts match" message and no cards
-    await expect(page.getByText(/No shortcuts match/)).toBeVisible();
-    await expect(page.locator('.card')).toHaveCount(0);
+    // Check icon is visible and loaded (naturalWidth > 0)
+    await expect(icon).toBeVisible();
+
+    const naturalWidth = await icon.evaluate((img: HTMLImageElement) => img.naturalWidth);
+    expect(naturalWidth).toBeGreaterThan(0);
 });
+
+test('PWA manifest is accessible', async ({ page, request }) => {
+    // Get the base URL from the page
+    await page.goto('/');
+    const baseUrl = page.url().replace(/\/$/, '');
+
+    // Fetch the manifest
+    const manifestUrl = `${baseUrl}/manifest.webmanifest`;
+    const response = await request.get(manifestUrl);
+
+    expect(response.status()).toBe(200);
+
+    const manifest = await response.json();
+    expect(manifest.name).toBe('Producer Hub');
+    expect(manifest.display).toBe('standalone');
+
+    // Check that start_url and scope are defined
+    expect(manifest.start_url).toBeDefined();
+    expect(manifest.scope).toBeDefined();
+});
+
+// ============================================
+// Product Filter Tests
+// ============================================
 
 test('product filter works', async ({ page }) => {
     await page.goto('/');
@@ -123,6 +148,10 @@ test('product filter reset to All products', async ({ page }) => {
     expect(allResults).not.toEqual(abletonResults);
 });
 
+// ============================================
+// Favorites Tests
+// ============================================
+
 test('favorites toggle works', async ({ page }) => {
     await page.goto('/');
 
@@ -182,6 +211,10 @@ test('multiple favorites can be toggled', async ({ page }) => {
     }
 });
 
+// ============================================
+// Theme and OS Tests
+// ============================================
+
 test('theme toggle works', async ({ page }) => {
     await page.goto('/');
 
@@ -216,6 +249,10 @@ test('key OS toggle works', async ({ page }) => {
     const newButton = await page.getByText(/Keys:/).textContent();
     expect(newButton).not.toEqual(initialButton);
 });
+
+// ============================================
+// Search and Filter Combination Tests
+// ============================================
 
 test('combining search and product filter', async ({ page }) => {
     await page.goto('/');

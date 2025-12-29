@@ -147,7 +147,7 @@ describe('groupShortcutsByGroup', () => {
         createShortcut({ id: 'b:2', group: 'Transport' }),
     ];
 
-    it('groups shortcuts by their group field', () => {
+    it('groups shortcuts by group field', () => {
         const result = groupShortcutsByGroup(shortcuts);
         expect(result.size).toBe(3);
         expect(result.get('Editing')).toHaveLength(2);
@@ -166,3 +166,61 @@ describe('groupShortcutsByGroup', () => {
     });
 });
 
+describe('filterShortcutsByProducts', () => {
+    // Import the new function
+    const { filterShortcutsByProducts } = await import('$lib/filter');
+
+    const shortcuts: ShortcutWithProduct[] = [
+        createShortcut({ id: 'a:1', productId: 'ableton' }),
+        createShortcut({ id: 'a:2', productId: 'ableton' }),
+        createShortcut({ id: 'b:1', productId: 'serum' }),
+        createShortcut({ id: 'c:1', productId: 'flstudio' }),
+    ];
+
+    it('filters shortcuts by selected product IDs', () => {
+        const result = filterShortcutsByProducts(shortcuts, ['ableton', 'serum']);
+        expect(result).toHaveLength(3);
+        expect(result.every(s => ['ableton', 'serum'].includes(s.productId))).toBe(true);
+    });
+
+    it('returns all shortcuts when selectedProductIds is empty', () => {
+        const result = filterShortcutsByProducts(shortcuts, []);
+        expect(result).toHaveLength(4);
+    });
+
+    it('returns empty array when no products match', () => {
+        const result = filterShortcutsByProducts(shortcuts, ['nonexistent']);
+        expect(result).toHaveLength(0);
+    });
+
+    it('is deterministic', () => {
+        const result1 = filterShortcutsByProducts(shortcuts, ['ableton']);
+        const result2 = filterShortcutsByProducts(shortcuts, ['ableton']);
+        expect(result1).toEqual(result2);
+    });
+});
+
+describe('filterProducts', () => {
+    const { filterProducts } = await import('$lib/filter');
+
+    const products = [
+        { productId: 'ableton', name: 'Ableton' },
+        { productId: 'serum', name: 'Serum' },
+        { productId: 'flstudio', name: 'FL Studio' },
+    ];
+
+    it('filters products by selected IDs', () => {
+        const result = filterProducts(products, ['ableton', 'serum']);
+        expect(result).toHaveLength(2);
+    });
+
+    it('returns all products when selectedProductIds is empty', () => {
+        const result = filterProducts(products, []);
+        expect(result).toHaveLength(3);
+    });
+
+    it('preserves product references', () => {
+        const result = filterProducts(products, ['ableton']);
+        expect(result[0]).toBe(products[0]);
+    });
+});

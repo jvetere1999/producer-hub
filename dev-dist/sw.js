@@ -67,7 +67,7 @@ if (!self.define) {
     });
   };
 }
-define(['./workbox-5a5d9309'], (function (workbox) { 'use strict';
+define(['./workbox-38bb0eb2'], (function (workbox) { 'use strict';
 
   self.skipWaiting();
   workbox.clientsClaim();
@@ -81,12 +81,15 @@ define(['./workbox-5a5d9309'], (function (workbox) { 'use strict';
     "url": "suppress-warnings.js",
     "revision": "d41d8cd98f00b204e9800998ecf8427e"
   }, {
-    "url": "200.html",
-    "revision": "0.scm4s616k38"
+    "url": "index.html",
+    "revision": "0.mnpr0ghru4g"
   }], {});
   workbox.cleanupOutdatedCaches();
-  workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("200.html"), {
-    allowlist: [/^\/$/]
+  workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("index.html"), {
+    allowlist: [/^\/$/],
+    denylist: [/^\/ads\.txt$/, /^\/robots\.txt$/, /^\/sitemap\.xml$/]
   }));
+  workbox.registerRoute(/^https:\/\/pagead2\.googlesyndication\.com\/.*/i, new workbox.NetworkOnly(), 'GET');
+  workbox.registerRoute(/^https:\/\/www\.googletagservices\.com\/.*/i, new workbox.NetworkOnly(), 'GET');
 
 }));
