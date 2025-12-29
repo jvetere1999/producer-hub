@@ -4,7 +4,7 @@
 	"version": "0.0.1",
 	"type": "module",
 	"engines": {
-		"node": ">=20.19.0 || >=22.12.0"
+		"node": ">=22.12.0"
 	},
 	"scripts": {
 		"dev": "vite dev",
@@ -20,7 +20,9 @@
 		"test:e2e:debug": "playwright test --debug",
 		"test:e2e:report": "playwright show-report",
 		"test": "npm run check && npm run test:unit && npm run build && npm run test:e2e",
-		"ci": "npm run test"
+		"ci": "npm run test",
+		"deploy:pages": "./scripts/deploy-github-pages.sh",
+		"build:pages": "BASE_PATH=/daw-shortcuts npm run build"
 	},
 	"devDependencies": {
 		"@playwright/test": "^1.57.0",

@@ -395,7 +395,13 @@
 				{:else}
 					<div class="items-grid">
 						{#each selectedCollection.items as item, index (item.id)}
-							<div class="item-card" onclick={() => handleItemClick(item)}>
+							<div
+								class="item-card"
+								role="button"
+								tabindex="0"
+								onclick={() => handleItemClick(item)}
+								onkeydown={(e) => e.key === 'Enter' || e.key === ' ' ? handleItemClick(item) : null}
+							>
 								<div class="item-icon">{getItemIcon(item.refType)}</div>
 								<div class="item-info">
 									<span class="item-type">{item.refType}</span>
@@ -711,6 +717,18 @@
 		background: var(--card);
 		border: 1px solid var(--border);
 		border-radius: 8px;
+		cursor: pointer;
+		transition: all 0.2s ease;
+	}
+
+	.item-card:hover {
+		background: var(--accent);
+		border-color: var(--primary);
+	}
+
+	.item-card:focus {
+		outline: 2px solid var(--primary);
+		outline-offset: 2px;
 	}
 
 	.item-icon {

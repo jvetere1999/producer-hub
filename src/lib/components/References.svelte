@@ -577,10 +577,12 @@
 								// Update track with new analysis
 								if (selectedLibraryId && selectedTrack) {
 									const updatedTracks = selectedLibrary!.tracks.map(t =>
-										t.id === selectedTrack.id
+										t.id === selectedTrack!.id
 											? {
 													...t,
 													analysis: {
+														version: 1 as const,
+														source: (t.analysis?.source ?? 'webaudio') as 'heuristic' | 'webaudio',
 														...t.analysis,
 														spectrum: analysis
 													}

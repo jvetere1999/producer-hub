@@ -95,23 +95,23 @@
 	}
 
 	function navigateToResult(result: HubSearchResult) {
-		const { kind, id } = parseHubResultId(result.id);
+		const { kind, realId } = parseHubResultId(result.id);
 
 		switch (kind) {
 			case 'project':
-				dispatch('navigate', { tab: 'projects', id });
+				dispatch('navigate', { tab: 'projects', id: realId });
 				break;
 			case 'inbox':
-				dispatch('navigate', { tab: 'inbox', id });
+				dispatch('navigate', { tab: 'inbox', id: realId });
 				break;
 			case 'reference':
-				dispatch('navigate', { tab: 'references', id });
+				dispatch('navigate', { tab: 'references', id: realId });
 				break;
 			case 'collection':
-				dispatch('navigate', { tab: 'collections', id });
+				dispatch('navigate', { tab: 'collections', id: realId });
 				break;
 			case 'infobaseNote':
-				dispatch('navigate', { tab: 'infobase', id });
+				dispatch('navigate', { tab: 'infobase', id: realId });
 				break;
 		}
 	}
