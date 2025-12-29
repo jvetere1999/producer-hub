@@ -1,5 +1,5 @@
 /**
- * Key parsing module for DAW Shortcuts.
+ * Key parsing module for Producer Hub.
  *
  * Parses keyboard shortcut strings into structured tokens for rendering
  * as individual keycaps in the UI.

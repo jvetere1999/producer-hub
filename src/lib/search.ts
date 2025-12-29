@@ -1,5 +1,5 @@
 /**
- * Search module for DAW Shortcuts.
+ * Search module for Producer Hub.
  *
  * Uses FlexSearch for fast, fuzzy full-text search across all entry fields.
  * The index is lazily built and cached for performance.

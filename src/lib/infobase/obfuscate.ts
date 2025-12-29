@@ -10,7 +10,7 @@
 import type { InfoBaseState, KnowledgeNote } from './types';
 
 const KEY_STORAGE = 'daw_infobase_key_v1';
-const HEADER_PREFIX = 'DAW-INFOBASE-OBFUSCATED v1';
+const HEADER_PREFIX = 'PRODUCER-HUB-INFOBASE-OBFUSCATED v1';
 
 /**
  * Gets or creates the per-install obfuscation key.
@@ -117,7 +117,7 @@ function entryToMarkdown(entry: KnowledgeNote): string {
 export function stateToMarkdown(state: InfoBaseState): string {
     const lines: string[] = [];
 
-    lines.push('# DAW Shortcuts Info Base Export');
+    lines.push('# Producer Hub Info Base Export');
     lines.push('');
     lines.push(`Exported: ${new Date().toISOString()}`);
     lines.push(`Entry count: ${Object.keys(state.entries).length}`);
@@ -161,7 +161,7 @@ export function deobfuscate(content: string): string {
     const lines = content.split('\n');
 
     // Validate header
-    if (!lines[0]?.startsWith('DAW-INFOBASE-OBFUSCATED')) {
+    if (!lines[0]?.startsWith('PRODUCER-HUB-INFOBASE-OBFUSCATED')) {
         throw new Error('Invalid file format: missing header');
     }
 
@@ -194,7 +194,7 @@ export function parseMarkdown(markdown: string): KnowledgeNote[] {
 
     for (const section of sections) {
         // Skip header section
-        if (section.includes('# DAW Shortcuts Info Base Export')) {
+        if (section.includes('# Producer Hub Info Base Export')) {
             continue;
         }
 

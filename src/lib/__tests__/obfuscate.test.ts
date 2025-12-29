@@ -58,7 +58,7 @@ describe('Info Base Obfuscation', () => {
 
             const md = stateToMarkdown(state);
 
-            expect(md).toContain('# DAW Shortcuts Info Base Export');
+            expect(md).toContain('# Producer Hub Info Base Export');
             expect(md).toContain('Entry count: 1');
             expect(md).toContain('## Test Note');
             expect(md).toContain('id: note-1');
@@ -107,7 +107,7 @@ Special: éàü → ←`;
             const original = 'Test content';
             const obfuscated = obfuscate(original);
 
-            expect(obfuscated).toContain('DAW-INFOBASE-OBFUSCATED v1');
+            expect(obfuscated).toContain('PRODUCER-HUB-INFOBASE-OBFUSCATED v1');
             expect(obfuscated).toContain('timestamp:');
             expect(obfuscated).toContain('length:');
         });
@@ -129,14 +129,14 @@ Special: éàü → ←`;
         });
 
         it('throws on empty content', () => {
-            const invalid = 'DAW-INFOBASE-OBFUSCATED v1\ntimestamp: 2024\nlength: 10\n';
+            const invalid = 'PRODUCER-HUB-INFOBASE-OBFUSCATED v1\ntimestamp: 2024\nlength: 10\n';
             expect(() => deobfuscate(invalid)).toThrow();
         });
     });
 
     describe('parseMarkdown', () => {
         it('parses markdown back to entries', () => {
-            const md = `# DAW Shortcuts Info Base Export
+            const md = `# Producer Hub Info Base Export
 
 Exported: 2024-01-01T00:00:00Z
 Entry count: 1

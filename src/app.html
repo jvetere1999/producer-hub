@@ -3,13 +3,22 @@
 <head>
 	<meta charset="utf-8" />
 	<link rel="icon" href="%sveltekit.assets%/favicon.svg" />
+	<link rel="manifest" href="%sveltekit.assets%/manifest.webmanifest" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+	<!-- Producer Hub Meta -->
+	<meta name="application-name" content="Producer Hub" />
+	<meta name="apple-mobile-web-app-title" content="Producer Hub" />
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+	<meta name="mobile-web-app-capable" content="yes" />
+	<meta name="theme-color" content="#3b82f6" />
 
 	<!-- No-flash theme initialization -->
 	<script>
 		(function () {
 			try {
-				var saved = localStorage.getItem('daw_theme'); // 'light' | 'dark' | 'system' | null
+				var saved = localStorage.getItem('producer_hub_theme'); // 'light' | 'dark' | 'system' | null
 				var prefersDark =
 						window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
 				var theme = saved && saved !== 'system' ? saved : prefersDark ? 'dark' : 'light';

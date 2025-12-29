@@ -1,7 +1,7 @@
 <!--
   Main Page Component
 
-  This is the primary UI for DAW Shortcuts, providing:
+  This is the primary UI for Producer Hub, providing:
   - Full-text search across all entries (commands, keys, tags, notes, etc.)
   - Filtering by product, type, group, facets, and entry kind
   - Favorites management with localStorage persistence
@@ -222,7 +222,15 @@
 </script>
 
 <svelte:head>
-    <title>DAW Shortcuts</title>
+    <title>Producer Hub</title>
+    <meta name="description" content="Comprehensive music production workspace with DAW shortcuts, audio analysis, project management, and creative tools for producers, composers, and audio engineers.">
+    <meta name="keywords" content="music production, DAW shortcuts, audio analysis, producer tools, music workspace, ableton, reason, serum, audio software">
+    <meta property="og:title" content="Producer Hub">
+    <meta property="og:description" content="Your ultimate music production workspace">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Producer Hub">
+    <meta name="twitter:description" content="Comprehensive music production workspace">
 </svelte:head>
 
 <style>
@@ -586,8 +594,8 @@
 <div class="wrap">
     <header>
         <div class="title">
-            <h1>DAW Shortcuts</h1>
-            <p>Searchable shortcuts & personal knowledge base for music production.</p>
+            <h1>🎵 Producer Hub</h1>
+            <p>Your comprehensive music production workspace</p>
         </div>
 
         <div class="controls">

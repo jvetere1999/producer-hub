@@ -1,5 +1,5 @@
 {
-	"name": "daw-shortcuts",
+	"name": "producer-hub",
 	"private": true,
 	"version": "0.0.1",
 	"type": "module",
@@ -22,7 +22,7 @@
 		"test": "npm run check && npm run test:unit && npm run build && npm run test:e2e",
 		"ci": "npm run test",
 		"deploy:pages": "./scripts/deploy-github-pages.sh",
-		"build:pages": "BASE_PATH=/daw-shortcuts npm run build"
+		"build:pages": "BASE_PATH=/producer-hub npm run build"
 	},
 	"devDependencies": {
 		"@playwright/test": "^1.57.0",
