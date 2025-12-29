@@ -1338,5 +1338,66 @@
 		justify-content: space-between;
 		align-items: center;
 	}
+
+	/* Mobile responsive improvements for text fields */
+	@media (max-width: 768px) {
+		.sidebar {
+			width: 200px;
+			min-width: 200px;
+		}
+
+		.input,
+		.modal-input {
+			font-size: 16px; /* Prevents zoom on iOS */
+		}
+
+		.library-header {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 12px;
+		}
+
+		.library-title {
+			width: 100%;
+		}
+
+		.library-actions {
+			width: 100%;
+			justify-content: flex-start;
+		}
+	}
+
+	@media (max-width: 480px) {
+		.references {
+			flex-direction: column;
+		}
+
+		.sidebar {
+			width: 100%;
+			min-width: 100%;
+			max-height: 200px;
+		}
+
+		.main {
+			flex: 1;
+			min-height: 300px;
+		}
+
+		.track-item {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 8px;
+		}
+
+		.track-actions {
+			align-self: flex-end;
+		}
+
+		.player-status {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 8px;
+		}
+	}
 </style>
 

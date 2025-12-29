@@ -1008,5 +1008,62 @@
 		font-size: 13px;
 		line-height: 1.5;
 	}
+
+	/* Mobile responsive improvements for text fields */
+	@media (max-width: 768px) {
+		.sidebar {
+			width: 200px;
+			min-width: 200px;
+		}
+
+		.title-input {
+			font-size: 18px;
+		}
+
+		.input,
+		.textarea {
+			font-size: 16px; /* Prevents zoom on iOS */
+		}
+
+		.items-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.item-card {
+			flex-wrap: wrap;
+		}
+
+		.item-actions {
+			flex-direction: row;
+			margin-top: 8px;
+		}
+	}
+
+	@media (max-width: 480px) {
+		.collections {
+			flex-direction: column;
+		}
+
+		.sidebar {
+			width: 100%;
+			min-width: 100%;
+			max-height: 200px;
+		}
+
+		.main {
+			flex: 1;
+			min-height: 300px;
+		}
+
+		.collection-header {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 12px;
+		}
+
+		.title-input {
+			width: 100%;
+		}
+	}
 </style>
 

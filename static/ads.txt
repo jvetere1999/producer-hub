@@ -1,0 +1,4 @@
+# Google AdSense ads.txt for Producer Hub
+# Publisher ID: pub-8374343652873511
+google.com, pub-8374343652873511, DIRECT, f08c47fec0942fa0
+

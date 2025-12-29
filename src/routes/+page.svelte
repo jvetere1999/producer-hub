@@ -37,6 +37,9 @@
     import References from '$lib/components/References.svelte';
     import Collections from '$lib/components/Collections.svelte';
     import GlobalSearch from '$lib/components/GlobalSearch.svelte';
+    import SEOHead from '$lib/components/SEOHead.svelte';
+    import { pageMeta, getWebSiteSchema, getSoftwareAppSchema } from '$lib/seo';
+    import { base } from '$app/paths';
     import {
         initGlobalKeyboard,
         registerDefaultCommands,
@@ -221,17 +224,15 @@
     }
 </script>
 
-<svelte:head>
-    <title>Producer Hub</title>
-    <meta name="description" content="Comprehensive music production workspace with DAW shortcuts, audio analysis, project management, and creative tools for producers, composers, and audio engineers.">
-    <meta name="keywords" content="music production, DAW shortcuts, audio analysis, producer tools, music workspace, ableton, reason, serum, audio software">
-    <meta property="og:title" content="Producer Hub">
-    <meta property="og:description" content="Your ultimate music production workspace">
-    <meta property="og:type" content="website">
-    <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Producer Hub">
-    <meta name="twitter:description" content="Comprehensive music production workspace">
-</svelte:head>
+<SEOHead
+    title={pageMeta.home.title}
+    description={pageMeta.home.description}
+    path="/"
+    keywords={pageMeta.home.keywords || []}
+    ogType="website"
+    includeWebsiteSchema={true}
+    structuredData={[getSoftwareAppSchema()]}
+/>
 
 <style>
     :global(html) {
