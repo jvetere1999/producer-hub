@@ -7,7 +7,7 @@ export const products: Product[] = [
         vendor: 'Xfer Records',
         category: 'Plugin',
         website: 'https://xferrecords.com/products/serum',
-        icon: '/icons/products/serum2.svg'
+        icon: 'icons/products/serum2.svg'
     },
     {
         productId: 'ableton12suite',
@@ -15,7 +15,7 @@ export const products: Product[] = [
         vendor: 'Ableton',
         category: 'DAW',
         website: 'https://www.ableton.com/en/live/',
-        icon: '/icons/products/ableton.svg'
+        icon: 'icons/products/ableton.svg'
     },
     {
         productId: 'reasonrack',
@@ -23,7 +23,7 @@ export const products: Product[] = [
         vendor: 'Reason Studios',
         category: 'DAW',
         website: 'https://www.reasonstudios.com/',
-        icon: '/icons/products/reason.svg'
+        icon: 'icons/products/reason.svg'
     },
     {
         productId: 'flstudio',
@@ -31,7 +31,15 @@ export const products: Product[] = [
         vendor: 'Image-Line',
         category: 'DAW',
         website: 'https://www.image-line.com/fl-studio/',
-        icon: '/icons/products/flstudio.svg'
+        icon: 'icons/products/flstudio.svg'
+    },
+    {
+        productId: 'logicpro',
+        name: 'Logic Pro',
+        vendor: 'Apple',
+        category: 'DAW',
+        website: 'https://www.apple.com/logic-pro/',
+        icon: 'icons/products/logicpro.svg'
     }
 ];
 

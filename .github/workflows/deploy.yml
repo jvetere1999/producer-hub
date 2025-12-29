@@ -70,6 +70,11 @@ jobs:
           echo "Checking for required files:"
           test -f build/index.html && echo "✓ index.html found" || echo "✗ index.html missing"
           test -d build/_app && echo "✓ _app directory found" || echo "✗ _app directory missing"
+          test -f build/manifest.webmanifest && echo "✓ manifest.webmanifest found" || echo "✗ manifest.webmanifest missing"
+          echo "Checking icons directory:"
+          ls -la build/icons/products/ 2>/dev/null || echo "✗ icons/products directory not found"
+          echo "Manifest contents:"
+          cat build/manifest.webmanifest 2>/dev/null || echo "✗ Could not read manifest"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
