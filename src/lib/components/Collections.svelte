@@ -534,9 +534,11 @@
 
 	.sidebar {
 		width: 240px;
+		min-width: 240px;
 		border-right: 1px solid var(--border);
 		display: flex;
 		flex-direction: column;
+		overflow: hidden;
 	}
 
 	.sidebar-header {
@@ -555,6 +557,8 @@
 	.create-form {
 		padding: 12px;
 		border-bottom: 1px solid var(--border);
+		overflow: hidden;
+		min-width: 0;
 	}
 
 	.create-actions {
@@ -622,6 +626,11 @@
 		color: var(--fg);
 		flex: 1;
 		padding: 0;
+		box-sizing: border-box;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		max-width: 100%;
 	}
 
 	.title-input:focus {
@@ -673,12 +682,17 @@
 	.input,
 	.textarea {
 		width: 100%;
+		max-width: 100%;
 		padding: 10px 12px;
 		background: var(--bg);
 		border: 1px solid var(--border);
 		border-radius: 6px;
 		color: var(--fg);
 		font-size: 14px;
+		box-sizing: border-box;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
 	.textarea {

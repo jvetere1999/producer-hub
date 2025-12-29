@@ -10,68 +10,16 @@
   @component
 -->
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import type { ReferenceTrack, FrequencySpectrum } from '$lib/hub';
-	import { analyzeFrequencySpectrum, type WaveformProgress } from '$lib/hub';
 
 	export let track: ReferenceTrack | null = null;
-	export let arrayBuffer: ArrayBuffer | null = null;
-	export let onAnalysisComplete: ((analysis: FrequencySpectrum) => void) | null = null;
+	// arrayBuffer and onAnalysisComplete no longer needed - analysis is automatic
 
-	let isAnalyzing = false;
-	let analysisProgress: WaveformProgress | null = null;
-	let spectrum: FrequencySpectrum | null = null;
-	let abortController: AbortController | null = null;
+	// Display existing spectrum from track analysis
+	$: spectrum = track?.analysis?.spectrum || null;
 
-	async function generateAnalysis() {
-		if (!arrayBuffer || !track) return;
-
-		isAnalyzing = true;
-		abortController = new AbortController();
-
-		try {
-			spectrum = await analyzeFrequencySpectrum(
-				arrayBuffer,
-				(progress) => {
-					analysisProgress = {
-						stage: progress === 1 ? 'done' : 'computing',
-						progress,
-						message: `Analyzing ${Math.round(progress * 100)}%`
-					};
-				},
-				abortController.signal
-			);
-
-			if (spectrum) {
-				onAnalysisComplete?.(spectrum);
-			}
-		} catch (e) {
-			console.error('Analysis failed:', e);
-			analysisProgress = {
-				stage: 'error',
-				progress: 0,
-				message: 'Analysis failed'
-			};
-		} finally {
-			isAnalyzing = false;
-			analysisProgress = null;
-		}
-	}
-
-	function cancelAnalysis() {
-		if (abortController) {
-			abortController.abort();
-			isAnalyzing = false;
-			analysisProgress = null;
-		}
-	}
-
-	onMount(() => {
-		return () => {
-			cancelAnalysis();
-		};
-	});
-
+	// Analysis is now performed automatically when tracks are selected
+	// This component only displays existing analysis results
 
 	function getEnergyBarWidth(energy: number): string {
 		return `${Math.min(100, energy * 100)}%`;
@@ -86,16 +34,9 @@
 		{/if}
 	</div>
 
-	{#if isAnalyzing}
-		<div class="progress-container">
-			<div class="progress-bar">
-				<div class="progress-fill" style="width: {(analysisProgress?.progress || 0) * 100}%"></div>
-			</div>
-			<p class="progress-text">{analysisProgress?.message}</p>
-			<button class="btn-cancel" onclick={cancelAnalysis}>Cancel</button>
-		</div>
-	{:else if spectrum}
+	{#if spectrum}
 		<div class="spectrum-container">
+			<!-- Frequency Bands -->>
 			<!-- Frequency Bands -->
 			<div class="bands-section">
 				<h4>Frequency Bands</h4>
@@ -173,10 +114,8 @@
 		</div>
 	{:else}
 		<div class="no-analysis">
-			<p>No frequency spectrum analysis yet</p>
-			<button class="btn-analyze" onclick={generateAnalysis} disabled={isAnalyzing}>
-				◈ Analyze Audio
-			</button>
+			<p>◉ Audio analysis happening automatically...</p>
+			<p class="analysis-note">Analysis results will appear here when complete</p>
 		</div>
 	{/if}
 </div>
@@ -398,7 +337,13 @@
 	.no-analysis {
 		text-align: center;
 		padding: 2rem 1rem;
-		color: var(--text-secondary);
+		color: var(--muted);
+	}
+
+	.analysis-note {
+		font-size: 0.85rem;
+		opacity: 0.7;
+		margin-top: 0.5rem;
 	}
 
 	.no-analysis p {
@@ -407,23 +352,15 @@
 	}
 
 	.btn-analyze {
-		padding: 0.75rem 1.5rem;
-		background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-		color: white;
-		border: none;
-		border-radius: 6px;
-		cursor: pointer;
-		font-weight: 600;
-		transition: opacity 0.2s;
+		display: none; /* Hidden since analysis is now automatic */
 	}
 
 	.btn-analyze:hover:not(:disabled) {
-		opacity: 0.9;
+		display: none;
 	}
 
 	.btn-analyze:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
+		display: none;
 	}
 
 	:global(:root) {
