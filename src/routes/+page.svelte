@@ -398,9 +398,9 @@
     }
 
     .list {
-        margin-top: 14px;
+        margin-top: 16px;
         display: grid;
-        gap: 10px;
+        gap: 14px;
     }
 
     .card {
@@ -526,7 +526,14 @@
     }
 
     .tagsRow {
-        margin-top: 4px;
+        margin-top: 8px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+
+    .tags {
         display: flex;
         gap: 6px;
         flex-wrap: wrap;
@@ -548,17 +555,21 @@
 
     .cmdRow {
         display: flex;
-        align-items: center;
-        gap: 8px;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 4px;
+        flex-wrap: wrap;
     }
 
     .kindBadge {
         font-size: 10px;
-        padding: 2px 6px;
+        padding: 3px 8px;
         border-radius: 4px;
         text-transform: uppercase;
         font-weight: 600;
         letter-spacing: 0.5px;
+        flex-shrink: 0;
+        margin-top: 1px; /* Align with text baseline */
     }
 
     .kindBadge.shortcut {
@@ -574,28 +585,86 @@
     }
 
     .note {
-        margin-top: 8px;
+        margin-top: 10px;
         font-size: 12px;
         color: var(--muted);
         line-height: 1.5;
-        padding: 8px;
+        padding: 10px;
         background: var(--accent);
         border-radius: 8px;
         border: 1px solid var(--border);
+        word-break: break-word;
     }
 
     .defaultVal {
-        margin-top: 6px;
+        margin-top: 8px;
         font-size: 11px;
         color: var(--muted);
+        line-height: 1.4;
+        word-break: break-word;
+    }
+
+    /* Responsive improvements for better spacing and layout */
+    @media (max-width: 768px) {
+        .card {
+            padding: 12px;
+            gap: 12px;
+        }
+
+        .card-left {
+            gap: 10px;
+        }
+
+        .product-icon {
+            width: 28px;
+            height: 28px;
+        }
+
+        .cmd {
+            font-size: 13px;
+        }
+
+        .meta {
+            gap: 6px;
+            font-size: 11px;
+        }
+
+        .cmdRow {
+            gap: 8px;
+        }
+
+        .kindBadge {
+            padding: 2px 6px;
+            font-size: 9px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .card {
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .card-left {
+            gap: 8px;
+        }
+
+        .product-icon {
+            width: 24px;
+            height: 24px;
+        }
+
+        .list {
+            gap: 12px;
+        }
     }
 </style>
 
 <div class="wrap">
     <header>
         <div class="title">
-            <h1>🎵 Producer Hub</h1>
-            <p>Your comprehensive music production workspace</p>
+            <h1>♪ Producer Hub</h1>
+            <p>Your comprehensive music production companion</p>
         </div>
 
         <div class="controls">
@@ -617,7 +686,7 @@
             on:click={() => activeTab = 'shortcuts'}
             data-testid="tab-shortcuts"
         >
-            ⌨️ Shortcuts
+            ⌨ Shortcuts
         </button>
         <button
             class="tab"
@@ -625,7 +694,7 @@
             on:click={() => activeTab = 'infobase'}
             data-testid="tab-infobase"
         >
-            📝 Info Base
+            ✎ Info Base
         </button>
         <button
             class="tab"
@@ -633,7 +702,7 @@
             on:click={() => activeTab = 'projects'}
             data-testid="tab-projects"
         >
-            📁 Projects
+            ◈ Projects
         </button>
         <button
             class="tab"
@@ -641,7 +710,7 @@
             on:click={() => activeTab = 'inbox'}
             data-testid="tab-inbox"
         >
-            📥 Inbox
+            ◉ Inbox
         </button>
         <button
             class="tab"
@@ -649,7 +718,7 @@
             on:click={() => activeTab = 'references'}
             data-testid="tab-references"
         >
-            🎵 References
+            ♫ References
         </button>
         <button
             class="tab"
@@ -657,7 +726,7 @@
             on:click={() => activeTab = 'collections'}
             data-testid="tab-collections"
         >
-            🎨 Collections
+            ◆ Collections
         </button>
         <button
             class="tab"
@@ -665,7 +734,7 @@
             on:click={() => activeTab = 'search'}
             data-testid="tab-search"
         >
-            🔍 Search
+            ⚲ Search
         </button>
     </nav>
 

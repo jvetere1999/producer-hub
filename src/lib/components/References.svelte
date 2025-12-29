@@ -60,6 +60,7 @@
 	let waveformProgress: WaveformProgress | null = null;
 	let isAnalyzing = false;
 	let showPlayerModal = false;
+	let processingCount = 0;
 
 	// Marker creation
 	let newMarkerLabel = '';
@@ -142,6 +143,11 @@
 			// Load as ArrayBuffer for analysis
 			try {
 				selectedTrackArrayBuffer = await blob.arrayBuffer();
+
+				// If track doesn't have analysis, perform it automatically
+				if (!track.analysis && selectedTrackArrayBuffer) {
+					performAutoAnalysis(track.id, selectedTrackArrayBuffer);
+				}
 			} catch (e) {
 				console.error('Failed to load array buffer:', e);
 			}
@@ -231,15 +237,21 @@
 				newTracks.push(track);
 			}
 
-			// Update library
+			// Update library with imported tracks
 			state = updateReferenceLibrary(state, selectedLibraryId, {
 				tracks: [...selectedLibrary.tracks, ...newTracks]
 			});
 			saveReferences(state);
 
-			// Generate waveforms in background
+			// Show import completion message
+			if (audioFiles.length > 1) {
+				console.log(`Imported ${audioFiles.length} tracks - waveforms and analysis will generate automatically`);
+			}
+
+			// Generate waveforms and analysis automatically for all imported tracks
+			processingCount = newTracks.length;
 			for (const track of newTracks) {
-				generateWaveformForTrack(track.id);
+				generateWaveformAndAnalysis(track.id);
 			}
 
 		} catch (e) {
@@ -279,6 +291,91 @@
 		});
 	}
 
+	async function generateWaveformAndAnalysis(trackId: string) {
+		if (!selectedLibraryId || !selectedLibrary) return;
+
+		const track = selectedLibrary.tracks.find(t => t.id === trackId);
+		if (!track) return;
+
+		waveformProgress = { stage: 'decoding', progress: 0 };
+
+		try {
+			const result = await getBlob(track.blobId);
+			if (!result) return;
+
+			const arrayBuffer = result.blob instanceof Blob
+				? await result.blob.arrayBuffer()
+				: result.blob;
+
+			// Generate waveform
+			const waveform = await generateWaveform(
+				arrayBuffer,
+				(progress: WaveformProgress) => {
+					waveformProgress = {
+						stage: progress.stage === 'done' ? 'computing' : progress.stage,
+						progress: progress.stage === 'done' ? 0.5 : progress.progress * 0.5,
+						message: progress.stage === 'decoding' ? 'Decoding audio...' : 'Generating waveform...'
+					};
+				}
+			);
+
+			// Get basic metadata
+			let durationSec = waveform?.durationSec;
+			let sampleRate: number | undefined;
+			let channels: number | undefined;
+
+			try {
+				const audioContext = new AudioContext();
+				const buffer = await audioContext.decodeAudioData(arrayBuffer.slice(0));
+				durationSec = buffer.duration;
+				sampleRate = buffer.sampleRate;
+				channels = buffer.numberOfChannels;
+				await audioContext.close();
+			} catch {
+				// Ignore decode errors for metadata
+			}
+
+			// Update progress for analysis phase
+			waveformProgress = { stage: 'computing', progress: 0.6 };
+
+			// Perform audio analysis
+			let analysis: any;
+			try {
+				analysis = await analyzeAudio(arrayBuffer.slice(0));
+				waveformProgress = { stage: 'computing', progress: 0.9 };
+			} catch (e) {
+				console.error('Audio analysis failed for track:', track.name, e);
+				// Continue without analysis if it fails
+			}
+
+			// Update track in library with both waveform and analysis
+			const updatedTracks = selectedLibrary.tracks.map(t =>
+				t.id === trackId ? {
+					...t,
+					waveform,
+					durationSec,
+					sampleRate,
+					channels,
+					...(analysis && { analysis })
+				} : t
+			);
+
+			state = updateReferenceLibrary(state, selectedLibraryId, { tracks: updatedTracks });
+			saveReferences(state);
+
+		} catch (e) {
+			console.error('Waveform and analysis generation failed:', e);
+		} finally {
+			waveformProgress = { stage: 'done', progress: 1 };
+			setTimeout(() => { waveformProgress = null; }, 500);
+
+			// Decrement processing counter
+			if (processingCount > 0) {
+				processingCount--;
+			}
+		}
+	}
+
 	async function generateWaveformForTrack(trackId: string) {
 		if (!selectedLibraryId || !selectedLibrary) return;
 
@@ -297,7 +394,9 @@
 
 			const waveform = await generateWaveform(
 				arrayBuffer,
-				(progress) => { waveformProgress = progress; }
+				(progress: WaveformProgress) => {
+					waveformProgress = progress;
+				}
 			);
 
 			if (waveform) {
@@ -458,6 +557,37 @@
 		if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
 		return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 	}
+
+	async function performAutoAnalysis(trackId: string, arrayBuffer: ArrayBuffer) {
+		if (!selectedLibraryId || !selectedLibrary) return;
+
+		try {
+			// Show a subtle indication that analysis is happening
+			console.log('Performing automatic analysis for track:', trackId);
+
+			// Perform audio analysis
+			const analysis = await analyzeAudio(arrayBuffer);
+
+			if (analysis) {
+				// Update track in library
+				const updatedTracks = selectedLibrary.tracks.map(t =>
+					t.id === trackId ? { ...t, analysis } : t
+				);
+
+				state = updateReferenceLibrary(state, selectedLibraryId, { tracks: updatedTracks });
+				saveReferences(state);
+				refreshLibraries();
+
+				// Update selected track if it's still the same one
+				if (selectedTrackId === trackId && selectedLibrary) {
+					selectedTrack = selectedLibrary.tracks.find(t => t.id === trackId) || null;
+				}
+			}
+		} catch (e) {
+			console.error('Auto-analysis failed for track:', trackId, e);
+			// Silent failure - don't interrupt user experience
+		}
+	}
 </script>
 
 <div class="references">
@@ -506,10 +636,15 @@
 	<div class="main">
 		{#if selectedLibrary}
 			<div class="library-header">
-				<h2>{selectedLibrary.name}</h2>
+				<div class="library-title">
+					<h2>{selectedLibrary.name}</h2>
+					{#if processingCount > 0}
+						<span class="processing-badge">Processing {processingCount} track{processingCount === 1 ? '' : 's'}...</span>
+					{/if}
+				</div>
 				<div class="library-actions">
 					<button class="btn btn-small" onclick={handleImportFolder}>
-						📁 Import Folder
+						◉ Import & Analyze
 					</button>
 					<button class="btn btn-small btn-danger" onclick={handleDeleteLibrary}>Delete</button>
 				</div>
@@ -524,9 +659,16 @@
 						<div
 							class="track-item"
 							class:selected={track.id === selectedTrackId}
+							class:processing={!track.waveform}
 						>
 							<button class="track-content" onclick={() => selectTrack(track)}>
-								<span class="track-name">{track.name}</span>
+								<span class="track-name">
+									{#if !track.waveform}
+										◈ {track.name} (processing...)
+									{:else}
+										{track.name}
+									{/if}
+								</span>
 								<span class="track-meta">
 									{#if track.durationSec}
 										{formatTime(track.durationSec)}
@@ -543,15 +685,8 @@
 								{#if !track.waveform}
 									<button
 										class="btn-icon"
-										title="Generate waveform"
-										onclick={() => generateWaveformForTrack(track.id)}
-									>◉</button>
-								{/if}
-								{#if !track.analysis}
-									<button
-										class="btn-icon"
-										title="Analyze BPM"
-										onclick={() => analyzeTrack(track.id)}
+										title="Processing waveform & analysis..."
+										onclick={() => generateWaveformAndAnalysis(track.id)}
 									>◈</button>
 								{/if}
 								<button
@@ -567,7 +702,7 @@
 
 			{#if selectedTrack}
 				<div class="player-status">
-					<span>🎵 Now loaded: {selectedTrack.name}</span>
+					<span>♫ Now loaded: {selectedTrack.name}</span>
 					<button class="btn btn-small" onclick={() => showPlayerModal = true}>
 						Open Player
 					</button>
@@ -589,7 +724,7 @@
 				<!-- Modal Header -->
 				<div class="modal-header">
 					<div class="modal-title">
-						<h2>🎵 {selectedTrack.name}</h2>
+						<h2>♫ {selectedTrack.name}</h2>
 						{#if selectedTrack.analysis}
 							<span class="analysis-badge">
 								{#if selectedTrack.analysis.bpm}~{selectedTrack.analysis.bpm} BPM{/if}
@@ -604,33 +739,9 @@
 				<!-- Modal Content -->
 				<div class="modal-content">
 					<!-- Audio Analysis Panel -->
-					{#if showAnalysisPanel && selectedTrackArrayBuffer}
+					{#if showAnalysisPanel}
 						<AudioAnalysisPanel
 							track={selectedTrack}
-							arrayBuffer={selectedTrackArrayBuffer}
-							onAnalysisComplete={(analysis) => {
-								// Update track with new analysis
-								if (selectedLibraryId && selectedTrack) {
-									const updatedTracks = selectedLibrary!.tracks.map(t =>
-										t.id === selectedTrack!.id
-											? {
-													...t,
-													analysis: {
-														version: 1 as const,
-														source: (t.analysis?.source ?? 'webaudio') as 'heuristic' | 'webaudio',
-														...t.analysis,
-														spectrum: analysis
-													}
-											  }
-											: t
-									);
-									state = updateReferenceLibrary(state, selectedLibraryId, { tracks: updatedTracks });
-									saveReferences(state);
-									refreshLibraries();
-									selectedLibrary = getReferenceLibrary(state, selectedLibraryId) || null;
-									selectedTrack = selectedLibrary?.tracks.find(t => t.id === selectedTrack!.id) || null;
-								}
-							}}
 						/>
 					{/if}
 
@@ -661,7 +772,7 @@
 							</button>
 							<button class="btn-transport" onclick={stopPlayback}>⏹</button>
 							<button class="btn-transport" onclick={addMarkerAtPlayhead} title="Add marker (M)">
-								🏷
+								⚑
 							</button>
 
 							<div class="time-display">
@@ -669,7 +780,7 @@
 							</div>
 
 							<div class="volume-control">
-								<span>🔊</span>
+								<span>♪</span>
 								<input
 									type="range"
 									min="0"
@@ -739,9 +850,11 @@
 
 	.sidebar {
 		width: 240px;
+		min-width: 240px;
 		border-right: 1px solid var(--border);
 		display: flex;
 		flex-direction: column;
+		overflow: hidden;
 	}
 
 	.sidebar-header {
@@ -760,6 +873,8 @@
 	.create-form {
 		padding: 12px;
 		border-bottom: 1px solid var(--border);
+		overflow: hidden;
+		min-width: 0;
 	}
 
 	.create-actions {
@@ -821,9 +936,30 @@
 		border-bottom: 1px solid var(--border);
 	}
 
+	.library-title {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+	}
+
 	.library-header h2 {
 		margin: 0;
 		font-size: 18px;
+	}
+
+	.processing-badge {
+		background: #f59e0b;
+		color: white;
+		font-size: 11px;
+		padding: 4px 8px;
+		border-radius: 12px;
+		font-weight: 500;
+		animation: pulse 2s infinite;
+	}
+
+	@keyframes pulse {
+		0%, 100% { opacity: 1; }
+		50% { opacity: 0.7; }
 	}
 
 	.library-actions {
@@ -849,6 +985,16 @@
 
 	.track-item.selected {
 		border-color: #3b82f6;
+	}
+
+	.track-item.processing {
+		opacity: 0.7;
+		border-left: 3px solid #f59e0b;
+	}
+
+	.track-item.processing .track-name {
+		color: #f59e0b;
+		font-style: italic;
 	}
 
 	.track-content {
@@ -1027,12 +1173,17 @@
 
 	.input {
 		width: 100%;
+		max-width: 100%;
 		padding: 8px 12px;
 		background: var(--bg);
 		border: 1px solid var(--border);
 		border-radius: 6px;
 		color: var(--fg);
 		font-size: 13px;
+		box-sizing: border-box;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
 	.modal-backdrop {
@@ -1061,6 +1212,7 @@
 
 	.modal-input {
 		width: 100%;
+		max-width: 100%;
 		padding: 12px;
 		background: var(--bg);
 		border: 1px solid var(--border);
@@ -1068,6 +1220,10 @@
 		color: var(--fg);
 		font-size: 14px;
 		margin-bottom: 16px;
+		box-sizing: border-box;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
 	.modal-actions {
