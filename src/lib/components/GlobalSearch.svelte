@@ -202,7 +202,7 @@
 					<div class="results-list">
 						{#each shortcutResults as shortcut (shortcut.id)}
 							<button class="result-item" onclick={() => navigateToShortcut(shortcut)}>
-								<span class="result-icon">⌨️</span>
+								<span class="result-icon">⌨</span>
 								<div class="result-content">
 									<span class="result-title">{shortcut.command}</span>
 									<span class="result-meta">
