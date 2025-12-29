@@ -1,14 +1,15 @@
 
-# DAW Shortcuts (SvelteKit Static PWA)
+# Producer Hub (SvelteKit Static PWA)
 
-Installable, offline-capable PWA for searching and filtering keyboard shortcuts and power features across multiple audio products (initially: Serum 2, Ableton Live 12 Suite, Reason Rack). Includes a local **Info Base** for storing music production notes.
+Installable, offline-capable PWA for comprehensive music production workspace with DAW shortcuts, audio analysis, project management, and creative tools. Includes shortcuts for multiple audio products (Serum 2, Ableton Live 12 Suite, Reason Rack) plus a local **Info Base** for storing music production notes.
 
 ## ✨ Key Features
 
-- **Tabbed interface** - Shortcuts and Info Base in separate tabs
+- **Comprehensive Workspace** - Shortcuts, audio analysis, project management, and creative tools
 - **Full-text search** across commands, keys, tags, notes, and more
 - **Multi-product support** with product icons and filtering
-- **Power features** - mouse actions, workflow tips, hidden features
+- **Audio Analysis** - frequency spectrum analysis, waveform visualization, BPM detection
+- **Project Management** - organize your music projects and references
 - **Keycap rendering** - keys displayed as styled keyboard caps
 - **Info Base** - local knowledge base for music production notes
 - **Offline capable** - works without internet as a PWA
@@ -16,11 +17,15 @@ Installable, offline-capable PWA for searching and filtering keyboard shortcuts 
 
 ## 🖥️ Interface
 
-The app uses a clean tabbed layout:
+The app uses a comprehensive tabbed layout:
 
 | Tab | Description |
 |-----|-------------|
-| **📋 Shortcuts** | Browse, search, and filter all keyboard shortcuts and power features |
+| **🎹 Shortcuts** | Browse, search, and filter all keyboard shortcuts and power features |
+| **📁 Projects** | Manage your music projects and creative work |
+| **📥 Inbox** | Quick capture and organize ideas |
+| **🎵 References** | Audio file management with analysis and annotation |
+| **📚 Collections** | Curated sets of shortcuts, samples, or references |
 | **📝 Info Base** | Personal knowledge base for music production notes |
 
 ### Shortcuts Tab

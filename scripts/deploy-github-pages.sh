@@ -3,8 +3,8 @@
 
 echo "🚀 Building for GitHub Pages..."
 
-# Set base path for GitHub Pages (replace 'daw-shortcuts' with your repo name)
-REPO_NAME="daw-shortcuts"
+# Set base path for GitHub Pages (replace 'producer-hub' with your repo name)
+REPO_NAME="producer-hub"
 export BASE_PATH="/$REPO_NAME"
 
 # Build the project

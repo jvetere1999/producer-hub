@@ -1,5 +1,5 @@
 export type ThemeChoice = 'system' | 'light' | 'dark';
-const THEME_STORAGE = 'daw_theme';
+const THEME_STORAGE = 'producer_hub_theme';
 
 export function getThemeChoice(): ThemeChoice {
     if (typeof localStorage === 'undefined') return 'system';

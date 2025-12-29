@@ -1,5 +1,5 @@
 /**
- * Entry types for the DAW Shortcuts app.
+ * Entry types for the Producer Hub app.
  *
  * Supports two kinds of entries:
  * - ShortcutEntry: Traditional keyboard shortcuts
