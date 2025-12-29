@@ -48,13 +48,14 @@ BASE_PATH=/your-repo-name npm run build
 
 ### Using Base Path in Code
 
-**In Svelte components:**
+**In Svelte components (for relative asset paths):**
 ```svelte
 <script>
     import { base } from '$app/paths';
 </script>
 
 <a href="{base}/">Home</a>
+<!-- For assets stored with relative paths (no leading slash): -->
 <img src="{base}/icons/products/ableton.svg" alt="Ableton" />
 ```
 
@@ -64,12 +65,27 @@ import { base } from '$app/paths';
 const iconUrl = `${base}/icons/products/ableton.svg`;
 ```
 
+**Important:** Product icons in `products.ts` use **relative paths** (no leading `/`):
+```typescript
+// CORRECT - relative path
+icon: 'icons/products/ableton.svg'
+
+// WRONG - absolute path breaks during prerendering
+icon: '/icons/products/ableton.svg'
+```
+
+Then in templates, combine with base:
+```svelte
+<img src="{base}/{product.icon}" alt={product.name} />
+```
+
 ### Common Mistakes
 
 | Wrong | Correct |
 |-------|---------|
 | `href="/"` | `href="{base}/"` |
 | `src="/icons/..."` | `src="{base}/icons/..."` |
+| `icon: '/icons/...'` in data | `icon: 'icons/...'` (relative) |
 | Hardcoded absolute paths | Use `$app/paths` base |
 
 ---
@@ -102,17 +118,20 @@ static/
 
 ### Product Registry Icon Paths
 
-In `src/lib/products.ts`, icons are defined with absolute paths:
+In `src/lib/products.ts`, icons are defined with **relative paths** (no leading slash):
 
 ```typescript
 {
     productId: 'flstudio',
     name: 'FL Studio',
-    icon: '/icons/products/flstudio.svg'  // Needs base prefix at runtime
+    icon: 'icons/products/flstudio.svg'  // Relative path - combined with base at runtime
 }
 ```
 
-The `productById` function should prepend `base` when returning icons to components.
+In templates, combine with `base`:
+```svelte
+<img src="{base}/{product.icon}" alt={product.name} />
+```
 
 ### Verifying Icons in DevTools
 
@@ -137,6 +156,20 @@ The manifest must be served from the correct path:
 | Local | `/manifest.webmanifest` |
 | GitHub Pages | `/repo-name/manifest.webmanifest` |
 
+### Manifest Path Fix (Automated)
+
+The `postbuild` script automatically updates the manifest for GitHub Pages:
+
+```bash
+# Runs automatically after build
+node scripts/fix-manifest-paths.mjs
+```
+
+This script:
+- Updates `start_url` to include the base path (e.g., `/producer-hub/`)
+- Updates `scope` to include the base path
+- Prefixes all icon `src` values with the base path
+
 ### Service Worker Scope
 
 **Key concepts:**
@@ -151,17 +184,21 @@ The manifest must be served from the correct path:
 | No install prompt | SW not controlling page | Reload after first visit |
 | "Site cannot be installed" | Invalid manifest paths | Check `start_url` and `scope` in manifest |
 | SW registration fails | Wrong SW path | Verify SW path includes base |
-| Icons 404 in manifest | Absolute paths without base | Update manifest icon paths |
+| Icons 404 in manifest | Absolute paths without base | Run `fix-manifest-paths.mjs` |
 
 ### Manifest Checklist
+
+After build with `BASE_PATH=/producer-hub`, the manifest should contain:
 
 ```json
 {
   "name": "Producer Hub",
-  "start_url": "/",        // Adjusted by build for base path
-  "scope": "/",            // Adjusted by build for base path
+  "start_url": "/producer-hub/",
+  "scope": "/producer-hub/",
   "display": "standalone",
-  "icons": [...]           // Must be valid URLs after deployment
+  "icons": [
+    { "src": "/producer-hub/favicon.svg", ... }
+  ]
 }
 ```
 

@@ -20,10 +20,21 @@ const config = {
 			fallback: null
 		}),
 		paths: {
-			base: dev ? '' : basePath
+			base: dev ? '' : basePath,
+			assets: dev ? '' : basePath
 		},
 		prerender: {
-			entries: ['*']
+			entries: ['*'],
+			handleHttpError: ({ path, referrer, message }) => {
+				// Ignore 404s for product icons during prerendering
+				// These are static assets that exist but the prerenderer can't resolve them
+				if (path.startsWith('/icons/products/') || path.includes('icons/products/')) {
+					console.warn(`[prerender] Ignoring expected 404 for static asset: ${path}`);
+					return;
+				}
+				// Throw on other errors
+				throw new Error(message);
+			}
 		}
 	}
 };

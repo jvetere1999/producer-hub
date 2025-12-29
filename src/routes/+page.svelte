@@ -39,7 +39,7 @@
     import GlobalSearch from '$lib/components/GlobalSearch.svelte';
     import SEOHead from '$lib/components/SEOHead.svelte';
     import { pageMeta, getWebSiteSchema, getSoftwareAppSchema } from '$lib/seo';
-    import { base } from '$app/paths';
+    import { base, assets } from '$app/paths';
     import {
         initGlobalKeyboard,
         registerDefaultCommands,
@@ -843,7 +843,7 @@
                         <div class="card">
                             <div class="card-left">
                                 {#if s.productIcon}
-                                    <img class="product-icon" src={base + s.productIcon} alt={s.productName} data-testid="product-icon" />
+                                    <img class="product-icon" src="{assets}/{s.productIcon}" alt={s.productName} data-testid="product-icon" />
                                 {/if}
                                 <div class="card-content">
                                     <div class="cmdRow">
