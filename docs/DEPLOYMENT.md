@@ -1,12 +1,14 @@
 # Deployment Guide
 
-This guide covers deploying Producer Hub to GitHub Pages, including common issues and their solutions.
+This guide covers deploying Producer Hub to GitHub Pages and Cloudflare Pages, including common issues and their solutions.
 
 ---
 
 ## Table of Contents
 
-- [GitHub Pages Subpath Primer](#github-pages-subpath-primer)
+- [Deployment Options](#deployment-options)
+- [GitHub Pages Deployment](#github-pages-deployment)
+- [Cloudflare Pages Deployment](#cloudflare-pages-deployment)
 - [Static Assets & Icons](#static-assets--icons)
 - [PWA Configuration](#pwa-configuration)
 - [CI/CD & Playwright](#cicd--playwright)
@@ -16,7 +18,77 @@ This guide covers deploying Producer Hub to GitHub Pages, including common issue
 
 ---
 
-## GitHub Pages Subpath Primer
+## Deployment Options
+
+| Platform | Base Path | Command | Best For |
+|----------|-----------|---------|----------|
+| GitHub Pages | `/<repo>/` | `npm run build:pages` | Free hosting, GitHub integration |
+| Cloudflare Pages | `/` (root) | `npm run build:cloudflare` | Better performance, edge caching |
+| Local/Custom | `/` (root) | `npm run build` | Self-hosting |
+
+---
+
+## Cloudflare Pages Deployment
+
+### Quick Start
+
+```bash
+# Build for Cloudflare
+npm run build:cloudflare
+
+# Deploy (requires wrangler CLI)
+npm run deploy:cloudflare
+```
+
+### Manual Setup
+
+1. **Install Wrangler CLI:**
+   ```bash
+   npm install -g wrangler
+   wrangler login
+   ```
+
+2. **Build the app:**
+   ```bash
+   DEPLOY_TARGET=cloudflare npm run build
+   ```
+
+3. **Deploy to Cloudflare Pages:**
+   ```bash
+   npx wrangler pages deploy build --project-name producer-hub
+   ```
+
+### Cloudflare Pages Dashboard Setup
+
+Alternatively, connect your GitHub repo directly:
+
+1. Go to [Cloudflare Pages](https://pages.cloudflare.com/)
+2. Click "Create a project" → "Connect to Git"
+3. Select your repository
+4. Configure build settings:
+   - **Build command:** `npm run build:cloudflare`
+   - **Build output directory:** `build`
+   - **Environment variables:** `DEPLOY_TARGET=cloudflare`
+
+### PWA on Cloudflare
+
+Cloudflare Pages works excellently with PWAs:
+- HTTPS is automatic
+- Service worker scope is at root (`/`)
+- No base path adjustments needed
+
+### AdSense on Cloudflare
+
+The `ads.txt` file is excluded from service worker caching to ensure Google can always fetch the latest version:
+
+```javascript
+// vite.config.ts - already configured
+globIgnores: ['**/ads.txt', '**/robots.txt', '**/sitemap.xml']
+```
+
+---
+
+## GitHub Pages Deployment
 
 ### The Problem
 

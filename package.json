@@ -24,6 +24,8 @@
 		"ci": "npm run test",
 		"deploy:pages": "./scripts/deploy-github-pages.sh",
 		"build:pages": "BASE_PATH=/producer-hub npm run build",
+		"build:cloudflare": "DEPLOY_TARGET=cloudflare npm run build",
+		"deploy:cloudflare": "npm run build:cloudflare && npx wrangler pages deploy build --project-name producer-hub",
 		"sitemap": "node scripts/generate-sitemap.mjs"
 	},
 	"devDependencies": {

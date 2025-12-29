@@ -138,6 +138,18 @@ export function setAddMarkerCallback(callback: () => void): void {
 }
 
 /**
+ * Tab navigation callback - set by the main page
+ */
+let tabNavigationCallback: ((tab: string) => void) | null = null;
+
+/**
+ * Sets the tab navigation callback.
+ */
+export function setTabNavigationCallback(callback: (tab: string) => void): void {
+	tabNavigationCallback = callback;
+}
+
+/**
  * Initializes global keyboard shortcuts.
  */
 export function initGlobalKeyboard(): () => void {
@@ -156,22 +168,62 @@ export function initGlobalKeyboard(): () => void {
 			return;
 		}
 
-		// Space: Play/pause (only when not in input)
-		if (e.key === ' ' && !isInput) {
+		// Cmd/Ctrl+/: Toggle command palette
+		if ((e.metaKey || e.ctrlKey) && e.key === '/') {
+			e.preventDefault();
+			openCommandPalette();
+			return;
+		}
+
+		// Skip shortcuts when in input fields
+		if (isInput) return;
+
+		// Number keys 1-7: Quick tab navigation
+		const tabMap: Record<string, string> = {
+			'1': 'shortcuts',
+			'2': 'infobase',
+			'3': 'projects',
+			'4': 'inbox',
+			'5': 'references',
+			'6': 'collections',
+			'7': 'search'
+		};
+
+		if (!e.metaKey && !e.ctrlKey && !e.altKey && tabMap[e.key]) {
+			e.preventDefault();
+			tabNavigationCallback?.(tabMap[e.key]);
+			return;
+		}
+
+		// Space: Play/pause
+		if (e.key === ' ') {
 			e.preventDefault();
 			playPauseCallback?.();
 			return;
 		}
 
-		// M: Add marker at current time (only when not in input)
-		if (e.key === 'm' && !isInput && !e.metaKey && !e.ctrlKey) {
+		// M: Add marker at current time
+		if (e.key === 'm' && !e.metaKey && !e.ctrlKey) {
 			e.preventDefault();
 			addMarkerCallback?.();
 			return;
 		}
 
-		// Quick navigation: g then p/i/s/r/c
-		// This is a simple implementation - could be enhanced with a chord system
+		// /: Focus search
+		if (e.key === '/') {
+			e.preventDefault();
+			const searchInput = document.querySelector('input[type="search"], input[placeholder*="earch"]') as HTMLInputElement;
+			searchInput?.focus();
+			return;
+		}
+
+		// Escape: Blur active element / close modals
+		if (e.key === 'Escape') {
+			if (document.activeElement instanceof HTMLElement) {
+				document.activeElement.blur();
+			}
+			return;
+		}
 	};
 
 	window.addEventListener('keydown', keyboardHandler);

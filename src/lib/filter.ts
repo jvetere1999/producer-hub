@@ -123,3 +123,42 @@ export function groupShortcutsByGroup(
     return groups;
 }
 
+/**
+ * Filter shortcuts by selected product IDs.
+ * Used by onboarding to filter dataset based on user's product selection.
+ *
+ * @param shortcuts - Array of shortcuts to filter
+ * @param selectedProductIds - Array of product IDs to include
+ * @returns Filtered array containing only shortcuts for selected products
+ */
+export function filterShortcutsByProducts(
+    shortcuts: ShortcutWithProduct[],
+    selectedProductIds: string[]
+): ShortcutWithProduct[] {
+    if (!selectedProductIds || selectedProductIds.length === 0) {
+        return shortcuts;
+    }
+
+    const productSet = new Set(selectedProductIds);
+    return shortcuts.filter((s) => productSet.has(s.productId));
+}
+
+/**
+ * Filter products by selected product IDs.
+ * Used by onboarding to get only selected products.
+ *
+ * @param products - Array of products to filter
+ * @param selectedProductIds - Array of product IDs to include
+ * @returns Filtered array containing only selected products
+ */
+export function filterProducts<T extends { productId: string }>(
+    products: T[],
+    selectedProductIds: string[]
+): T[] {
+    if (!selectedProductIds || selectedProductIds.length === 0) {
+        return products;
+    }
+
+    const productSet = new Set(selectedProductIds);
+    return products.filter((p) => productSet.has(p.productId));
+}

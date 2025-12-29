@@ -125,6 +125,7 @@ export {
 	setNavigationCallback,
 	setPlayPauseCallback,
 	setAddMarkerCallback,
+	setTabNavigationCallback,
 	initGlobalKeyboard,
 	registerDefaultCommands,
 	registerCreateCommands,

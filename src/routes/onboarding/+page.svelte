@@ -16,10 +16,9 @@
         completeOnboarding,
         skipOnboarding,
         connectICloud,
-        disconnectICloud,
-        type OnboardingSettings
+        disconnectICloud
     } from '$lib/onboarding';
-    import { getThemes, setTheme, resolveTheme } from '$lib/themes';
+    import { getThemes, setTheme } from '$lib/themes';
 
     // Current step (1-3)
     let currentStep = 1;
@@ -194,6 +193,7 @@
                             class="toggle-btn"
                             class:active={iCloudEnabled}
                             on:click={handleICloudToggle}
+                            aria-label={iCloudEnabled ? 'Disable iCloud sync' : 'Enable iCloud sync'}
                         >
                             <span class="toggle-track">
                                 <span class="toggle-thumb"></span>

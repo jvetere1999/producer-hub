@@ -6,17 +6,9 @@
  */
 
 import type { StorageAdapter } from './adapter';
-import type { VaultMeta, ConflictRecord, SyncResult } from './vaultTypes';
+import type { VaultMeta, ConflictRecord, SyncResult, ProjectRef, LibraryRef, InfobaseRef } from './vaultTypes';
 import { getDeviceId } from './vaultTypes';
 
-/**
- * Entity with timestamp for merge comparison
- */
-interface TimestampedEntity {
-    id: string;
-    updatedAt: string;
-    [key: string]: unknown;
-}
 
 /**
  * Sync engine configuration
@@ -146,7 +138,7 @@ export class SyncEngine {
         // Merge projects
         if (local.projects || remote.projects) {
             const { merged: mergedProjects, conflicts: projectConflicts } =
-                this.mergeEntityList(local.projects || [], remote.projects || [], 'project', local.deviceId, remote.deviceId);
+                this.mergeEntityList<ProjectRef>(local.projects || [], remote.projects || [], 'project', local.deviceId, remote.deviceId);
             merged.projects = mergedProjects;
             conflicts.push(...projectConflicts);
         }
@@ -154,7 +146,7 @@ export class SyncEngine {
         // Merge libraries
         if (local.referenceLibraries || remote.referenceLibraries) {
             const { merged: mergedLibraries, conflicts: libraryConflicts } =
-                this.mergeEntityList(local.referenceLibraries || [], remote.referenceLibraries || [], 'library', local.deviceId, remote.deviceId);
+                this.mergeEntityList<LibraryRef>(local.referenceLibraries || [], remote.referenceLibraries || [], 'library', local.deviceId, remote.deviceId);
             merged.referenceLibraries = mergedLibraries;
             conflicts.push(...libraryConflicts);
         }
@@ -162,7 +154,7 @@ export class SyncEngine {
         // Merge infobase
         if (local.infobase || remote.infobase) {
             const { merged: mergedInfobase, conflicts: infobaseConflicts } =
-                this.mergeEntityList(local.infobase || [], remote.infobase || [], 'infobase', local.deviceId, remote.deviceId);
+                this.mergeEntityList<InfobaseRef>(local.infobase || [], remote.infobase || [], 'infobase', local.deviceId, remote.deviceId);
             merged.infobase = mergedInfobase;
             conflicts.push(...infobaseConflicts);
         }
@@ -187,7 +179,7 @@ export class SyncEngine {
     /**
      * Merge a list of entities using last-write-wins
      */
-    private mergeEntityList<T extends TimestampedEntity>(
+    private mergeEntityList<T extends { id: string; updatedAt: string }>(
         local: T[],
         remote: T[],
         entityType: ConflictRecord['entityType'],

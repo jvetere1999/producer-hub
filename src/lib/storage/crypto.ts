@@ -5,7 +5,7 @@
  * Never stores passphrases - only derived key material.
  */
 
-import type { KDFParams, VaultEnvelope } from './vaultTypes';
+import type { VaultEnvelope } from './vaultTypes';
 import { DEFAULT_KDF_PARAMS } from './vaultTypes';
 
 /**
@@ -62,11 +62,11 @@ export async function deriveKey(
         ['deriveKey']
     );
 
-    // Derive AES-GCM key
+    // Derive AES-GCM key - use .buffer to get ArrayBuffer
     return crypto.subtle.deriveKey(
         {
             name: 'PBKDF2',
-            salt,
+            salt: salt.buffer as ArrayBuffer,
             iterations,
             hash: 'SHA-256'
         },
@@ -91,9 +91,9 @@ export async function encryptJson<T>(
     // Encode data as JSON
     const plaintext = new TextEncoder().encode(JSON.stringify(data));
 
-    // Encrypt with AES-GCM
+    // Encrypt with AES-GCM - use .buffer to get ArrayBuffer
     const ciphertext = await crypto.subtle.encrypt(
-        { name: 'AES-GCM', iv },
+        { name: 'AES-GCM', iv: iv.buffer as ArrayBuffer },
         key,
         plaintext
     );
@@ -127,11 +127,11 @@ export async function decryptJson<T>(
 
     const key = await deriveKey(passphrase, salt, envelope.kdf.iterations);
 
-    // Decrypt with AES-GCM
+    // Decrypt with AES-GCM - use .buffer to get ArrayBuffer
     const plaintext = await crypto.subtle.decrypt(
-        { name: 'AES-GCM', iv },
+        { name: 'AES-GCM', iv: iv.buffer as ArrayBuffer },
         key,
-        ciphertext
+        ciphertext.buffer as ArrayBuffer
     );
 
     // Decode JSON

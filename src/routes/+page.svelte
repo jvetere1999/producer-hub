@@ -26,7 +26,7 @@
     import type { ShortcutWithProduct } from '$lib/types';
     import { loadFavorites, toggleFavorite } from '$lib/favorites';
     import { searchShortcutIds } from '$lib/search';
-    import { getThemeChoice, setThemeChoice, applyTheme, watchSystemTheme, type ThemeChoice } from '$lib/theme';
+    import { initThemeSystem, loadThemePreferences } from '$lib/themes';
     import { getKeyOSPreference, setKeyOSPreference, resolveKeysForOS, type KeyOS } from '$lib/platform';
     import { filterShortcuts, groupShortcutsByGroup } from '$lib/filter';
     import KeyCaps from '$lib/components/KeyCaps.svelte';
@@ -45,7 +45,8 @@
         registerDefaultCommands,
         registerCreateCommands,
         setPlayPauseCallback,
-        setAddMarkerCallback
+        setAddMarkerCallback,
+        setTabNavigationCallback
     } from '$lib/hub';
 
     // ============================================
@@ -55,6 +56,50 @@
     type TypeFilter = 'all' | string;
     type GroupFilter = 'all' | string;
     type KindFilter = 'all' | 'shortcut' | 'feature';
+
+    // ============================================
+    // State Persistence Keys
+    // ============================================
+    const STATE_STORAGE_KEY = 'producerhub_ui_state_v1';
+
+    interface UIState {
+        query: string;
+        product: ProductFilter;
+        type: TypeFilter;
+        group: GroupFilter;
+        kind: KindFilter;
+        selectedFacets: string[];
+        favoritesOnly: boolean;
+    }
+
+    function loadUIState(): Partial<UIState> {
+        try {
+            const stored = localStorage.getItem(STATE_STORAGE_KEY);
+            if (stored) {
+                return JSON.parse(stored);
+            }
+        } catch (e) {
+            // Ignore localStorage errors
+        }
+        return {};
+    }
+
+    function saveUIState() {
+        try {
+            const state: UIState = {
+                query,
+                product,
+                type,
+                group,
+                kind,
+                selectedFacets,
+                favoritesOnly
+            };
+            localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(state));
+        } catch (e) {
+            // Ignore localStorage errors
+        }
+    }
 
     // ============================================
     // Reactive State
@@ -78,8 +123,6 @@
     /** Set of favorited entry IDs */
     let favorites = new Set<string>();
 
-    /** Current theme choice */
-    let themeChoice: ThemeChoice = 'system';
     /** Current key display OS */
     let keyOS: KeyOS = 'mac';
 
@@ -89,11 +132,14 @@
     /** Command palette open state */
     let commandPaletteOpen = false;
 
-    /** Cleanup function for system theme watcher */
-    let stopWatch = () => {};
 
     /** Cleanup function for keyboard handler */
     let stopKeyboard = () => {};
+
+    // Save UI state whenever filters change
+    $: if (typeof window !== 'undefined') {
+        saveUIState();
+    }
 
     // ============================================
     // Tab Persistence
@@ -132,11 +178,27 @@
     onMount(() => {
         // Load persisted state
         favorites = loadFavorites();
-        themeChoice = getThemeChoice();
-        applyTheme(themeChoice);
-        stopWatch = watchSystemTheme(themeChoice, () => applyTheme(themeChoice));
+
+        // Initialize theme system (uses the new $lib/themes system)
+        initThemeSystem();
+
         keyOS = getKeyOSPreference();
         activeTab = loadActiveTab();
+
+        // Restore UI state (filters, search query)
+        const savedState = loadUIState();
+        if (savedState.query !== undefined) query = savedState.query;
+        if (savedState.product !== undefined) product = savedState.product;
+        if (savedState.type !== undefined) type = savedState.type;
+        if (savedState.group !== undefined) group = savedState.group;
+        if (savedState.kind !== undefined) kind = savedState.kind;
+        if (savedState.selectedFacets !== undefined) selectedFacets = savedState.selectedFacets;
+        if (savedState.favoritesOnly !== undefined) favoritesOnly = savedState.favoritesOnly;
+
+        // Set up tab navigation callback for keyboard shortcuts
+        setTabNavigationCallback((tab) => {
+            activeTab = tab as typeof activeTab;
+        });
 
         // Initialize hub commands
         registerDefaultCommands((tab) => {
@@ -154,7 +216,6 @@
         stopKeyboard = initGlobalKeyboard();
 
         return () => {
-            stopWatch();
             stopKeyboard();
         };
     });
@@ -163,15 +224,6 @@
     // Event Handlers
     // ============================================
 
-    /** Cycles through theme options: system → dark → light → system */
-    function cycleTheme() {
-        const next: ThemeChoice =
-            themeChoice === 'system' ? 'dark' : themeChoice === 'dark' ? 'light' : 'system';
-        themeChoice = next;
-        setThemeChoice(next);
-        stopWatch();
-        stopWatch = watchSystemTheme(themeChoice, () => applyTheme(themeChoice));
-    }
 
     function toggleKeyOS() {
         keyOS = keyOS === 'mac' ? 'win' : 'mac';
@@ -273,28 +325,23 @@
     :global(html[data-theme='dark']) {
         color-scheme: dark;
     }
+    :global(html[data-theme='light']) {
+        color-scheme: light;
+    }
     :global(body) {
         margin: 0;
-        background: var(--bg);
-        color: var(--fg);
+        background: var(--bg-primary, #0f0f10);
+        color: var(--text-primary, #f2f2f2);
     }
 
-    :global(html[data-theme='light']) {
-        --bg: #ffffff;
-        --fg: #121212;
-        --muted: #666;
-        --card: #f6f6f6;
-        --border: rgba(0, 0, 0, 0.12);
-        --accent: rgba(0, 0, 0, 0.06);
-    }
-
-    :global(html[data-theme='dark']) {
-        --bg: #0f0f10;
-        --fg: #f2f2f2;
-        --muted: #a7a7a7;
-        --card: #151518;
-        --border: rgba(255, 255, 255, 0.14);
-        --accent: rgba(255, 255, 255, 0.08);
+    /* CSS variable aliases for backwards compatibility */
+    :global(html) {
+        --bg: var(--bg-primary);
+        --fg: var(--text-primary);
+        --muted: var(--text-muted);
+        --card: var(--card-bg, var(--bg-secondary));
+        --border: var(--border-default);
+        --accent: var(--accent-primary);
     }
 
     .wrap {
@@ -308,7 +355,7 @@
         display: flex;
         gap: 0;
         margin-top: 16px;
-        border-bottom: 1px solid var(--border);
+        border-bottom: 1px solid var(--border-default);
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
     }
@@ -317,7 +364,7 @@
         padding: 12px 20px;
         border: none;
         background: transparent;
-        color: var(--muted);
+        color: var(--tab-inactive, var(--text-muted));
         font-size: 13px;
         font-weight: 500;
         cursor: pointer;
@@ -328,12 +375,13 @@
     }
 
     .tab:hover {
-        color: var(--fg);
+        color: var(--text-primary);
+        background: var(--surface-hover);
     }
 
     .tab.active {
-        color: var(--fg);
-        border-bottom-color: var(--fg);
+        color: var(--tab-active, var(--accent-primary));
+        border-bottom-color: var(--tab-active, var(--accent-primary));
     }
 
     .tab-content {
@@ -362,10 +410,11 @@
         margin: 0;
         font-size: 18px;
         letter-spacing: -0.01em;
+        color: var(--text-primary);
     }
     .title p {
         margin: 0;
-        color: var(--muted);
+        color: var(--text-muted);
         font-size: 12px;
     }
 
@@ -395,19 +444,39 @@
         flex: 1 1 360px;
         padding: 10px 12px;
         border-radius: 10px;
-        border: 1px solid var(--border);
-        background: transparent;
-        color: inherit;
+        border: 1px solid var(--input-border, var(--border-default));
+        background: var(--input-bg, var(--bg-secondary));
+        color: var(--text-primary);
+    }
+
+    input[type='text']::placeholder {
+        color: var(--text-muted);
+    }
+
+    input[type='text']:focus {
         outline: none;
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 2px var(--accent-primary, #ff764d)33;
     }
 
     select, button {
         padding: 10px 12px;
         border-radius: 10px;
-        border: 1px solid var(--border);
-        background: transparent;
-        color: inherit;
+        border: 1px solid var(--border-default);
+        background: var(--button-bg, var(--bg-tertiary));
+        color: var(--text-primary);
         cursor: pointer;
+        transition: background 0.15s, border-color 0.15s;
+    }
+
+    select:hover, button:hover {
+        background: var(--button-hover, var(--surface-hover));
+        border-color: var(--accent-primary);
+    }
+
+    select:focus, button:focus {
+        outline: none;
+        border-color: var(--accent-primary);
     }
 
     .pill {
@@ -416,8 +485,14 @@
         gap: 8px;
         padding: 8px 10px;
         border-radius: 999px;
-        border: 1px solid var(--border);
-        background: transparent;
+        border: 1px solid var(--border-default);
+        background: var(--button-bg, var(--bg-tertiary));
+        color: var(--text-primary);
+        transition: background 0.15s;
+    }
+
+    .pill:hover {
+        background: var(--button-hover, var(--surface-hover));
     }
 
     .checkbox {
@@ -426,7 +501,13 @@
         gap: 8px;
         padding: 8px 10px;
         border-radius: 999px;
-        border: 1px solid var(--border);
+        border: 1px solid var(--border-default);
+        background: var(--button-bg, var(--bg-tertiary));
+        color: var(--text-primary);
+    }
+
+    .checkbox:hover {
+        background: var(--button-hover, var(--surface-hover));
     }
 
     .list {
@@ -436,13 +517,19 @@
     }
 
     .card {
-        background: var(--card);
-        border: 1px solid var(--border);
+        background: var(--card-bg, var(--bg-secondary));
+        border: 1px solid var(--card-border, var(--border-default));
         border-radius: 14px;
         padding: 12px;
         display: grid;
         grid-template-columns: 1fr auto;
         gap: 10px;
+        transition: border-color 0.15s, background 0.15s;
+    }
+
+    .card:hover {
+        border-color: var(--accent-primary);
+        background: var(--surface-hover);
     }
 
     .card-left {
@@ -467,6 +554,7 @@
         font-size: 14px;
         font-weight: 600;
         margin: 0;
+        color: var(--text-primary);
     }
 
     .meta {
@@ -474,26 +562,34 @@
         display: flex;
         gap: 10px;
         flex-wrap: wrap;
-        color: var(--muted);
+        color: var(--text-muted);
         font-size: 12px;
     }
 
     .description {
         margin: 8px 0 0;
         font-size: 12px;
-        color: var(--muted);
+        color: var(--text-secondary);
         line-height: 1.4;
     }
 
 
     .star {
-        border: 1px solid var(--border);
-        background: transparent;
+        border: 1px solid var(--border-default);
+        background: var(--button-bg, var(--bg-tertiary));
         border-radius: 10px;
         padding: 8px 10px;
         font-size: 12px;
         min-width: 74px;
+        color: var(--star-inactive, var(--text-muted));
+        transition: all 0.15s;
     }
+
+    .star:hover {
+        border-color: var(--star-active, #ffc107);
+        color: var(--star-active, #ffc107);
+    }
+
 
     .tags {
         margin-top: 8px;
@@ -503,15 +599,16 @@
     }
     .tag {
         font-size: 11px;
-        color: var(--muted);
-        border: 1px solid var(--border);
+        color: var(--tag-text, var(--text-primary));
+        background: var(--tag-bg, var(--bg-tertiary));
+        border: 1px solid var(--border-subtle);
         padding: 3px 8px;
         border-radius: 999px;
     }
 
     .footerRow {
         margin-top: 10px;
-        color: var(--muted);
+        color: var(--text-muted);
         font-size: 12px;
         display: flex;
         justify-content: space-between;
@@ -528,14 +625,14 @@
     }
 
     .facetLabel {
-        color: var(--muted);
+        color: var(--text-muted);
         font-size: 12px;
     }
 
     .facetChip {
         padding: 8px 10px;
         border-radius: 999px;
-        border: 1px solid var(--border);
+        border: 1px solid var(--border-default);
         background: transparent;
         color: inherit;
         cursor: pointer;
@@ -554,7 +651,7 @@
         font-size: 16px;
         font-weight: 500;
         margin: 0 0 8px 0;
-        color: var(--fg);
+        color: var(--text-primary);
     }
 
     .tagsRow {
@@ -579,8 +676,8 @@
 
     .facet {
         font-size: 11px;
-        color: var(--muted);
-        border: 1px solid var(--border);
+        color: var(--text-muted);
+        border: 1px solid var(--border-default);
         padding: 3px 8px;
         border-radius: 999px;
     }
@@ -619,19 +716,19 @@
     .note {
         margin-top: 10px;
         font-size: 12px;
-        color: var(--muted);
+        color: var(--text-muted);
         line-height: 1.5;
         padding: 10px;
         background: var(--accent);
         border-radius: 8px;
-        border: 1px solid var(--border);
+        border: 1px solid var(--border-default);
         word-break: break-word;
     }
 
     .defaultVal {
         margin-top: 8px;
         font-size: 11px;
-        color: var(--muted);
+        color: var(--text-muted);
         line-height: 1.4;
         word-break: break-word;
     }
@@ -702,10 +799,6 @@
         <div class="controls">
             <button on:click={toggleKeyOS} title="Toggle key display OS">
                 Keys: {keyOS === 'mac' ? 'macOS' : 'Windows'}
-            </button>
-
-            <button on:click={cycleTheme} title="Cycle theme (system/dark/light)">
-                Theme: {themeChoice}
             </button>
         </div>
     </header>

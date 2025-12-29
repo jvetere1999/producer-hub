@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Mock parsable Ableton theme file for testing -->
+<AbletonSkinDocument>
+    <Theme>
+        <Name Value="TestDark"/>
+        <Mode Value="Dark"/>
+        <Colors>
+            <ControlBackground R="0.1" G="0.1" B="0.1"/>
+            <ControlForeground R="0.9" G="0.9" B="0.9"/>
+            <SurfaceBackground R="0.15" G="0.15" B="0.15"/>
+            <SurfaceHighlight R="0.25" G="0.25" B="0.25"/>
+            <TextColor R="1.0" G="1.0" B="1.0"/>
+            <AccentColor R="1.0" G="0.5" B="0.3"/>
+            <SelectionColor R="0.3" G="0.5" B="1.0"/>
+        </Colors>
+    </Theme>
+</AbletonSkinDocument>
+
