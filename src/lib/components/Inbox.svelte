@@ -287,15 +287,15 @@
 						</div>
 						<div class="item-actions">
 							{#if !item.promotedProjectId}
-								<button class="btn-icon" title="Promote to project" onclick={() => startPromote(item)}>🚀</button>
+								<button class="btn-icon" title="Promote to project" onclick={() => startPromote(item)}>⬆</button>
 							{/if}
-							<button class="btn-icon" title="Edit" onclick={() => startEdit(item)}>✏️</button>
+							<button class="btn-icon" title="Edit" onclick={() => startEdit(item)}>✎</button>
 							{#if item.archived}
-								<button class="btn-icon" title="Restore" onclick={() => handleRestore(item.id)}>↩️</button>
+								<button class="btn-icon" title="Restore" onclick={() => handleRestore(item.id)}>↶</button>
 							{:else}
-								<button class="btn-icon" title="Archive" onclick={() => handleArchive(item.id)}>📥</button>
+								<button class="btn-icon" title="Archive" onclick={() => handleArchive(item.id)}>⬇</button>
 							{/if}
-							<button class="btn-icon" title="Delete" onclick={() => handleDelete(item.id)}>🗑️</button>
+							<button class="btn-icon" title="Delete" onclick={() => handleDelete(item.id)}>✕</button>
 						</div>
 					{/if}
 				</div>
@@ -328,6 +328,8 @@
 <style>
 	.inbox {
 		padding: 16px;
+		overflow: auto;
+		height: 100%;
 	}
 
 	.inbox-header {
