@@ -21,12 +21,9 @@
 		exportProjectToMarkdown,
 		encodeBase64,
 		decodeBase64,
-		generateId,
 		type ProjectsState,
 		type Project,
 		type ProjectStatus,
-		type ProjectMilestone,
-		type ProjectChecklistItem,
 		PROJECT_STATUS_LABELS,
 		PROJECT_STATUS_ORDER
 	} from '$lib/hub';
@@ -141,7 +138,6 @@
 		if (!selectedId || !editName.trim()) return;
 
 		const tags = editTags.split(',').map(t => t.trim()).filter(Boolean);
-		const oldProject = getProject(state, selectedId);
 
 		state = updateProject(state, selectedId, {
 			name: editName.trim(),

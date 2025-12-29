@@ -134,8 +134,7 @@
 			const blob = result.blob instanceof Blob ? result.blob : new Blob([result.blob]);
 
 			// Load for playback
-			const url = URL.createObjectURL(blob);
-			audio.src = url;
+			audio.src = URL.createObjectURL(blob);
 			audio.load();
 
 			// Load as ArrayBuffer for analysis
