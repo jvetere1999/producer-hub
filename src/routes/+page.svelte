@@ -663,8 +663,8 @@
 <div class="wrap">
     <header>
         <div class="title">
-            <h1>♪ Producer Hub</h1>
-            <p>Your comprehensive music production companion</p>
+            <h1>🎵 Producer Hub</h1>
+            <p>Your comprehensive music production workspace</p>
         </div>
 
         <div class="controls">
