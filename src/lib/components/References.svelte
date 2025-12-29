@@ -1481,44 +1481,5 @@
 			gap: 8px;
 		}
 	}
-
-	.analysis-status {
-		display: flex;
-		align-items: center;
-		gap: 16px;
-		padding: 8px 16px;
-		background: var(--card);
-		border-bottom: 1px solid var(--border);
-		font-size: 12px;
-	}
-
-	.status-item {
-		color: var(--muted);
-	}
-
-	.status-complete {
-		color: #22c55e;
-		font-weight: 500;
-	}
-
-	.btn-link {
-		background: none;
-		border: none;
-		color: #3b82f6;
-		cursor: pointer;
-		font-size: 12px;
-		padding: 0;
-		text-decoration: underline;
-	}
-
-	.btn-link:hover {
-		color: #2563eb;
-	}
-
-	.btn-link:disabled {
-		color: var(--muted);
-		cursor: not-allowed;
-		text-decoration: none;
-	}
 </style>
 

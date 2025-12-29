@@ -18,7 +18,6 @@ import type { Shortcut, ShortcutWithProduct, FeatureEntry } from './types';
 import { ableton12suiteShortcuts } from './data/ableton12suite';
 import { reasonrackShortcuts } from './data/reasonrack';
 import { flstudioShortcuts } from './data/flstudio';
-import { logicproShortcuts } from './data/logicpro';
 import { serum2PowerFeatures } from './data/serum2PowerFeatures';
 import { resolveGroup } from './grouping';
 
@@ -26,12 +25,11 @@ import { resolveGroup } from './grouping';
 // Data Module Imports
 // ============================================
 
-/** All keyboard shortcut modules (Ableton, Reason, FL Studio, and Logic Pro) */
+/** All keyboard shortcut modules (Ableton, Reason, and FL Studio) */
 const shortcutModules: Shortcut[] = [
     ...ableton12suiteShortcuts,
     ...reasonrackShortcuts,
-    ...flstudioShortcuts,
-    ...logicproShortcuts
+    ...flstudioShortcuts
 ];
 
 /** All power feature modules (Serum uses features instead of shortcuts) */
