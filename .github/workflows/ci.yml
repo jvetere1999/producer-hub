@@ -19,16 +19,20 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22.12.0'
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
 
-      - name: Cache dependencies
-        id: cache
-        uses: actions/cache@v3
+      - name: Cache node modules
+        uses: actions/cache@v4
+        env:
+          cache-name: cache-node-modules
         with:
           path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-node-
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
 
       - name: Install dependencies
         run: npm ci
@@ -45,8 +49,8 @@ jobs:
             echo "❌ Build directory not created"
             exit 1
           fi
-          if [ ! -f "build/index.html" ] && [ ! -f "build/200.html" ]; then
-            echo "❌ No index/fallback HTML found in build"
+          if [ ! -f "build/index.html" ]; then
+            echo "❌ No index.html found in build"
             exit 1
           fi
           echo "✓ Build artifacts verified"

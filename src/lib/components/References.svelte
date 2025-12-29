@@ -1116,7 +1116,7 @@
 		color: var(--fg);
 	}
 
-`	.analysis-badge {
+	.analysis-badge {
 		font-size: 12px;
 		color: var(--muted);
 		margin-left: 12px;
