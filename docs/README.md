@@ -13,6 +13,9 @@ Welcome to DAW Shortcuts documentation. Here you'll find everything you need to 
 | [Contributing](./CONTRIBUTING.md) | Development setup, code style, PR process |
 | [Testing](./TESTING.md) | Test framework, patterns, and examples |
 | [Quick Reference](./QUICK_REFERENCE.md) | Command cheat sheet |
+| [Deployment](./DEPLOYMENT.md) | GitHub Pages deployment, PWA, base paths, troubleshooting |
+| [AdSense](./ADSENSE.md) | Google AdSense setup, configuration, troubleshooting |
+| [SEO](./SEO.md) | SEO implementation, content strategy, keyword clusters |
 
 ## Quick Start for New Users
 
@@ -88,7 +91,10 @@ daw-shortcuts/
 │   ├── INFOBASE.md          # Info Base documentation
 │   ├── CONTRIBUTING.md      # Contribution guide
 │   ├── TESTING.md           # Testing guide
-│   └── QUICK_REFERENCE.md   # Command cheat sheet
+│   ├── QUICK_REFERENCE.md   # Command cheat sheet
+│   ├── DEPLOYMENT.md        # GitHub Pages deployment guide
+│   ├── ADSENSE.md           # Google AdSense guide
+│   └── SEO.md               # SEO implementation guide
 ├── src/
 │   ├── lib/                 # Core library
 │   │   ├── data/           # Data modules (shortcuts, features)

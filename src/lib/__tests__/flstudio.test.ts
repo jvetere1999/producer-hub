@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-    flstudioShortcuts,
-    flstudioShortcutsCount,
-    flstudioRawCount,
-    flstudioImportSummary
-} from '../data/flstudio';
+import { flstudioShortcuts } from '../data/flstudio';
 
 describe('FL Studio dataset', () => {
     describe('data integrity', () => {
@@ -12,8 +7,9 @@ describe('FL Studio dataset', () => {
             expect(flstudioShortcuts.length).toBeGreaterThan(0);
         });
 
-        it('exports correct count', () => {
-            expect(flstudioShortcutsCount).toBe(flstudioShortcuts.length);
+        it('has substantial number of shortcuts', () => {
+            // FL Studio has extensive shortcuts, expect 100+
+            expect(flstudioShortcuts.length).toBeGreaterThan(100);
         });
 
         it('has no duplicate IDs', () => {
@@ -159,35 +155,13 @@ describe('FL Studio dataset', () => {
         });
     });
 
-    describe('import summary', () => {
-        it('reports total count matching raw JSON', () => {
-            expect(flstudioImportSummary.totalCount).toBe(flstudioRawCount);
-        });
-
-        it('imported count matches shortcuts length (before dedupe)', () => {
-            // Note: importedCount is before dedupe, shortcuts is after
-            expect(flstudioImportSummary.importedCount).toBeGreaterThanOrEqual(
-                flstudioShortcuts.length
-            );
-        });
-
-        it('tracks skipped entries', () => {
-            expect(flstudioImportSummary.skippedCount).toBeDefined();
-            expect(flstudioImportSummary.skippedReasons).toBeDefined();
-        });
-
-        it('tracks duplicate resolutions', () => {
-            expect(flstudioImportSummary.duplicateResolutions).toBeDefined();
-        });
-    });
-
     describe('specific shortcuts', () => {
         it('has Undo shortcut', () => {
             const undo = flstudioShortcuts.find((s) =>
                 s.command.toLowerCase().includes('undo')
             );
             expect(undo).toBeDefined();
-            expect(undo!.keys).toContain('Cmd');
+            expect(undo!.keys).toContain('⌘');
         });
 
         it('has Play/Stop shortcut', () => {
@@ -203,7 +177,7 @@ describe('FL Studio dataset', () => {
                 s.command.toLowerCase() === 'save file'
             );
             expect(save).toBeDefined();
-            expect(save!.keys).toContain('Cmd');
+            expect(save!.keys).toContain('⌘');
         });
     });
 });

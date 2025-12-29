@@ -1,3 +1,3 @@
 export const prerender = true;
-export const ssr = false;
-
+// SSR enabled for SEO - meta tags must be in static HTML for search engines
+export const ssr = true;

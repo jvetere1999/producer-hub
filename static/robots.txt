@@ -1,3 +1,15 @@
-# allow crawling everything by default
+# Producer Hub robots.txt
+# https://producerhub.ecent.online/robots.txt
+#
+# Allow all crawlers access to all content
+# See: https://developers.google.com/search/docs/crawling-indexing/robots/intro
+
 User-agent: *
-Disallow:
+Allow: /
+
+# Sitemap location
+Sitemap: https://producerhub.ecent.online/sitemap.xml
+
+# Block common non-content paths (none currently, but template for future)
+# Disallow: /api/
+# Disallow: /_app/
