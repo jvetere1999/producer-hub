@@ -26,6 +26,9 @@ const BASE_PATH = process.env.BASE_PATH || '';
 const pathConfig = {
     '/': { priority: '1.0', changefreq: 'weekly' },
     '/privacy': { priority: '0.3', changefreq: 'monthly' },
+    '/templates': { priority: '0.9', changefreq: 'weekly' },
+    '/templates/': { priority: '0.8', changefreq: 'weekly' },
+    '/arrange': { priority: '0.8', changefreq: 'weekly' },
     // Add more as you create pages
     '/guides/': { priority: '0.8', changefreq: 'weekly' },
     '/shortcuts/': { priority: '0.9', changefreq: 'weekly' },

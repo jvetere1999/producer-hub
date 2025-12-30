@@ -300,6 +300,34 @@ function createPlayerStore() {
          */
         reset() {
             set(initialState);
+        },
+
+        /**
+         * Restore queue from persisted state
+         * Used on page load to resume where user left off
+         */
+        restoreQueue(
+            tracks: QueueTrack[],
+            startIndex: number = 0,
+            startTime: number = 0
+        ) {
+            update(state => ({
+                ...state,
+                queue: tracks,
+                queueIndex: startIndex,
+                currentTrack: tracks[startIndex] || null,
+                currentTime: startTime,
+                status: 'paused', // Start paused, user must click play
+                isVisible: tracks.length > 0,
+                error: null
+            }));
+        },
+
+        /**
+         * Get current state snapshot (for persistence)
+         */
+        getState(): PlayerState {
+            return get({ subscribe });
         }
     };
 }
