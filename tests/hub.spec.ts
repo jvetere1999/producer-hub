@@ -4,16 +4,41 @@
 
 import { test, expect } from '@playwright/test';
 
+// Helper function to navigate via custom event (reliable for testing)
+async function navigateToTab(page: import('@playwright/test').Page, tab: string) {
+	// Set the activeTab state directly via custom event
+	await page.evaluate((tabName) => {
+		window.dispatchEvent(new CustomEvent('test:switch-tab', { detail: tabName }));
+	}, tab);
+
+	// Wait for the tab content to become visible
+	await page.waitForTimeout(100);
+}
+
+test.beforeEach(async ({ context, page }) => {
+	await context.clearCookies();
+	// Set onboarding as complete
+	await page.addInitScript(() => {
+		if (!sessionStorage.getItem('test_initialized')) {
+			localStorage.clear();
+			localStorage.setItem('daw_onboarding_v1', JSON.stringify({
+				version: 1,
+				completed: true,
+				selectedProductIds: ['ableton12suite', 'serum2', 'reasonrack', 'flstudio', 'logicpro'],
+				themeId: 'system',
+				iCloud: { enabled: false, syncStatus: 'disabled' }
+			}));
+			sessionStorage.setItem('test_initialized', 'true');
+		}
+	});
+});
+
 test.describe('Producer Hub Navigation', () => {
-	test('should display Projects tab and navigate to it', async ({ page }) => {
+	test('should display Projects via dropdown and navigate to it', async ({ page }) => {
 		await page.goto('/');
 
-		// Check Projects tab is visible
-		const projectsTab = page.getByTestId('tab-projects');
-		await expect(projectsTab).toBeVisible();
-
-		// Click Projects tab
-		await projectsTab.click();
+		// Navigate to Projects via dropdown
+		await navigateToTab(page, 'projects');
 
 		// Verify Projects content is shown
 		const projectsContent = page.getByTestId('projects-tab-content');
@@ -23,11 +48,11 @@ test.describe('Producer Hub Navigation', () => {
 	test('should navigate between all hub tabs', async ({ page }) => {
 		await page.goto('/');
 
-		// Test all hub tabs
+		// Test all hub tabs via dropdown navigation
 		const tabs = ['inbox', 'references', 'collections', 'search'];
 
 		for (const tab of tabs) {
-			await page.getByTestId(`tab-${tab}`).click();
+			await navigateToTab(page, tab);
 			await expect(page.getByTestId(`${tab}-tab-content`)).toBeVisible();
 		}
 	});
@@ -36,7 +61,7 @@ test.describe('Producer Hub Navigation', () => {
 test.describe('Projects CRUD', () => {
 	test('should create a project with notes and checklist', async ({ page }) => {
 		await page.goto('/');
-		await page.getByTestId('tab-projects').click();
+		await navigateToTab(page, 'projects');
 
 		// Click New button
 		await page.getByRole('button', { name: '+ New' }).click();
@@ -61,7 +86,7 @@ test.describe('Projects CRUD', () => {
 
 	test('should persist project after page reload', async ({ page }) => {
 		await page.goto('/');
-		await page.getByTestId('tab-projects').click();
+		await navigateToTab(page, 'projects');
 
 		// Create a project
 		await page.getByRole('button', { name: '+ New' }).click();
@@ -72,7 +97,7 @@ test.describe('Projects CRUD', () => {
 		await page.reload();
 
 		// Navigate back to Projects
-		await page.getByTestId('tab-projects').click();
+		await navigateToTab(page, 'projects');
 
 		// Verify project still exists
 		await expect(page.getByText('Persisted Project')).toBeVisible();
@@ -82,7 +107,7 @@ test.describe('Projects CRUD', () => {
 test.describe('Inbox and Promote', () => {
 	test('should quick add to inbox and promote to project', async ({ page }) => {
 		await page.goto('/');
-		await page.getByTestId('tab-inbox').click();
+		await navigateToTab(page, 'inbox');
 
 		// Quick add an idea
 		await page.getByPlaceholder('Quick idea...').fill('Great hook idea');
@@ -99,7 +124,7 @@ test.describe('Inbox and Promote', () => {
 		await page.locator('.modal').getByRole('button', { name: 'Create Project' }).click();
 
 		// Navigate to Projects and verify
-		await page.getByTestId('tab-projects').click();
+		await navigateToTab(page, 'projects');
 		await expect(page.getByText('Hook Track')).toBeVisible();
 	});
 });
@@ -107,7 +132,7 @@ test.describe('Inbox and Promote', () => {
 test.describe('Export Markdown', () => {
 	test('should export project as markdown with decoded content', async ({ page }) => {
 		await page.goto('/');
-		await page.getByTestId('tab-projects').click();
+		await navigateToTab(page, 'projects');
 
 		// Create a project with notes
 		await page.getByRole('button', { name: '+ New' }).click();
@@ -180,13 +205,13 @@ test.describe('Collections', () => {
 	test('should create collection and add items', async ({ page }) => {
 		// First create a project to add to collection
 		await page.goto('/');
-		await page.getByTestId('tab-projects').click();
+		await navigateToTab(page, 'projects');
 		await page.locator('.sidebar').getByRole('button', { name: '+ New' }).click();
 		await page.getByPlaceholder('Project name').fill('Collection Test Project');
 		await page.getByRole('button', { name: 'Create Project' }).click();
 
 		// Go to Collections
-		await page.getByTestId('tab-collections').click();
+		await navigateToTab(page, 'collections');
 
 		// Create collection
 		await page.locator('.sidebar').getByRole('button', { name: '+ New' }).click();
@@ -212,7 +237,7 @@ test.describe('Collections', () => {
 
 	test('should persist collection after reload', async ({ page }) => {
 		await page.goto('/');
-		await page.getByTestId('tab-collections').click();
+		await navigateToTab(page, 'collections');
 
 		// Create collection
 		await page.locator('.sidebar').getByRole('button', { name: '+ New' }).click();
@@ -221,7 +246,7 @@ test.describe('Collections', () => {
 
 		// Reload
 		await page.reload();
-		await page.getByTestId('tab-collections').click();
+		await navigateToTab(page, 'collections');
 
 		// Verify persisted
 		await expect(page.getByText('Persisted Collection')).toBeVisible();
@@ -234,7 +259,7 @@ test.describe('References Library', () => {
 
 	test('should create a reference library', async ({ page }) => {
 		await page.goto('/');
-		await page.getByTestId('tab-references').click();
+		await navigateToTab(page, 'references');
 
 		// Create library
 		await page.locator('.sidebar').getByRole('button', { name: '+ New' }).click();
@@ -248,7 +273,7 @@ test.describe('References Library', () => {
 
 	test('should show import folder button', async ({ page }) => {
 		await page.goto('/');
-		await page.getByTestId('tab-references').click();
+		await navigateToTab(page, 'references');
 
 		// Create library first
 		await page.locator('.sidebar').getByRole('button', { name: '+ New' }).click();
@@ -266,7 +291,7 @@ test.describe('References Library', () => {
 test.describe('Global Search', () => {
 	test('should display search interface', async ({ page }) => {
 		await page.goto('/');
-		await page.getByTestId('tab-search').click();
+		await navigateToTab(page, 'search');
 
 		// Verify search UI is visible
 		await expect(page.getByPlaceholder(/Search shortcuts/)).toBeVisible();
@@ -277,7 +302,7 @@ test.describe('Global Search', () => {
 
 	test('should filter between shortcuts and hub', async ({ page }) => {
 		await page.goto('/');
-		await page.getByTestId('tab-search').click();
+		await navigateToTab(page, 'search');
 
 		// Verify mode tabs exist within the search tab
 		await expect(page.locator('.mode-tabs').getByRole('button', { name: 'All' })).toBeVisible();

@@ -9,11 +9,13 @@ Welcome to DAW Shortcuts documentation. Here you'll find everything you need to 
 | [Main README](../README.md) | Project overview, features, quick start |
 | [Wiki](./WIKI.md) | Guide to each tab and how to use them |
 | [Architecture](./ARCHITECTURE.md) | System design, data model, module structure |
+| [Deployment](./DEPLOYMENT.md) | GitHub Pages & Cloudflare deployment, PWA, base paths |
+| [Patterns](./PATTERNS.md) | Drum pattern builder, templates, ghost kicks |
+| [Player](./PLAYER.md) | Global audio player, queue management |
 | [Info Base](./INFOBASE.md) | Local knowledge base for music production notes |
 | [Contributing](./CONTRIBUTING.md) | Development setup, code style, PR process |
 | [Testing](./TESTING.md) | Test framework, patterns, and examples |
 | [Quick Reference](./QUICK_REFERENCE.md) | Command cheat sheet |
-| [Deployment](./DEPLOYMENT.md) | GitHub Pages deployment, PWA, base paths, troubleshooting |
 | [AdSense](./ADSENSE.md) | Google AdSense setup, configuration, troubleshooting |
 | [SEO](./SEO.md) | SEO implementation, content strategy, keyword clusters |
 

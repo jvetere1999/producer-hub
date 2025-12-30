@@ -1,50 +1,55 @@
 
 # Producer Hub (SvelteKit Static PWA)
 
-Installable, offline-capable PWA for comprehensive music production workspace with DAW shortcuts, audio analysis, project management, and creative tools. Includes shortcuts for multiple audio products (Serum 2, Ableton Live 12 Suite, Reason Rack) plus a local **Info Base** for storing music production notes.
+Installable, offline-capable PWA for comprehensive music production workspace with DAW shortcuts, audio analysis, project management, and creative tools. Includes shortcuts for multiple audio products (Serum 2, Ableton Live 12 Suite, Reason Rack, FL Studio, Logic Pro) plus creative tools like the Pattern Builder.
 
-## ✨ Key Features
+## Features
 
 - **Comprehensive Workspace** - Shortcuts, audio analysis, project management, and creative tools
 - **Full-text search** across commands, keys, tags, notes, and more
 - **Multi-product support** with product icons and filtering
+- **Pattern Builder** - Create and learn drum patterns for various genres
 - **Audio Analysis** - frequency spectrum analysis, waveform visualization, BPM detection
 - **Project Management** - organize your music projects and references
 - **Keycap rendering** - keys displayed as styled keyboard caps
 - **Info Base** - local knowledge base for music production notes
 - **Offline capable** - works without internet as a PWA
 - **Dark/Light themes** with system preference support
+- **iOS/iPad PWA compatible** - full-screen app experience on mobile
 
-## 🖥️ Interface
+## Interface
 
-The app uses a comprehensive tabbed layout:
+The app uses dropdown navigation organized into three categories:
 
-| Tab | Description |
-|-----|-------------|
-| **🎹 Shortcuts** | Browse, search, and filter all keyboard shortcuts and power features |
-| **📁 Projects** | Manage your music projects and creative work |
-| **📥 Inbox** | Quick capture and organize ideas |
-| **🎵 References** | Audio file management with analysis and annotation |
-| **📚 Collections** | Curated sets of shortcuts, samples, or references |
-| **📝 Info Base** | Personal knowledge base for music production notes |
+### Shortcuts Menu
+| Item | Description |
+|------|-------------|
+| **Keyboard Shortcuts** | Browse, search, and filter all keyboard shortcuts |
+| **Info Base** | Personal knowledge base for music production notes |
 
-### Shortcuts Tab
-- Search across all entries (commands, keys, tags, context, product)
-- Filter by product, type, group, kind, and facets
-- Star favorites for quick access
-- Keys displayed as styled keycaps (Mac/Windows toggle)
+### Tools Menu
+| Item | Description |
+|------|-------------|
+| **Projects** | Manage your music projects and creative work |
+| **Inbox** | Quick capture and organize ideas |
+| **Collections** | Curated sets of shortcuts, samples, or references |
+| **References** | Audio file management with analysis and annotation |
+| **Global Search** | Search across all content |
 
-### Info Base Tab
-- Create, edit, delete notes with Markdown support
-- Organize with categories and tags
-- Quick templates for common note types
-- Export/import with obfuscation
+### Create Menu
+| Item | Description |
+|------|-------------|
+| **Drum Patterns** | MIDI roll drum pattern builder with genre templates |
+| **Piano Roll** | (Coming soon) Piano roll for melodies and chords |
 
-## 📖 Documentation
+## Documentation
 
 - **[docs/README.md](./docs/README.md)** - Documentation index (start here)
 - **[docs/WIKI.md](./docs/WIKI.md)** - Wiki guide describing each tab and how to use them
 - **[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)** - System architecture
+- **[docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md)** - Deployment guide (GitHub Pages, Cloudflare)
+- **[docs/PATTERNS.md](./docs/PATTERNS.md)** - Pattern Builder documentation
+- **[docs/PLAYER.md](./docs/PLAYER.md)** - Audio player documentation
 - **[docs/INFOBASE.md](./docs/INFOBASE.md)** - Info Base documentation
 - **[docs/CONTRIBUTING.md](./docs/CONTRIBUTING.md)** - How to contribute
 - **[docs/TESTING.md](./docs/TESTING.md)** - Testing guide

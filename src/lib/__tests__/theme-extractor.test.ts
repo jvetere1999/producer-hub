@@ -83,7 +83,9 @@ describe('Theme Manifest', () => {
 
         for (const theme of manifest.themes) {
             for (const varName of requiredVars) {
+                // @ts-ignore
                 expect(theme.vars[varName]).toBeDefined();
+                // @ts-ignore
                 expect(theme.vars[varName]).toMatch(/^#[0-9a-fA-F]{6,8}$/);
             }
         }

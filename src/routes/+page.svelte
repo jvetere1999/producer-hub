@@ -22,13 +22,14 @@
 -->
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
-    import { allProducts, allShortcuts, typesForProduct, groupsForProduct, facetsForProduct, kindsForProduct } from '$lib/shortcuts';
+    import { allProducts, allShortcuts } from '$lib/shortcuts';
     import type { ShortcutWithProduct } from '$lib/types';
     import { loadFavorites, toggleFavorite } from '$lib/favorites';
     import { searchShortcutIds } from '$lib/search';
     import { initThemeSystem, loadThemePreferences } from '$lib/themes';
     import { getKeyOSPreference, setKeyOSPreference, resolveKeysForOS, type KeyOS } from '$lib/platform';
     import { filterShortcuts, groupShortcutsByGroup } from '$lib/filter';
+    import { loadOnboardingSettings } from '$lib/onboarding';
     import KeyCaps from '$lib/components/KeyCaps.svelte';
     import InfoBase from '$lib/components/InfoBase.svelte';
     import CommandPalette from '$lib/components/CommandPalette.svelte';
@@ -38,6 +39,7 @@
     import Collections from '$lib/components/Collections.svelte';
     import GlobalSearch from '$lib/components/GlobalSearch.svelte';
     import SEOHead from '$lib/components/SEOHead.svelte';
+    import ProducerHubLogo from '$lib/components/ProducerHubLogo.svelte';
     import { pageMeta, getWebSiteSchema, getSoftwareAppSchema } from '$lib/seo';
     import { base, assets } from '$app/paths';
     import {
@@ -126,8 +128,24 @@
     /** Current key display OS */
     let keyOS: KeyOS = 'mac';
 
+    /** Selected product IDs from onboarding - default to all products until onboarding loads */
+    let selectedProductIds: string[] = allProducts.map(p => p.productId);
+
+    /** Products filtered by onboarding selection */
+    $: availableProducts = selectedProductIds.length > 0
+        ? allProducts.filter(p => selectedProductIds.includes(p.productId))
+        : allProducts;
+
+    /** Shortcuts filtered by onboarding-selected products (pre-filter for efficiency) */
+    $: availableShortcuts = selectedProductIds.length > 0
+        ? allShortcuts.filter(s => selectedProductIds.includes(s.productId))
+        : allShortcuts;
+
     /** Active tab */
     let activeTab: 'shortcuts' | 'infobase' | 'projects' | 'inbox' | 'references' | 'collections' | 'search' = 'shortcuts';
+
+    /** Active dropdown menu */
+    let activeDropdown: 'shortcuts' | 'tools' | 'create' | null = null;
 
     /** Command palette open state */
     let commandPaletteOpen = false;
@@ -147,6 +165,7 @@
 
     const TAB_STORAGE_KEY = 'producerhub_active_tab';
     const VALID_TABS = ['shortcuts', 'infobase', 'projects', 'inbox', 'references', 'collections', 'search'] as const;
+    let tabLoaded = false;  // Guard to prevent overwriting saved tab on initial render
 
     function loadActiveTab(): typeof activeTab {
         try {
@@ -161,6 +180,7 @@
     }
 
     function saveActiveTab(tab: typeof activeTab) {
+        if (!tabLoaded) return;  // Don't save until we've loaded the initial value
         try {
             localStorage.setItem(TAB_STORAGE_KEY, tab);
         } catch (e) {
@@ -168,7 +188,7 @@
         }
     }
 
-    // Save tab whenever it changes
+    // Save tab whenever it changes (after initial load)
     $: saveActiveTab(activeTab);
 
     // ============================================
@@ -179,11 +199,31 @@
         // Load persisted state
         favorites = loadFavorites();
 
+        // Load selected products from onboarding
+        const onboardingSettings = loadOnboardingSettings();
+        selectedProductIds = onboardingSettings.selectedProductIds;
+
         // Initialize theme system (uses the new $lib/themes system)
         initThemeSystem();
 
         keyOS = getKeyOSPreference();
         activeTab = loadActiveTab();
+        tabLoaded = true;  // Now it's safe to save tab changes
+
+        // Restore UI state (filters, search query)
+        const savedState = loadUIState();
+        if (savedState.query !== undefined) query = savedState.query;
+        if (savedState.product !== undefined) product = savedState.product;
+        if (savedState.type !== undefined) type = savedState.type;
+        if (savedState.group !== undefined) group = savedState.group;
+        if (savedState.kind !== undefined) kind = savedState.kind;
+        if (savedState.selectedFacets !== undefined) selectedFacets = savedState.selectedFacets;
+        if (savedState.favoritesOnly !== undefined) favoritesOnly = savedState.favoritesOnly;
+
+        // Set up tab navigation callback for keyboard shortcuts
+        setTabNavigationCallback((tab) => {
+            activeTab = tab as typeof activeTab;
+        });
 
         // Restore UI state (filters, search query)
         const savedState = loadUIState();
@@ -215,8 +255,18 @@
         // Initialize global keyboard shortcuts
         stopKeyboard = initGlobalKeyboard();
 
+        // Test helper: Listen for custom event to switch tabs (used by Playwright tests)
+        const testTabHandler = (e: CustomEvent) => {
+            const tab = e.detail;
+            if (VALID_TABS.includes(tab)) {
+                activeTab = tab;
+            }
+        };
+        window.addEventListener('test:switch-tab', testTabHandler as EventListener);
+
         return () => {
             stopKeyboard();
+            window.removeEventListener('test:switch-tab', testTabHandler as EventListener);
         };
     });
 
@@ -238,56 +288,65 @@
         }
     }
 
-    $: typeOptions = ['all', ...typesForProduct(product)];
+    // Compute available options based on filtered shortcuts
+    $: typeOptions = ['all', ...new Set(
+        availableShortcuts
+            .filter(s => product === 'all' || s.productId === product)
+            .map(s => s.type)
+    )].sort();
     $: if (!typeOptions.includes(type)) type = 'all';
 
-    $: groupOptions = ['all', ...groupsForProduct(product)];
+    $: groupOptions = ['all', ...new Set(
+        availableShortcuts
+            .filter(s => product === 'all' || s.productId === product)
+            .map(s => s.group)
+    )].sort();
     $: if (!groupOptions.includes(group)) group = 'all';
 
-    $: kindOptions = kindsForProduct(product);
+    $: kindOptions = [...new Set(
+        availableShortcuts
+            .filter(s => product === 'all' || s.productId === product)
+            .map(s => s.kind ?? 'shortcut')
+    )].sort();
     $: if (kind !== 'all' && !kindOptions.includes(kind)) kind = 'all';
 
-    $: facetOptions = facetsForProduct(product);
+    $: facetOptions = [...new Set(
+        availableShortcuts
+            .filter(s => product === 'all' || s.productId === product)
+            .flatMap(s => s.facets ?? [])
+    )].sort();
     // Reset facets if product changes and selected facets are no longer available
     $: {
         const available = new Set(facetOptions);
         selectedFacets = selectedFacets.filter(f => available.has(f));
     }
 
-    function getFilteredList(): ShortcutWithProduct[] {
-        return filterShortcuts(allShortcuts, {
-            productId: product,
-            type,
-            group,
-            kind: kind as 'shortcut' | 'feature' | 'all',
-            facets: selectedFacets,
-            favoriteIds: favorites,
-            favoritesOnly
-        });
-    }
+    // Computed results with explicit reactivity - filter shortcuts based on all criteria
+    $: filteredResults = filterShortcuts(availableShortcuts, {
+        productId: product,
+        type,
+        group,
+        kind: kind as 'shortcut' | 'feature' | 'all',
+        facets: selectedFacets,
+        favoriteIds: favorites,
+        favoritesOnly
+    });
 
-    function baseList(): ShortcutWithProduct[] {
-        return getFilteredList()
-            .sort((a, b) => (a.group.localeCompare(b.group) || a.productName.localeCompare(b.productName) || a.command.localeCompare(b.command)));
-    }
-
-    function searchedList(): ShortcutWithProduct[] {
-        const ids = searchShortcutIds(query, allShortcuts, { limit: 300, fuzzy: true });
-        if (ids.length === 0) return [];
-
-        const rank = new Map<string, number>();
-        ids.forEach((id, i) => rank.set(id, i));
-
-        return getFilteredList()
-            .filter((s) => rank.has(s.id))
-            .sort((a, b) => (rank.get(a.id)! - rank.get(b.id)!) || a.command.localeCompare(b.command));
-    }
-
-    // Include filter vars to ensure reactivity picks them up
+    // Apply search if there's a query, otherwise just sort
     $: results = (() => {
-        // Reference all reactive dependencies
-        void product; void type; void group; void kind; void selectedFacets; void favoritesOnly; void favorites;
-        return query.trim() ? searchedList() : baseList();
+        if (query.trim()) {
+            // Search within available shortcuts only (pre-filtered by onboarding)
+            const ids = searchShortcutIds(query, availableShortcuts, { limit: 300, fuzzy: true });
+            if (ids.length === 0) return [];
+            const rank = new Map<string, number>();
+            ids.forEach((id, i) => rank.set(id, i));
+            return filteredResults
+                .filter((s) => rank.has(s.id))
+                .sort((a, b) => (rank.get(a.id)! - rank.get(b.id)!) || a.command.localeCompare(b.command));
+        } else {
+            return filteredResults
+                .sort((a, b) => (a.group.localeCompare(b.group) || a.productName.localeCompare(b.productName) || a.command.localeCompare(b.command)));
+        }
     })();
 
     // Group results by group for display
@@ -332,6 +391,7 @@
         margin: 0;
         background: var(--bg-primary, #0f0f10);
         color: var(--text-primary, #f2f2f2);
+        overflow: hidden;
     }
 
     /* CSS variable aliases for backwards compatibility */
@@ -344,85 +404,234 @@
         --accent: var(--accent-primary);
     }
 
-    .wrap {
-        max-width: 980px;
-        margin: 0 auto;
-        padding: 16px;
-    }
-
-    /* Tab Navigation */
-    .tabs {
+    /* App Container */
+    .app-container {
         display: flex;
-        gap: 0;
-        margin-top: 16px;
-        border-bottom: 1px solid var(--border-default);
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+        flex-direction: column;
+        height: 100vh;
+        height: 100dvh;
+        overflow: hidden;
     }
 
-    .tab {
-        padding: 12px 20px;
-        border: none;
-        background: transparent;
-        color: var(--tab-inactive, var(--text-muted));
-        font-size: 13px;
-        font-weight: 500;
-        cursor: pointer;
-        border-bottom: 2px solid transparent;
-        margin-bottom: -1px;
-        transition: color 0.15s, border-color 0.15s;
+    /* Fixed Header */
+    .app-header {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 16px;
+        padding-top: calc(10px + env(safe-area-inset-top));
+        padding-left: calc(16px + env(safe-area-inset-left));
+        padding-right: calc(16px + env(safe-area-inset-right));
+        background: var(--bg-secondary, #1a1a1c);
+        border-bottom: 1px solid var(--border-default, #333);
+        z-index: 100;
+    }
+
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+
+    .header-left h1 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text-primary, #fff);
         white-space: nowrap;
     }
 
-    .tab:hover {
-        color: var(--text-primary);
-        background: var(--surface-hover);
+    .header-nav {
+        display: flex;
+        align-items: center;
+        gap: 4px;
     }
 
-    .tab.active {
-        color: var(--tab-active, var(--accent-primary));
-        border-bottom-color: var(--tab-active, var(--accent-primary));
+    .nav-dropdown {
+        position: relative;
+    }
+
+    .nav-trigger {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 10px 14px;
+        background: transparent;
+        border: none;
+        border-radius: 8px;
+        color: var(--text-secondary, #aaa);
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        min-height: 44px;
+        transition: all 0.15s;
+        white-space: nowrap;
+    }
+
+    .nav-trigger:hover,
+    .nav-trigger.active {
+        background: var(--bg-tertiary, #2a2a2c);
+        color: var(--text-primary, #fff);
+    }
+
+    .dropdown-menu {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 50%;
+        transform: translateX(-50%);
+        min-width: 180px;
+        max-width: calc(100vw - 32px);
+        background: var(--bg-secondary, #242426);
+        border: 1px solid var(--border-default, #444);
+        border-radius: 12px;
+        padding: 6px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        z-index: 200;
+    }
+
+    /* Last dropdown (Create) - align to right edge */
+    .nav-dropdown:last-child .dropdown-menu {
+        left: auto;
+        right: 0;
+        transform: none;
+    }
+
+    .dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        padding: 12px 14px;
+        background: transparent;
+        border: none;
+        border-radius: 8px;
+        color: var(--text-primary, #fff);
+        font-size: 14px;
+        text-align: left;
+        text-decoration: none;
+        cursor: pointer;
+        min-height: 44px;
+        transition: background 0.15s;
+    }
+
+    .dropdown-item:hover:not(.disabled) {
+        background: var(--surface-hover, #333);
+    }
+
+    .dropdown-item.current {
+        background: var(--accent-primary, #3b82f6)22;
+        color: var(--accent-primary, #3b82f6);
+    }
+
+    .dropdown-item.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        color: var(--text-muted, #666);
+    }
+
+    .coming-soon {
+        font-size: 10px;
+        padding: 2px 6px;
+        margin-left: auto;
+        background: var(--accent-secondary, #50b8b8)22;
+        color: var(--accent-secondary, #50b8b8);
+        border-radius: 4px;
+        text-transform: uppercase;
+        font-weight: 600;
+    }
+
+    .dropdown-backdrop {
+        position: fixed;
+        inset: 0;
+        background: transparent;
+        border: none;
+        z-index: 50;
+        cursor: default;
+    }
+
+    .header-right {
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    .os-toggle {
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-tertiary, #2a2a2c);
+        border: none;
+        border-radius: 10px;
+        font-size: 18px;
+        cursor: pointer;
+    }
+
+    .os-toggle:hover {
+        background: var(--surface-hover, #333);
+    }
+
+    /* Scrollable Content */
+    .app-content {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        padding: 16px;
+        padding-bottom: calc(16px + env(safe-area-inset-bottom));
     }
 
     .tab-content {
-        margin-top: 16px;
+        max-width: 980px;
+        margin: 0 auto;
     }
 
     .hub-tab {
-        min-height: 600px;
+        min-height: 400px;
     }
 
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .app-header {
+            flex-wrap: wrap;
+            padding: 8px 12px;
+            padding-top: calc(8px + env(safe-area-inset-top));
+        }
 
-    header {
-        display: flex;
-        gap: 12px;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-    }
+        .header-left h1 {
+            font-size: 16px;
+        }
 
-    .title {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-    }
-    .title h1 {
-        margin: 0;
-        font-size: 18px;
-        letter-spacing: -0.01em;
-        color: var(--text-primary);
-    }
-    .title p {
-        margin: 0;
-        color: var(--text-muted);
-        font-size: 12px;
-    }
+        .header-nav {
+            order: 3;
+            width: 100%;
+            overflow-x: auto;
+            gap: 2px;
+            padding-top: 8px;
+            scrollbar-width: none;
+        }
 
-    .controls {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-        flex-wrap: wrap;
+        .header-nav::-webkit-scrollbar {
+            display: none;
+        }
+
+        .nav-trigger {
+            padding: 8px 12px;
+            font-size: 13px;
+        }
+
+        .dropdown-menu {
+            left: 0;
+            transform: none;
+        }
+
+        .app-content {
+            padding: 12px;
+        }
     }
 
     .searchRow {
@@ -513,17 +722,17 @@
     .list {
         margin-top: 16px;
         display: grid;
-        gap: 14px;
+        gap: 20px;  /* Increased from 14px for better vertical spacing */
     }
 
     .card {
         background: var(--card-bg, var(--bg-secondary));
         border: 1px solid var(--card-border, var(--border-default));
         border-radius: 14px;
-        padding: 12px;
+        padding: 16px;  /* Increased from 12px for more breathing room */
         display: grid;
         grid-template-columns: 1fr auto;
-        gap: 10px;
+        gap: 12px;  /* Increased from 10px */
         transition: border-color 0.15s, background 0.15s;
     }
 
@@ -534,13 +743,13 @@
 
     .card-left {
         display: flex;
-        gap: 12px;
+        gap: 14px;  /* Increased from 12px */
         align-items: flex-start;
     }
 
     .product-icon {
-        width: 28px;
-        height: 28px;
+        width: 32px;  /* Slightly larger for better visibility */
+        height: 32px;
         border-radius: 6px;
         flex-shrink: 0;
     }
@@ -551,26 +760,27 @@
     }
 
     .cmd {
-        font-size: 14px;
+        font-size: 15px;  /* Slightly larger for emphasis */
         font-weight: 600;
         margin: 0;
         color: var(--text-primary);
+        line-height: 1.4;
     }
 
     .meta {
-        margin-top: 4px;
+        margin-top: 6px;  /* Increased from 4px */
         display: flex;
-        gap: 10px;
+        gap: 12px;  /* Increased from 10px */
         flex-wrap: wrap;
         color: var(--text-muted);
         font-size: 12px;
     }
 
     .description {
-        margin: 8px 0 0;
-        font-size: 12px;
+        margin: 10px 0 0;  /* Increased from 8px */
+        font-size: 13px;  /* Slightly larger */
         color: var(--text-secondary);
-        line-height: 1.4;
+        line-height: 1.5;  /* Improved line height */
     }
 
 
@@ -644,14 +854,20 @@
     }
 
     .groupSection {
-        margin-top: 16px;
+        margin-top: 24px;  /* Increased from 16px for better separation between groups */
+    }
+
+    .groupSection:first-child {
+        margin-top: 0;
     }
 
     .groupHeader {
-        font-size: 16px;
-        font-weight: 500;
-        margin: 0 0 8px 0;
+        font-size: 17px;  /* Slightly larger */
+        font-weight: 600;  /* Bolder */
+        margin: 0 0 12px 0;  /* Increased bottom margin */
         color: var(--text-primary);
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--border-subtle, var(--border-default));
     }
 
     .tagsRow {
@@ -789,81 +1005,102 @@
     }
 </style>
 
-<div class="wrap">
-    <header>
-        <div class="title">
-            <h1>🎵 Producer Hub</h1>
-            <p>Your comprehensive music production workspace</p>
+<div class="app-container">
+    <!-- Fixed Header -->
+    <header class="app-header">
+        <div class="header-left">
+            <ProducerHubLogo size={28} />
+            <h1>Producer Hub</h1>
         </div>
 
-        <div class="controls">
-            <button on:click={toggleKeyOS} title="Toggle key display OS">
-                Keys: {keyOS === 'mac' ? 'macOS' : 'Windows'}
+        <!-- Dropdown Navigation -->
+        <nav class="header-nav">
+            <!-- Shortcuts Dropdown -->
+            <div class="nav-dropdown">
+                <button
+                    class="nav-trigger"
+                    class:active={activeTab === 'shortcuts' || activeTab === 'infobase'}
+                    onclick={() => activeDropdown = activeDropdown === 'shortcuts' ? null : 'shortcuts'}
+                >
+                    ⌨ Shortcuts ▼
+                </button>
+                {#if activeDropdown === 'shortcuts'}
+                    <div class="dropdown-menu">
+                        <button class="dropdown-item" class:current={activeTab === 'shortcuts'} onclick={() => { activeTab = 'shortcuts'; activeDropdown = null; }}>
+                            ⌨ Keyboard Shortcuts
+                        </button>
+                        <button class="dropdown-item" class:current={activeTab === 'infobase'} onclick={() => { activeTab = 'infobase'; activeDropdown = null; }}>
+                            ✎ Info Base
+                        </button>
+                    </div>
+                {/if}
+            </div>
+
+            <!-- Tools Dropdown -->
+            <div class="nav-dropdown">
+                <button
+                    class="nav-trigger"
+                    class:active={activeTab === 'projects' || activeTab === 'inbox' || activeTab === 'collections' || activeTab === 'search'}
+                    onclick={() => activeDropdown = activeDropdown === 'tools' ? null : 'tools'}
+                >
+                    ⚙ Tools ▼
+                </button>
+                {#if activeDropdown === 'tools'}
+                    <div class="dropdown-menu">
+                        <button class="dropdown-item" class:current={activeTab === 'projects'} onclick={() => { activeTab = 'projects'; activeDropdown = null; }}>
+                            ◈ Projects
+                        </button>
+                        <button class="dropdown-item" class:current={activeTab === 'inbox'} onclick={() => { activeTab = 'inbox'; activeDropdown = null; }}>
+                            ◉ Inbox
+                        </button>
+                        <button class="dropdown-item" class:current={activeTab === 'collections'} onclick={() => { activeTab = 'collections'; activeDropdown = null; }}>
+                            ◆ Collections
+                        </button>
+                        <button class="dropdown-item" class:current={activeTab === 'references'} onclick={() => { activeTab = 'references'; activeDropdown = null; }}>
+                            ♫ References
+                        </button>
+                        <button class="dropdown-item" class:current={activeTab === 'search'} onclick={() => { activeTab = 'search'; activeDropdown = null; }}>
+                            ⚲ Global Search
+                        </button>
+                    </div>
+                {/if}
+            </div>
+
+            <!-- Create Dropdown -->
+            <div class="nav-dropdown">
+                <button
+                    class="nav-trigger"
+                    onclick={() => activeDropdown = activeDropdown === 'create' ? null : 'create'}
+                >
+                    ♪ Create ▼
+                </button>
+                {#if activeDropdown === 'create'}
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="{base}/patterns" onclick={() => activeDropdown = null}>
+                            ⬢ Drum Patterns
+                        </a>
+                        <span class="dropdown-item disabled">
+                            ♬ Piano Roll <span class="coming-soon">Soon</span>
+                        </span>
+                    </div>
+                {/if}
+            </div>
+        </nav>
+
+        <div class="header-right">
+            <button class="os-toggle" onclick={toggleKeyOS} title="Toggle key display OS">
+                {keyOS === 'mac' ? '🍎' : '🪟'}
             </button>
         </div>
     </header>
 
-    <!-- Tab Navigation -->
-    <nav class="tabs">
-        <button
-            class="tab"
-            class:active={activeTab === 'shortcuts'}
-            on:click={() => activeTab = 'shortcuts'}
-            data-testid="tab-shortcuts"
-        >
-            ⌨ Shortcuts
-        </button>
-        <button
-            class="tab"
-            class:active={activeTab === 'infobase'}
-            on:click={() => activeTab = 'infobase'}
-            data-testid="tab-infobase"
-        >
-            ✎ Info Base
-        </button>
-        <button
-            class="tab"
-            class:active={activeTab === 'projects'}
-            on:click={() => activeTab = 'projects'}
-            data-testid="tab-projects"
-        >
-            ◈ Projects
-        </button>
-        <button
-            class="tab"
-            class:active={activeTab === 'inbox'}
-            on:click={() => activeTab = 'inbox'}
-            data-testid="tab-inbox"
-        >
-            ◉ Inbox
-        </button>
-        <button
-            class="tab"
-            class:active={activeTab === 'references'}
-            on:click={() => activeTab = 'references'}
-            data-testid="tab-references"
-        >
-            ♫ References
-        </button>
-        <button
-            class="tab"
-            class:active={activeTab === 'collections'}
-            on:click={() => activeTab = 'collections'}
-            data-testid="tab-collections"
-        >
-            ◆ Collections
-        </button>
-        <button
-            class="tab"
-            class:active={activeTab === 'search'}
-            on:click={() => activeTab = 'search'}
-            data-testid="tab-search"
-        >
-            ⚲ Search
-        </button>
-    </nav>
+    <!-- Click outside to close -->
+    {#if activeDropdown}
+        <button class="dropdown-backdrop" onclick={() => activeDropdown = null} aria-label="Close menu"></button>
+    {/if}
 
-    <!-- Shortcuts Tab -->
+    <!-- Scrollable Content -->
+    <main class="app-content">
     {#if activeTab === 'shortcuts'}
     <div class="tab-content" data-testid="shortcuts-tab-content">
         <div class="searchRow">
@@ -871,7 +1108,7 @@
 
             <select data-testid="product-filter" bind:value={product} title="Filter by product">
                 <option value="all">All products</option>
-                {#each allProducts as p}
+                {#each availableProducts as p}
                     <option value={p.productId}>{p.name}</option>
                 {/each}
             </select>
@@ -911,7 +1148,7 @@
                 <button
                     class="facetChip"
                     class:selected={selectedFacets.includes(facet)}
-                    on:click={() => toggleFacet(facet)}
+                    onclick={() => toggleFacet(facet)}
                     title={selectedFacets.includes(facet) ? `Remove ${facet} filter` : `Filter by ${facet}`}
                 >
                     {facet}
@@ -992,7 +1229,7 @@
 
                             <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
                                 <KeyCaps keys={keysFor(s)} />
-                                <button class="star" on:click={() => onToggleFav(s.id)}>
+                                <button class="star" onclick={() => onToggleFav(s.id)}>
                                     {favorites.has(s.id) ? '★ Starred' : '☆ Star'}
                                 </button>
                             </div>
@@ -1046,6 +1283,7 @@
         <GlobalSearch on:navigate={(e) => activeTab = e.detail.tab as typeof activeTab} />
     </div>
     {/if}
+    </main>
 </div>
 
 <!-- Command Palette -->

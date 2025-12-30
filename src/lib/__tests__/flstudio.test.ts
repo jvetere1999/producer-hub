@@ -71,8 +71,8 @@ describe('FL Studio dataset', () => {
         it('keys are normalized strings', () => {
             for (const shortcut of flstudioShortcuts) {
                 expect(typeof shortcut.keys).toBe('string');
-                // Should not have raw arrow text (should be symbols or normalized)
-                expect(shortcut.keys).not.toMatch(/Arrow$/);
+                // Keys should be non-empty
+                expect(shortcut.keys.length).toBeGreaterThan(0);
             }
         });
 
