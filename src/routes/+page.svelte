@@ -508,7 +508,7 @@
     }
 
     .dropdown-item.current {
-        background: var(--accent-primary, #3b82f6)22;
+        background: var(--accent-primary, #3b82f6);
         color: var(--accent-primary, #3b82f6);
     }
 
@@ -522,7 +522,7 @@
         font-size: 10px;
         padding: 2px 6px;
         margin-left: auto;
-        background: var(--accent-secondary, #50b8b8)22;
+        background: var(--accent-secondary, #50b8b8);
         color: var(--accent-secondary, #50b8b8);
         border-radius: 4px;
         text-transform: uppercase;
@@ -567,8 +567,7 @@
         overflow-y: auto;
         overflow-x: hidden;
         -webkit-overflow-scrolling: touch;
-        padding: 16px;
-        padding-bottom: calc(16px + env(safe-area-inset-bottom));
+        padding: 16px 16px calc(16px + var(--safe-area-inset-bottom));
     }
 
     .tab-content {
@@ -584,8 +583,7 @@
     @media (max-width: 768px) {
         .app-header {
             flex-wrap: wrap;
-            padding: 8px 12px;
-            padding-top: calc(8px + env(safe-area-inset-top));
+            padding: calc(8px + var(--safe-area-inset-top)) 12px 8px;
         }
 
         .header-left h1 {
@@ -651,7 +649,7 @@
     input[type='text']:focus {
         outline: none;
         border-color: var(--accent-primary);
-        box-shadow: 0 0 0 2px var(--accent-primary, #ff764d)33;
+        box-shadow: 0 0 0 2px var(--accent-primary, #ff764d);
     }
 
     select, button {
@@ -672,6 +670,29 @@
     select:focus, button:focus {
         outline: none;
         border-color: var(--accent-primary);
+    }
+
+    /* Enhanced focus-visible styles for keyboard navigation */
+    select:focus-visible,
+    button:focus-visible {
+        outline: 2px solid var(--accent-primary, #ff764d);
+        outline-offset: 2px;
+    }
+
+    .nav-trigger:focus-visible {
+        outline: 2px solid var(--accent-primary, #ff764d);
+        outline-offset: 2px;
+    }
+
+    .dropdown-item:focus-visible {
+        outline: 2px solid var(--accent-primary, #ff764d);
+        outline-offset: -2px;
+        background: var(--surface-hover, #3d3d3d);
+    }
+
+    .os-toggle:focus-visible {
+        outline: 2px solid var(--accent-primary, #ff764d);
+        outline-offset: 2px;
     }
 
     .pill {
@@ -1000,22 +1021,25 @@
         </div>
 
         <!-- Dropdown Navigation -->
-        <nav class="header-nav">
+        <nav class="header-nav" aria-label="Main navigation">
             <!-- Shortcuts Dropdown -->
             <div class="nav-dropdown">
                 <button
                     class="nav-trigger"
                     class:active={activeTab === 'shortcuts' || activeTab === 'infobase'}
                     onclick={() => activeDropdown = activeDropdown === 'shortcuts' ? null : 'shortcuts'}
+                    aria-expanded={activeDropdown === 'shortcuts'}
+                    aria-haspopup="menu"
+                    aria-label="Shortcuts menu"
                 >
                     ⌨ Shortcuts ▼
                 </button>
                 {#if activeDropdown === 'shortcuts'}
-                    <div class="dropdown-menu">
-                        <button class="dropdown-item" class:current={activeTab === 'shortcuts'} onclick={() => { activeTab = 'shortcuts'; activeDropdown = null; }}>
+                    <div class="dropdown-menu" role="menu" aria-label="Shortcuts submenu">
+                        <button class="dropdown-item" class:current={activeTab === 'shortcuts'} onclick={() => { activeTab = 'shortcuts'; activeDropdown = null; }} role="menuitem">
                             ⌨ Keyboard Shortcuts
                         </button>
-                        <button class="dropdown-item" class:current={activeTab === 'infobase'} onclick={() => { activeTab = 'infobase'; activeDropdown = null; }}>
+                        <button class="dropdown-item" class:current={activeTab === 'infobase'} onclick={() => { activeTab = 'infobase'; activeDropdown = null; }} role="menuitem">
                             ✎ Info Base
                         </button>
                     </div>
@@ -1028,24 +1052,27 @@
                     class="nav-trigger"
                     class:active={activeTab === 'projects' || activeTab === 'inbox' || activeTab === 'collections' || activeTab === 'search'}
                     onclick={() => activeDropdown = activeDropdown === 'tools' ? null : 'tools'}
+                    aria-expanded={activeDropdown === 'tools'}
+                    aria-haspopup="menu"
+                    aria-label="Tools menu"
                 >
                     ⚙ Tools ▼
                 </button>
                 {#if activeDropdown === 'tools'}
-                    <div class="dropdown-menu">
-                        <button class="dropdown-item" class:current={activeTab === 'projects'} onclick={() => { activeTab = 'projects'; activeDropdown = null; }}>
+                    <div class="dropdown-menu" role="menu" aria-label="Tools submenu">
+                        <button class="dropdown-item" class:current={activeTab === 'projects'} onclick={() => { activeTab = 'projects'; activeDropdown = null; }} role="menuitem">
                             ◈ Projects
                         </button>
-                        <button class="dropdown-item" class:current={activeTab === 'inbox'} onclick={() => { activeTab = 'inbox'; activeDropdown = null; }}>
+                        <button class="dropdown-item" class:current={activeTab === 'inbox'} onclick={() => { activeTab = 'inbox'; activeDropdown = null; }} role="menuitem">
                             ◉ Inbox
                         </button>
-                        <button class="dropdown-item" class:current={activeTab === 'collections'} onclick={() => { activeTab = 'collections'; activeDropdown = null; }}>
+                        <button class="dropdown-item" class:current={activeTab === 'collections'} onclick={() => { activeTab = 'collections'; activeDropdown = null; }} role="menuitem">
                             ◆ Collections
                         </button>
-                        <button class="dropdown-item" class:current={activeTab === 'references'} onclick={() => { activeTab = 'references'; activeDropdown = null; }}>
+                        <button class="dropdown-item" class:current={activeTab === 'references'} onclick={() => { activeTab = 'references'; activeDropdown = null; }} role="menuitem">
                             ♫ References
                         </button>
-                        <button class="dropdown-item" class:current={activeTab === 'search'} onclick={() => { activeTab = 'search'; activeDropdown = null; }}>
+                        <button class="dropdown-item" class:current={activeTab === 'search'} onclick={() => { activeTab = 'search'; activeDropdown = null; }} role="menuitem">
                             ⚲ Global Search
                         </button>
                     </div>
@@ -1057,24 +1084,29 @@
                 <button
                     class="nav-trigger"
                     onclick={() => activeDropdown = activeDropdown === 'create' ? null : 'create'}
+                    aria-expanded={activeDropdown === 'create'}
+                    aria-haspopup="menu"
+                    aria-label="Create menu"
                 >
-                    ♪ Create ▼
+                    Create
                 </button>
                 {#if activeDropdown === 'create'}
-                    <div class="dropdown-menu">
-                        <a class="dropdown-item" href="{base}/patterns" onclick={() => activeDropdown = null}>
-                            ⬢ Drum Patterns
+                    <div class="dropdown-menu" role="menu" aria-label="Create submenu">
+                        <a class="dropdown-item" href="{base}/arrange" onclick={() => activeDropdown = null} role="menuitem">
+                            Arrange
                         </a>
-                        <span class="dropdown-item disabled">
-                            ♬ Piano Roll <span class="coming-soon">Soon</span>
-                        </span>
                     </div>
                 {/if}
             </div>
         </nav>
 
         <div class="header-right">
-            <button class="os-toggle" onclick={toggleKeyOS} title="Toggle key display OS">
+            <button
+                class="os-toggle"
+                onclick={toggleKeyOS}
+                title="Toggle key display OS"
+                aria-label={keyOS === 'mac' ? 'Currently showing Mac shortcuts, click to switch to Windows' : 'Currently showing Windows shortcuts, click to switch to Mac'}
+            >
                 {keyOS === 'mac' ? '🍎' : '🪟'}
             </button>
         </div>

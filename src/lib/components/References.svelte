@@ -10,8 +10,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import AudioAnalysisPanel from './AudioAnalysisPanel.svelte';
-	import { PageHeader } from '$lib/components/ui';
+	import { PageHeader, EmptyState } from '$lib/components/ui';
 	import { playerStore, type QueueTrack, seek } from '$lib/player';
+	import { toasts } from '$lib/stores/toast';
 	import {
 		loadReferences,
 		saveReferences,
@@ -252,8 +253,7 @@
 
 		} catch (e) {
 			if ((e as Error).name !== 'AbortError') {
-				console.error('Import failed:', e);
-				alert('Failed to import files');
+				toasts.error('Failed to import files. Please try again.');
 			}
 		}
 	}
@@ -360,7 +360,7 @@
 			saveReferences(state);
 
 		} catch (e) {
-			console.error('Waveform and analysis generation failed:', e);
+			toasts.error('Failed to process audio. The file may be corrupted.');
 		} finally {
 			waveformProgress = { stage: 'done', progress: 1 };
 			setTimeout(() => { waveformProgress = null; }, 500);
@@ -631,7 +631,11 @@
 
 		<div class="library-list">
 			{#if libraries.length === 0}
-				<div class="empty">No libraries yet</div>
+				<EmptyState
+					icon="🎵"
+					title="No libraries yet"
+					body="Create a library to organize your reference tracks"
+				/>
 			{:else}
 				{#each libraries as library (library.id)}
 					<button
@@ -695,7 +699,11 @@
 			<!-- Track List -->
 			<div class="track-list">
 				{#if selectedLibrary.tracks.length === 0}
-					<div class="empty">No tracks yet. Import a folder to get started.</div>
+					<EmptyState
+						icon="🎧"
+						title="No tracks yet"
+						body="Import a folder to add reference tracks"
+					/>
 				{:else}
 					{#each selectedLibrary.tracks as track (track.id)}
 						<div

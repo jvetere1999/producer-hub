@@ -8,7 +8,7 @@
 	import SettingsPanel from '$lib/components/SettingsPanel.svelte';
 	import BottomPlayer from '$lib/components/BottomPlayer.svelte';
 	import { playerVisible, playerStore, initAudioController } from '$lib/player';
-	import { IconButton } from '$lib/components/ui';
+	import { IconButton, ToastContainer } from '$lib/components/ui';
 	import '$lib/design-tokens.css';
 
 	let settingsOpen = false;
@@ -104,6 +104,9 @@
 	{#if isPlayerVisible}
 		<BottomPlayer />
 	{/if}
+
+	<!-- Toast Notifications -->
+	<ToastContainer />
 {/if}
 
 <div class="main-wrapper" class:has-player={isPlayerVisible}>
@@ -180,8 +183,15 @@
 
 	/* When player is visible, reserve space at bottom */
 	.main-wrapper.has-player {
-		/* Bottom player height: ~72px + safe area */
-		bottom: calc(72px + env(safe-area-inset-bottom));
+		/* Use token-based player height calculation */
+		bottom: var(--player-total-height);
+	}
+
+	/* Mobile: use taller player height for two-row layout */
+	@media (max-width: 600px) {
+		.main-wrapper.has-player {
+			bottom: var(--player-total-height-mobile);
+		}
 	}
 
 	/* Input avoidance - ensure focused inputs scroll into view */
@@ -189,14 +199,14 @@
 	:global(textarea:focus),
 	:global(select:focus) {
 		/* Scroll margin ensures element is visible above the bottom player */
-		scroll-margin-bottom: calc(80px + env(safe-area-inset-bottom));
+		scroll-margin-bottom: var(--input-scroll-margin);
 	}
 
 	/* When player is visible, increase scroll margin for focused inputs */
 	.main-wrapper.has-player :global(input:focus),
 	.main-wrapper.has-player :global(textarea:focus),
 	.main-wrapper.has-player :global(select:focus) {
-		scroll-margin-bottom: calc(100px + env(safe-area-inset-bottom));
+		scroll-margin-bottom: calc(var(--input-scroll-margin) + var(--space-4));
 	}
 
 	/* iOS keyboard avoidance - use visual viewport to handle virtual keyboard */
@@ -204,6 +214,16 @@
 		:global(body) {
 			/* Dynamic viewport height accounts for iOS keyboard */
 			min-height: 100dvh;
+		}
+	}
+
+	/* Ensure inputs scroll into view when focused on iOS Safari */
+	@supports (-webkit-touch-callout: none) {
+		:global(input:focus),
+		:global(textarea:focus),
+		:global(select:focus) {
+			/* Additional scroll padding for iOS Safari with virtual keyboard */
+			scroll-padding-bottom: calc(var(--input-scroll-margin) + var(--space-8));
 		}
 	}
 </style>

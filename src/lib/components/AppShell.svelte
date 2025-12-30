@@ -451,10 +451,10 @@
         /* Prevent scroll chaining to parent */
         overscroll-behavior: contain;
         /* iOS safe area for sides */
-        padding-left: env(safe-area-inset-left);
-        padding-right: env(safe-area-inset-right);
+        padding-left: var(--safe-area-inset-left);
+        padding-right: var(--safe-area-inset-right);
         /* Bottom safe area handled by layout wrapper when player visible */
-        padding-bottom: env(safe-area-inset-bottom);
+        padding-bottom: var(--safe-area-inset-bottom);
     }
 
     .app-content.has-player {
@@ -478,7 +478,7 @@
             flex-wrap: wrap;
             gap: var(--space-2);
             padding: var(--space-2) var(--space-3);
-            padding-top: calc(var(--space-2) + env(safe-area-inset-top));
+            padding-top: calc(var(--space-2) + var(--safe-area-inset-top));
         }
 
         .app-title {

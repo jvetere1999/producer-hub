@@ -139,6 +139,31 @@
    * Minimum touch target size for accessibility
    * ============================================ */
   --touch-target: 44px;
+
+  /* ============================================
+   * Safe Area Insets
+   * Fallback values for devices without notches/home indicators
+   * Actual values come from env() at runtime
+   * ============================================ */
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --safe-area-inset-right: env(safe-area-inset-right, 0px);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-inset-left: env(safe-area-inset-left, 0px);
+
+  /* ============================================
+   * Bottom Player Layout
+   * ============================================ */
+  --player-height: 72px;
+  --player-height-mobile: 88px;  /* Two-row layout on mobile */
+  --player-total-height: calc(var(--player-height) + var(--safe-area-inset-bottom));
+  --player-total-height-mobile: calc(var(--player-height-mobile) + var(--safe-area-inset-bottom));
+
+  /* Content padding when player is visible */
+  --content-bottom-offset: var(--player-total-height);
+  --content-bottom-offset-mobile: var(--player-total-height-mobile);
+
+  /* Input scroll margin to avoid being hidden behind player */
+  --input-scroll-margin: calc(var(--player-height) + var(--space-4) + var(--safe-area-inset-bottom));
 }
 
 /* ============================================

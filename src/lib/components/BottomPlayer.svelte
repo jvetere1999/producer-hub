@@ -22,6 +22,7 @@
         savePlayerSettings
     } from '$lib/player';
     import { IconButton } from '$lib/components/ui';
+    import { toasts } from '$lib/stores/toast';
 
     let currentTime = 0;
     let duration = 0;
@@ -57,6 +58,13 @@
     onDestroy(() => {
         if (unsubscribe) unsubscribe();
     });
+
+    // Show toast when player error occurs
+    let lastErrorShown = '';
+    $: if ($playerStore.error && $playerStore.error !== lastErrorShown) {
+        lastErrorShown = $playerStore.error;
+        toasts.error($playerStore.error);
+    }
 
     function formatTime(seconds: number): string {
         if (!isFinite(seconds)) return '0:00';
@@ -290,10 +298,12 @@
         z-index: var(--z-sticky);
         box-shadow: var(--shadow-player);
         /* iOS safe area - add padding at bottom for home indicator */
-        padding-bottom: env(safe-area-inset-bottom);
-        /* Ensure player doesn't get cut off */
-        padding-left: env(safe-area-inset-left);
-        padding-right: env(safe-area-inset-right);
+        padding-bottom: var(--safe-area-inset-bottom);
+        /* Ensure player doesn't get cut off on notched devices */
+        padding-left: var(--safe-area-inset-left);
+        padding-right: var(--safe-area-inset-right);
+        /* Ensure player content is always above home indicator */
+        min-height: var(--player-height);
     }
 
     .progress-track {

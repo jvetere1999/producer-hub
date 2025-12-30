@@ -8,7 +8,7 @@
 -->
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { PageHeader } from '$lib/components/ui';
+	import { PageHeader, EmptyState } from '$lib/components/ui';
 	import {
 		loadProjects,
 		saveProjects,
@@ -285,7 +285,11 @@
 
 		<div class="project-list">
 			{#if projects.length === 0}
-				<div class="empty">No projects found</div>
+				<EmptyState
+					icon="📁"
+					title="No projects yet"
+					body="Create your first project to start organizing your work"
+				/>
 			{:else}
 				{#each projects as project (project.id)}
 					<button

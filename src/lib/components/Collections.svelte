@@ -8,6 +8,7 @@
 -->
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { EmptyState } from '$lib/components/ui';
 	import {
 		loadCollections,
 		saveCollections,
@@ -325,7 +326,11 @@
 
 		<div class="collection-list">
 			{#if collections.length === 0}
-				<div class="empty">No collections yet</div>
+				<EmptyState
+					icon="📚"
+					title="No collections yet"
+					body="Create a collection to organize your favorite items"
+				/>
 			{:else}
 				{#each collections as collection (collection.id)}
 					<button
@@ -391,7 +396,11 @@
 				</div>
 
 				{#if selectedCollection.items.length === 0}
-					<div class="empty">No items in this collection</div>
+					<EmptyState
+						icon="✨"
+						title="No items yet"
+						body="Add items from projects, references, or shortcuts"
+					/>
 				{:else}
 					<div class="items-grid">
 						{#each selectedCollection.items as item, index (item.id)}

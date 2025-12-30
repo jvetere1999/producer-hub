@@ -8,6 +8,7 @@
 -->
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { EmptyState } from '$lib/components/ui';
 	import {
 		loadInbox,
 		saveInbox,
@@ -248,7 +249,11 @@
 		</div>
 
 		{#if activeItems.length === 0}
-			<div class="empty">No items yet. Add your first idea above!</div>
+			<EmptyState
+				icon="💡"
+				title="No ideas yet"
+				body="Capture your first idea, note, or task above"
+			/>
 		{:else}
 			{#each activeItems as item (item.id)}
 				<div class="inbox-item" class:archived={item.archived} class:promoted={item.promotedProjectId}>
