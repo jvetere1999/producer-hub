@@ -1,0 +1,35 @@
+# Cloudflare Pages Headers
+# https://developers.cloudflare.com/pages/configuration/headers/
+
+# PWA manifest
+/manifest.webmanifest
+  Content-Type: application/manifest+json
+  Cache-Control: public, max-age=604800
+
+# Service Worker - no cache
+/sw.js
+  Cache-Control: no-cache, no-store, must-revalidate
+  Service-Worker-Allowed: /
+
+# Workbox - immutable cache
+/workbox-*.js
+  Cache-Control: public, max-age=31536000, immutable
+
+# Immutable assets
+/_app/immutable/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Icons
+/icons/*
+  Cache-Control: public, max-age=604800
+
+# Ads.txt
+/ads.txt
+  Cache-Control: public, max-age=86400
+
+# Security headers for all routes
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+
