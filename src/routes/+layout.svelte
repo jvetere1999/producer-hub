@@ -78,9 +78,10 @@
 	}
 </script>
 
-<svelte:window on:keydown={handleGlobalKeydown} />
+<svelte:window onkeydown={handleGlobalKeydown} />
 
-<!-- Settings Cog Button (always visible, fixed position) -->
+<!-- Settings Cog Button (always visible, fixed position) - hidden on arrange page -->
+{#if !$page.url.pathname.includes('/arrange')}
 <div class="settings-cog-wrapper">
 	<IconButton
 		ariaLabel="Open settings"
@@ -95,6 +96,7 @@
 		</svg>
 	</IconButton>
 </div>
+{/if}
 
 {#if mounted}
 	<!-- Settings Panel -->

@@ -22,6 +22,7 @@
 -->
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
+    import { goto } from '$app/navigation';
     import { allProducts, allShortcuts } from '$lib/shortcuts';
     import type { ShortcutWithProduct } from '$lib/types';
     import { loadFavorites, toggleFavorite } from '$lib/favorites';
@@ -594,9 +595,13 @@
             order: 3;
             width: 100%;
             overflow-x: auto;
+            overflow-y: visible;
             gap: 2px;
             padding-top: 8px;
+            padding-bottom: 4px;
             scrollbar-width: none;
+            /* Allow dropdowns to overflow */
+            clip-path: none;
         }
 
         .header-nav::-webkit-scrollbar {
@@ -1088,13 +1093,13 @@
                     aria-haspopup="menu"
                     aria-label="Create menu"
                 >
-                    Create
+                    ✚ Create ▼
                 </button>
                 {#if activeDropdown === 'create'}
                     <div class="dropdown-menu" role="menu" aria-label="Create submenu">
-                        <a class="dropdown-item" href="{base}/arrange" onclick={() => activeDropdown = null} role="menuitem">
-                            Arrange
-                        </a>
+                        <button class="dropdown-item" onclick={() => { goto(`${base}/arrange`); activeDropdown = null; }} role="menuitem">
+                            🎹 Arrange
+                        </button>
                     </div>
                 {/if}
             </div>

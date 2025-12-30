@@ -3,11 +3,23 @@
  *
  * Handles synchronization between local storage and remote vault.
  * Implements last-write-wins merge strategy with conflict detection.
+ * Supports Lane Builder entities (templates, progressions, audio loops, clips).
  */
 
 import type { StorageAdapter } from './adapter';
-import type { VaultMeta, ConflictRecord, SyncResult, ProjectRef, LibraryRef, InfobaseRef } from './vaultTypes';
-import { getDeviceId } from './vaultTypes';
+import type {
+    VaultMeta,
+    ConflictRecord,
+    SyncResult,
+    ProjectRef,
+    LibraryRef,
+    InfobaseRef,
+    LaneTemplateRef,
+    ChordProgressionRef,
+    AudioLoopRef,
+    ProjectClipRefEntry,
+} from './vaultTypes';
+import { getDeviceId, VAULT_SCHEMA_VERSION } from './vaultTypes';
 
 
 /**
@@ -130,15 +142,15 @@ export class SyncEngine {
 
         // Both exist - merge with last-write-wins
         const merged: VaultMeta = {
-            schemaVersion: 1,
+            schemaVersion: VAULT_SCHEMA_VERSION,
             deviceId: this.deviceId,
             updatedAt: new Date().toISOString()
         };
 
-        // Merge projects
+        // Merge projects (conservative merge for clip refs)
         if (local.projects || remote.projects) {
             const { merged: mergedProjects, conflicts: projectConflicts } =
-                this.mergeEntityList<ProjectRef>(local.projects || [], remote.projects || [], 'project', local.deviceId, remote.deviceId);
+                this.mergeProjects(local.projects || [], remote.projects || [], local.deviceId, remote.deviceId);
             merged.projects = mergedProjects;
             conflicts.push(...projectConflicts);
         }
@@ -159,6 +171,35 @@ export class SyncEngine {
             conflicts.push(...infobaseConflicts);
         }
 
+        // Merge lane templates (conflict if notes/settings diverge)
+        if (local.laneTemplates || remote.laneTemplates) {
+            const { merged: mergedTemplates, conflicts: templateConflicts } =
+                this.mergeLaneTemplates(local.laneTemplates || [], remote.laneTemplates || [], local.deviceId, remote.deviceId);
+            merged.laneTemplates = mergedTemplates;
+            conflicts.push(...templateConflicts);
+        }
+
+        // Merge chord progressions
+        if (local.chordProgressions || remote.chordProgressions) {
+            const { merged: mergedProgressions, conflicts: progressionConflicts } =
+                this.mergeChordProgressions(local.chordProgressions || [], remote.chordProgressions || [], local.deviceId, remote.deviceId);
+            merged.chordProgressions = mergedProgressions;
+            conflicts.push(...progressionConflicts);
+        }
+
+        // Merge audio loops (dedupe by blob hash)
+        if (local.audioLoops || remote.audioLoops) {
+            merged.audioLoops = this.mergeAudioLoops(local.audioLoops || [], remote.audioLoops || []);
+        }
+
+        // Merge project clips
+        if (local.projectClips || remote.projectClips) {
+            const { merged: mergedClips, conflicts: clipConflicts } =
+                this.mergeEntityList<ProjectClipRefEntry>(local.projectClips || [], remote.projectClips || [], 'projectClip', local.deviceId, remote.deviceId);
+            merged.projectClips = mergedClips;
+            conflicts.push(...clipConflicts);
+        }
+
         // Merge settings (last-write-wins for the whole object)
         if (local.settings && remote.settings) {
             const localTime = new Date(local.settings.updatedAt).getTime();
@@ -174,6 +215,203 @@ export class SyncEngine {
         }
 
         return { merged, conflictsFound: conflicts };
+    }
+
+    /**
+     * Merge projects with conservative clip ref merging
+     */
+    private mergeProjects(
+        local: ProjectRef[],
+        remote: ProjectRef[],
+        localDeviceId: string,
+        remoteDeviceId: string
+    ): { merged: ProjectRef[]; conflicts: ConflictRecord[] } {
+        const conflicts: ConflictRecord[] = [];
+        const merged = new Map<string, ProjectRef>();
+
+        // Add all local projects
+        for (const project of local) {
+            merged.set(project.id, project);
+        }
+
+        // Merge remote projects
+        for (const remoteProject of remote) {
+            const localProject = merged.get(remoteProject.id);
+
+            if (!localProject) {
+                merged.set(remoteProject.id, remoteProject);
+            } else {
+                const localTime = new Date(localProject.updatedAt).getTime();
+                const remoteTime = new Date(remoteProject.updatedAt).getTime();
+
+                // Conservative merge: combine clip refs from both sides
+                const mergedClipRefs = new Set([
+                    ...(localProject.clipRefs || []),
+                    ...(remoteProject.clipRefs || [])
+                ]);
+
+                // Combine blob IDs
+                const mergedBlobIds = new Set([
+                    ...localProject.blobIds,
+                    ...remoteProject.blobIds
+                ]);
+
+                // Use newer metadata but keep combined refs
+                const newerProject = remoteTime > localTime ? remoteProject : localProject;
+                merged.set(remoteProject.id, {
+                    ...newerProject,
+                    clipRefs: Array.from(mergedClipRefs),
+                    blobIds: Array.from(mergedBlobIds)
+                });
+
+                // Record conflict if there were incompatible edits
+                if (Math.abs(localTime - remoteTime) < 1000 &&
+                    localProject.name !== remoteProject.name) {
+                    conflicts.push({
+                        entityType: 'project',
+                        entityId: localProject.id,
+                        localValue: localProject,
+                        remoteValue: remoteProject,
+                        localDeviceId,
+                        remoteDeviceId,
+                        localUpdatedAt: localProject.updatedAt,
+                        remoteUpdatedAt: remoteProject.updatedAt,
+                        conflictReason: 'concurrent_edit'
+                    });
+                }
+            }
+        }
+
+        return { merged: Array.from(merged.values()), conflicts };
+    }
+
+    /**
+     * Merge lane templates with conflict detection for note/settings divergence
+     */
+    private mergeLaneTemplates(
+        local: LaneTemplateRef[],
+        remote: LaneTemplateRef[],
+        localDeviceId: string,
+        remoteDeviceId: string
+    ): { merged: LaneTemplateRef[]; conflicts: ConflictRecord[] } {
+        const conflicts: ConflictRecord[] = [];
+        const merged = new Map<string, LaneTemplateRef>();
+
+        for (const template of local) {
+            merged.set(template.id, template);
+        }
+
+        for (const remoteTemplate of remote) {
+            const localTemplate = merged.get(remoteTemplate.id);
+
+            if (!localTemplate) {
+                merged.set(remoteTemplate.id, remoteTemplate);
+            } else {
+                const localTime = new Date(localTemplate.updatedAt).getTime();
+                const remoteTime = new Date(remoteTemplate.updatedAt).getTime();
+
+                // Check for content hash mismatch (notes/settings diverged)
+                if (localTemplate.contentHash !== remoteTemplate.contentHash) {
+                    // Conflict: notes or settings diverged
+                    conflicts.push({
+                        entityType: 'laneTemplate',
+                        entityId: localTemplate.id,
+                        localValue: localTemplate,
+                        remoteValue: remoteTemplate,
+                        localDeviceId,
+                        remoteDeviceId,
+                        localUpdatedAt: localTemplate.updatedAt,
+                        remoteUpdatedAt: remoteTemplate.updatedAt,
+                        conflictReason: localTemplate.notes.length !== remoteTemplate.notes.length
+                            ? 'notes_diverged'
+                            : 'settings_conflict'
+                    });
+                    // Keep local by default, user can resolve
+                } else if (remoteTime > localTime) {
+                    merged.set(remoteTemplate.id, remoteTemplate);
+                }
+            }
+        }
+
+        return { merged: Array.from(merged.values()), conflicts };
+    }
+
+    /**
+     * Merge chord progressions with content hash conflict detection
+     */
+    private mergeChordProgressions(
+        local: ChordProgressionRef[],
+        remote: ChordProgressionRef[],
+        localDeviceId: string,
+        remoteDeviceId: string
+    ): { merged: ChordProgressionRef[]; conflicts: ConflictRecord[] } {
+        const conflicts: ConflictRecord[] = [];
+        const merged = new Map<string, ChordProgressionRef>();
+
+        for (const prog of local) {
+            merged.set(prog.id, prog);
+        }
+
+        for (const remoteProg of remote) {
+            const localProg = merged.get(remoteProg.id);
+
+            if (!localProg) {
+                merged.set(remoteProg.id, remoteProg);
+            } else {
+                const localTime = new Date(localProg.updatedAt).getTime();
+                const remoteTime = new Date(remoteProg.updatedAt).getTime();
+
+                if (localProg.contentHash !== remoteProg.contentHash) {
+                    conflicts.push({
+                        entityType: 'chordProgression',
+                        entityId: localProg.id,
+                        localValue: localProg,
+                        remoteValue: remoteProg,
+                        localDeviceId,
+                        remoteDeviceId,
+                        localUpdatedAt: localProg.updatedAt,
+                        remoteUpdatedAt: remoteProg.updatedAt,
+                        conflictReason: 'content_hash_mismatch'
+                    });
+                } else if (remoteTime > localTime) {
+                    merged.set(remoteProg.id, remoteProg);
+                }
+            }
+        }
+
+        return { merged: Array.from(merged.values()), conflicts };
+    }
+
+    /**
+     * Merge audio loops with deduplication by blob hash
+     */
+    private mergeAudioLoops(
+        local: AudioLoopRef[],
+        remote: AudioLoopRef[]
+    ): AudioLoopRef[] {
+        const byHash = new Map<string, AudioLoopRef>();
+
+        // Add local loops
+        for (const loop of local) {
+            byHash.set(loop.blobHash, loop);
+        }
+
+        // Add remote loops (skip duplicates by hash)
+        for (const loop of remote) {
+            if (!byHash.has(loop.blobHash)) {
+                byHash.set(loop.blobHash, loop);
+            } else {
+                // Keep the one with more metadata
+                const existing = byHash.get(loop.blobHash)!;
+                const existingMeta = (existing.bpm ? 1 : 0) + (existing.key ? 1 : 0) + (existing.bars ? 1 : 0);
+                const newMeta = (loop.bpm ? 1 : 0) + (loop.key ? 1 : 0) + (loop.bars ? 1 : 0);
+                if (newMeta > existingMeta) {
+                    byHash.set(loop.blobHash, loop);
+                }
+            }
+        }
+
+        return Array.from(byHash.values());
     }
 
     /**
@@ -275,7 +513,7 @@ export class SyncEngine {
      */
     private createEmptyMeta(): VaultMeta {
         return {
-            schemaVersion: 1,
+            schemaVersion: VAULT_SCHEMA_VERSION,
             deviceId: this.deviceId,
             updatedAt: new Date().toISOString()
         };

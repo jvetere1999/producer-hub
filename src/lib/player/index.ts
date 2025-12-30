@@ -23,7 +23,15 @@ export {
 // Persistence utilities for localStorage
 export {
     loadPlayerSettings,
-    savePlayerSettings
+    savePlayerSettings,
+    loadQueueState,
+    saveQueueState,
+    saveQueueStateImmediate,
+    clearQueueState,
+    migratePlayerStorage,
+    type QueueStorage,
+    type SerializedQueueTrack,
+    PLAYER_STORAGE_VERSION
 } from './persist';
 
 // Audio controller for playback
@@ -42,4 +50,16 @@ export {
     getAudioElement,
     disposeAudioController
 } from './audio';
+
+// Waveform generation and caching
+export {
+    type WaveformData,
+    type WaveformCacheEntry,
+    generateWaveform,
+    generateWaveformFromBuffer,
+    getCachedWaveform,
+    cacheWaveform,
+    clearWaveformCache,
+    generateBlobHash
+} from './waveform';
 

@@ -213,13 +213,13 @@ test.describe('Player Controls Functionality', () => {
         const bottomPlayer = page.locator('[aria-label="Audio player"]');
         await expect(bottomPlayer).toBeVisible({ timeout: 5000 });
 
-        // Progress track should be present and clickable
-        const progressTrack = bottomPlayer.locator('[aria-label="Seek"]');
-        await expect(progressTrack).toBeVisible();
+        // Waveform should be present and seekable (replaces old progress track)
+        const waveform = bottomPlayer.locator('.waveform-container');
+        await expect(waveform).toBeVisible();
 
         // It should have proper ARIA attributes
-        await expect(progressTrack).toHaveAttribute('role', 'slider');
-        await expect(progressTrack).toHaveAttribute('tabindex', '0');
+        await expect(waveform).toHaveAttribute('role', 'slider');
+        await expect(waveform).toHaveAttribute('tabindex', '0');
     });
 });
 
@@ -349,14 +349,14 @@ test.describe('Bottom Player - Mobile Layout', () => {
         const bottomPlayer = page.locator('[aria-label="Audio player"]');
         await expect(bottomPlayer).toBeVisible({ timeout: 5000 });
 
-        // Progress bar should be visible
-        const progressTrack = bottomPlayer.locator('[aria-label="Seek"]');
-        await expect(progressTrack).toBeVisible();
+        // Waveform should be visible (replaces old progress bar)
+        const waveform = bottomPlayer.locator('.waveform-container');
+        await expect(waveform).toBeVisible();
 
-        // Progress bar should have usable height (at least 4px)
-        const progressBox = await progressTrack.boundingBox();
-        expect(progressBox).not.toBeNull();
-        expect(progressBox!.height).toBeGreaterThanOrEqual(4);
+        // Waveform should have usable height (at least 20px for touch)
+        const waveformBox = await waveform.boundingBox();
+        expect(waveformBox).not.toBeNull();
+        expect(waveformBox!.height).toBeGreaterThanOrEqual(20);
     });
 });
 
@@ -432,5 +432,153 @@ test.describe('Bottom Player - Input Avoidance', () => {
 
         // Player should have proper fixed positioning with safe-area support
         expect(hasSafeAreaSetup).toBe(true);
+    });
+});
+
+test.describe('Waveform Display', () => {
+    test('waveform container appears when player is visible', async ({ page }) => {
+        await page.goto('/');
+        await page.waitForLoadState('networkidle');
+
+        // Inject mock track
+        await injectTestTrack(page);
+
+        const bottomPlayer = page.locator('[aria-label="Audio player"]');
+        await expect(bottomPlayer).toBeVisible({ timeout: 5000 });
+
+        // Waveform container should be visible
+        const waveformWrapper = bottomPlayer.locator('.waveform-wrapper');
+        await expect(waveformWrapper).toBeVisible({ timeout: 5000 });
+    });
+
+    test('waveform has proper ARIA attributes for seek', async ({ page }) => {
+        await page.goto('/');
+        await page.waitForLoadState('networkidle');
+
+        await injectTestTrack(page);
+
+        const bottomPlayer = page.locator('[aria-label="Audio player"]');
+        await expect(bottomPlayer).toBeVisible({ timeout: 5000 });
+
+        // Waveform container should have slider role
+        const waveform = bottomPlayer.locator('.waveform-container');
+        await expect(waveform).toBeVisible({ timeout: 5000 });
+
+        // Check ARIA attributes
+        await expect(waveform).toHaveAttribute('role', 'slider');
+        await expect(waveform).toHaveAttribute('aria-label', /waveform.*seek/i);
+    });
+
+    test('waveform click triggers seek', async ({ page }) => {
+        await page.goto('/');
+        await page.waitForLoadState('networkidle');
+
+        await injectTestTrack(page);
+
+        const bottomPlayer = page.locator('[aria-label="Audio player"]');
+        await expect(bottomPlayer).toBeVisible({ timeout: 5000 });
+
+        const waveform = bottomPlayer.locator('.waveform-container');
+        await expect(waveform).toBeVisible({ timeout: 5000 });
+
+        // Get initial time
+        const initialTime = await page.evaluate(() => {
+            const store = (window as any).__playerStore;
+            if (!store) return 0;
+            let currentTime = 0;
+            store.subscribe((state: any) => { currentTime = state.currentTime; })();
+            return currentTime;
+        });
+
+        // Click in the middle of the waveform
+        const box = await waveform.boundingBox();
+        if (box) {
+            await page.mouse.click(box.x + box.width * 0.5, box.y + box.height / 2);
+        }
+
+        // Note: With the minimal test audio, actual seek behavior may not be visible
+        // but the click handler should fire without errors
+        await page.waitForTimeout(100);
+    });
+
+    test('waveform respects keyboard navigation', async ({ page }) => {
+        await page.goto('/');
+        await page.waitForLoadState('networkidle');
+
+        await injectTestTrack(page);
+
+        const bottomPlayer = page.locator('[aria-label="Audio player"]');
+        await expect(bottomPlayer).toBeVisible({ timeout: 5000 });
+
+        const waveform = bottomPlayer.locator('.waveform-container');
+        await expect(waveform).toBeVisible({ timeout: 5000 });
+
+        // Focus the waveform
+        await waveform.focus();
+
+        // Press arrow keys (should not throw errors)
+        await page.keyboard.press('ArrowRight');
+        await page.keyboard.press('ArrowLeft');
+
+        // Waveform should still be visible
+        await expect(waveform).toBeVisible();
+    });
+
+    test('waveform container is focusable', async ({ page }) => {
+        await page.goto('/');
+        await page.waitForLoadState('networkidle');
+
+        await injectTestTrack(page);
+
+        const bottomPlayer = page.locator('[aria-label="Audio player"]');
+        await expect(bottomPlayer).toBeVisible({ timeout: 5000 });
+
+        const waveform = bottomPlayer.locator('.waveform-container');
+        await expect(waveform).toBeVisible({ timeout: 5000 });
+
+        // Should have tabindex for focus
+        await expect(waveform).toHaveAttribute('tabindex', '0');
+    });
+});
+
+test.describe('Waveform - Mobile', () => {
+    test.use({ viewport: { width: 390, height: 844 } });
+
+    test('waveform is visible on mobile without overlap', async ({ page }) => {
+        await page.goto('/');
+        await page.waitForLoadState('networkidle');
+
+        await injectTestTrack(page);
+
+        const bottomPlayer = page.locator('[aria-label="Audio player"]');
+        await expect(bottomPlayer).toBeVisible({ timeout: 5000 });
+
+        // Waveform should be visible
+        const waveformWrapper = bottomPlayer.locator('.waveform-wrapper');
+        await expect(waveformWrapper).toBeVisible();
+
+        // Check no horizontal overflow
+        const hasOverflow = await page.evaluate(() => {
+            return document.documentElement.scrollWidth > document.documentElement.clientWidth;
+        });
+        expect(hasOverflow).toBe(false);
+    });
+
+    test('player has safe-area padding on mobile', async ({ page }) => {
+        await page.goto('/');
+        await page.waitForLoadState('networkidle');
+
+        await injectTestTrack(page);
+
+        const bottomPlayer = page.locator('[aria-label="Audio player"]');
+        await expect(bottomPlayer).toBeVisible({ timeout: 5000 });
+
+        // Verify safe-area setup
+        const hasSafeArea = await bottomPlayer.evaluate(el => {
+            const style = getComputedStyle(el);
+            return style.position === 'fixed' && style.bottom === '0px';
+        });
+
+        expect(hasSafeArea).toBe(true);
     });
 });

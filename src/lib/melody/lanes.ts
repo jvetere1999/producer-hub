@@ -2,16 +2,25 @@
  * Unified Lane System
  *
  * Core types and utilities for the lane-based arrangement view.
- * Supports both melody (piano) and drum lanes.
+ * Supports melody (piano), drum, and chord lanes.
  */
 
-import type { MelodyNote, ScaleConfig, HumanizeConfig } from './model';
+import type { MelodyNote, ScaleConfig, HumanizeConfig, ChordBlock } from './model';
+
+// ============================================
+// Schema Version
+// ============================================
+
+export const ARRANGEMENT_SCHEMA_VERSION = 2;
+export const MAX_ARRANGEMENT_URL_SIZE = 12000; // ~12KB limit
 
 // ============================================
 // Lane Types
 // ============================================
 
-export type LaneType = 'melody' | 'drums';
+export type LaneType = 'melody' | 'drums' | 'chord';
+
+export type NoteMode = 'oneShot' | 'sustain';
 
 export interface BaseLane {
     id: string;
@@ -23,6 +32,7 @@ export interface BaseLane {
     pan: number; // -64 to 63 (center = 0)
     color: string;
     collapsed: boolean;
+    noteMode: NoteMode;
 }
 
 export interface MelodyLane extends BaseLane {
@@ -39,7 +49,13 @@ export interface DrumLane extends BaseLane {
     pattern: DrumPattern;
 }
 
-export type Lane = MelodyLane | DrumLane;
+export interface ChordLane extends BaseLane {
+    type: 'chord';
+    chords: ChordBlock[];
+    instrument: MelodyInstrument;
+}
+
+export type Lane = MelodyLane | DrumLane | ChordLane;
 
 // ============================================
 // Instrument Types
@@ -63,7 +79,7 @@ export interface DrumPattern {
 export interface Arrangement {
     id: string;
     name: string;
-    version: number;
+    schemaVersion: number;   // For URL/storage migrations
     createdAt: string;
     updatedAt: string;
 
@@ -144,6 +160,7 @@ export function createMelodyLane(name: string = 'Melody'): MelodyLane {
         pan: 0,
         color: '#92d36e',
         collapsed: false,
+        noteMode: 'sustain',
         notes: [],
         scale: {
             root: 'C',
@@ -165,6 +182,7 @@ export function createDrumLane(name: string = 'Drums'): DrumLane {
         pan: 0,
         color: '#ff9f43',
         collapsed: false,
+        noteMode: 'oneShot',
         notes: [],
         kit: 'acoustic',
         pattern: {
@@ -176,11 +194,28 @@ export function createDrumLane(name: string = 'Drums'): DrumLane {
     };
 }
 
+export function createChordLane(name: string = 'Chords'): ChordLane {
+    return {
+        id: generateLaneId(),
+        name,
+        type: 'chord',
+        muted: false,
+        solo: false,
+        volume: 100,
+        pan: 0,
+        color: '#5d9cec',
+        collapsed: false,
+        noteMode: 'sustain',
+        chords: [],
+        instrument: 'grand-piano',
+    };
+}
+
 export function createArrangement(name: string = 'New Arrangement'): Arrangement {
     return {
         id: `arr_${Date.now()}`,
         name,
-        version: 1,
+        schemaVersion: ARRANGEMENT_SCHEMA_VERSION,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         bpm: 120,
@@ -211,9 +246,19 @@ export function createArrangement(name: string = 'New Arrangement'): Arrangement
 // ============================================
 
 export function addLane(arrangement: Arrangement, type: LaneType): Arrangement {
-    const lane = type === 'melody'
-        ? createMelodyLane(`Melody ${arrangement.lanes.filter(l => l.type === 'melody').length + 1}`)
-        : createDrumLane(`Drums ${arrangement.lanes.filter(l => l.type === 'drums').length + 1}`);
+    let lane: Lane;
+
+    switch (type) {
+        case 'melody':
+            lane = createMelodyLane(`Melody ${arrangement.lanes.filter(l => l.type === 'melody').length + 1}`);
+            break;
+        case 'drums':
+            lane = createDrumLane(`Drums ${arrangement.lanes.filter(l => l.type === 'drums').length + 1}`);
+            break;
+        case 'chord':
+            lane = createChordLane(`Chords ${arrangement.lanes.filter(l => l.type === 'chord').length + 1}`);
+            break;
+    }
 
     return {
         ...arrangement,
@@ -258,12 +303,28 @@ export function moveLane(arrangement: Arrangement, laneId: string, direction: 'u
 }
 
 // ============================================
-// URL Encoding/Decoding
+// URL Encoding/Decoding (with versioning and validation)
 // ============================================
+
+export interface SerializedArrangement {
+    v: number;  // schema version
+    data: Arrangement;
+}
 
 export function encodeArrangementToUrl(arrangement: Arrangement): string {
     try {
-        const json = JSON.stringify(arrangement);
+        const payload: SerializedArrangement = {
+            v: ARRANGEMENT_SCHEMA_VERSION,
+            data: arrangement,
+        };
+        const json = JSON.stringify(payload);
+
+        // Check size before encoding
+        if (json.length > MAX_ARRANGEMENT_URL_SIZE) {
+            console.warn('Arrangement too large for URL embedding');
+            return '';
+        }
+
         const compressed = btoa(encodeURIComponent(json));
         return compressed;
     } catch {
@@ -274,17 +335,74 @@ export function encodeArrangementToUrl(arrangement: Arrangement): string {
 
 export function decodeArrangementFromUrl(encoded: string): Arrangement | null {
     try {
-        const json = decodeURIComponent(atob(encoded));
-        const arrangement = JSON.parse(json) as Arrangement;
         // Basic validation
-        if (!arrangement.id || !arrangement.lanes) {
+        if (!encoded || typeof encoded !== 'string') {
             return null;
         }
-        return arrangement;
+
+        // Reject suspiciously large payloads
+        if (encoded.length > MAX_ARRANGEMENT_URL_SIZE * 1.5) {
+            console.warn('URL payload too large, rejecting');
+            return null;
+        }
+
+        const json = decodeURIComponent(atob(encoded));
+        const payload = JSON.parse(json);
+
+        // Handle versioned payload
+        if (payload.v !== undefined && payload.data) {
+            const migrated = migrateArrangement(payload);
+            if (!validateArrangement(migrated)) {
+                return null;
+            }
+            return migrated;
+        }
+
+        // Legacy unversioned payload (v1)
+        const arrangement = payload as Arrangement;
+        if (!validateArrangement(arrangement)) {
+            return null;
+        }
+        return migrateArrangement({ v: 1, data: arrangement });
     } catch {
         console.error('Failed to decode arrangement');
         return null;
     }
+}
+
+function validateArrangement(arr: unknown): arr is Arrangement {
+    if (!arr || typeof arr !== 'object') return false;
+
+    const a = arr as Record<string, unknown>;
+
+    // Required fields
+    if (typeof a.id !== 'string') return false;
+    if (!Array.isArray(a.lanes)) return false;
+    if (typeof a.bpm !== 'number' || a.bpm < 20 || a.bpm > 300) return false;
+    if (typeof a.bars !== 'number' || a.bars < 1 || a.bars > 64) return false;
+
+    return true;
+}
+
+function migrateArrangement(payload: SerializedArrangement): Arrangement {
+    const { v, data } = payload;
+    let migrated = { ...data };
+
+    // Migration from v1 to v2: add schemaVersion, noteMode
+    if (v < 2) {
+        migrated.schemaVersion = ARRANGEMENT_SCHEMA_VERSION;
+        migrated.lanes = migrated.lanes.map(lane => {
+            if (!('noteMode' in lane)) {
+                return {
+                    ...lane,
+                    noteMode: lane.type === 'drums' ? 'oneShot' : 'sustain',
+                } as Lane;
+            }
+            return lane;
+        });
+    }
+
+    return migrated;
 }
 
 // ============================================
@@ -309,7 +427,17 @@ export function loadArrangements(): ArrangementStorage {
         if (!data) {
             return { version: 1, arrangements: [], lastOpenedId: null };
         }
-        return JSON.parse(data);
+        const storage = JSON.parse(data) as ArrangementStorage;
+
+        // Migrate all arrangements to current schema version
+        storage.arrangements = storage.arrangements.map(arr => {
+            if (!arr.schemaVersion || arr.schemaVersion < ARRANGEMENT_SCHEMA_VERSION) {
+                return migrateArrangement({ v: arr.schemaVersion || 1, data: arr });
+            }
+            return arr;
+        });
+
+        return storage;
     } catch {
         return { version: 1, arrangements: [], lastOpenedId: null };
     }

@@ -129,6 +129,79 @@
             ],
         },
 
+        // Lane Types
+        laneTypes: {
+            title: 'Lane Types',
+            description: 'Different lane types for different instruments and purposes.',
+            tips: [
+                'Melody Lane: Piano, synths, leads - full pitch range',
+                'Drum Lane: Drum kit sounds - step sequencer style',
+                'Chord Lane: Chord blocks for harmonic content',
+                'Each type has optimized controls and display',
+            ],
+        },
+
+        // Note Modes
+        noteModes: {
+            title: 'Note Modes',
+            description: 'Controls how notes behave when played.',
+            tips: [
+                'One-Shot: Note plays once, ignores duration (drums)',
+                'Sustain: Note plays for its full duration (piano, pads)',
+                'Click and drag to extend note length in sustain mode',
+                'Drums default to one-shot, melody to sustain',
+            ],
+        },
+
+        // Quantize Grid
+        quantize: {
+            title: 'Quantize Grid',
+            description: 'Snaps notes to a timing grid for precise alignment.',
+            tips: [
+                '1/4: Quarter notes (on the beat)',
+                '1/8: Eighth notes (twice per beat)',
+                '1/16: Sixteenth notes (four per beat)',
+                '1/32: Thirty-second notes (very fine)',
+                'Off: Free timing, no snapping',
+            ],
+        },
+
+        // Velocity
+        velocity: {
+            title: 'Velocity',
+            description: 'How hard/loud a note is played. Range is 1-127.',
+            tips: [
+                '100-127: Forte (loud)',
+                '64-99: Mezzo (medium)',
+                '1-63: Piano (soft)',
+                'Vary velocity for dynamic, expressive playing',
+            ],
+        },
+
+        // Export & Share
+        exportShare: {
+            title: 'Export & Share',
+            description: 'Save and share your arrangements.',
+            tips: [
+                'Share: Creates a URL with your arrangement embedded',
+                'Save: Stores locally in your browser',
+                'Export: Download as MIDI or audio (coming soon)',
+                'URL has a size limit - very large arrangements may be truncated',
+            ],
+        },
+
+        // Clips
+        clips: {
+            title: 'Project Clips',
+            description: 'Link lane content to your projects for reuse.',
+            tips: [
+                'Attach clips to projects for organization',
+                'Clips remember BPM, key, and lane settings',
+                'Detach clips without deleting the original',
+                'Clips are stored locally in your browser',
+            ],
+        },
+
         // BPM
         bpm: {
             title: 'Tempo (BPM)',

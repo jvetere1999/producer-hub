@@ -1,15 +1,19 @@
 <!--
   MidiRoll Component - Unified MIDI editor for both melody and drums
 
-  Fixed version with synchronized scrolling between keys and grid.
+  Features:
+  - Click to add/remove notes
+  - Drag right to extend note duration (sustain)
+  - Visual note bars showing duration
+  - Bar and beat grid lines
 -->
 <script lang="ts">
+    import { tick } from 'svelte';
     import {
         type MelodyNote,
         type ScaleConfig,
         isInScale,
         createNote,
-        detectChordsInSequence,
         playNote,
     } from '$lib/melody';
     import { playDrumSound } from '$lib/melody/audio';
@@ -32,6 +36,12 @@
     const CELL_SIZE = 20;
     const KEY_WIDTH = 80;
 
+    // Drag state for extending notes
+    let isDragging = false;
+    let dragStartStep = -1;
+    let dragCurrentStep = -1;
+    let dragPitch = -1;
+
     // Computed values
     $: pitchRange = mode === 'drums' ? drumPitches : generatePitchRange(36, 84);
     $: totalBeats = bars * beatsPerBar;
@@ -39,7 +49,37 @@
     $: gridWidth = totalSteps * CELL_SIZE;
     $: gridHeight = pitchRange.length * CELL_SIZE;
 
-    $: detectedChords = mode === 'melody' ? detectChordsInSequence(notes) : new Map();
+    // Create a note lookup map for O(1) access - reactive to notes changes
+    $: noteMap = createNoteMap(notes);
+
+    // Create a map to check if a step is covered by any note (for rendering note bars)
+    $: noteCoverageMap = createNoteCoverageMap(notes);
+
+    function createNoteMap(noteList: MelodyNote[]): Map<string, MelodyNote> {
+        const map = new Map<string, MelodyNote>();
+        for (const note of noteList) {
+            const step = Math.round(note.startBeat * 4);
+            map.set(`${note.pitch}_${step}`, note);
+        }
+        return map;
+    }
+
+    function createNoteCoverageMap(noteList: MelodyNote[]): Map<string, { note: MelodyNote, isStart: boolean, isEnd: boolean }> {
+        const map = new Map<string, { note: MelodyNote, isStart: boolean, isEnd: boolean }>();
+        for (const note of noteList) {
+            const startStep = Math.round(note.startBeat * 4);
+            const durationSteps = Math.round(note.duration * 4);
+            for (let i = 0; i < durationSteps; i++) {
+                const step = startStep + i;
+                map.set(`${note.pitch}_${step}`, {
+                    note,
+                    isStart: i === 0,
+                    isEnd: i === durationSteps - 1
+                });
+            }
+        }
+        return map;
+    }
 
     function generatePitchRange(min: number, max: number): number[] {
         const range: number[] = [];
@@ -67,27 +107,59 @@
         return pitchRange.indexOf(pitch);
     }
 
-    function handleCellClick(pitch: number, step: number) {
-        const beat = step / 4;
-        const duration = 0.25;
+    function handleMouseDown(pitch: number, step: number, e: MouseEvent) {
+        e.preventDefault();
+        const coverage = noteCoverageMap.get(`${pitch}_${step}`);
 
-        const existingNote = notes.find(n =>
-            n.pitch === pitch && Math.abs(n.startBeat - beat) < 0.01
-        );
-
-        if (existingNote) {
-            onNoteDelete?.(existingNote.id);
-            onNotesChange?.(notes.filter(n => n.id !== existingNote.id));
+        if (coverage) {
+            // Clicking on existing note - delete it
+            const newNotes = notes.filter(n => n.id !== coverage.note.id);
+            onNoteDelete?.(coverage.note.id);
+            onNotesChange?.(newNotes);
         } else {
-            const newNote = createNote(pitch, beat, duration, 100);
+            // Start new note - begin drag
+            isDragging = true;
+            dragStartStep = step;
+            dragCurrentStep = step;
+            dragPitch = pitch;
+        }
+    }
+
+    function handleMouseMove(step: number) {
+        if (isDragging && step >= dragStartStep) {
+            dragCurrentStep = step;
+        }
+    }
+
+    async function handleMouseUp() {
+        if (isDragging) {
+            const beat = dragStartStep / 4;
+            const durationSteps = Math.max(1, dragCurrentStep - dragStartStep + 1);
+            const duration = durationSteps / 4; // Convert steps to beats
+
+            const newNote = createNote(dragPitch, beat, duration, 100);
+            const newNotes = [...notes, newNote];
             onNoteAdd?.(newNote);
-            onNotesChange?.([...notes, newNote]);
+            onNotesChange?.(newNotes);
 
             if (mode === 'drums') {
-                playDrumSound(pitch, 100);
+                playDrumSound(dragPitch, 100);
             } else {
-                playNote(pitch, 0.3, 100, 'grand-piano');
+                playNote(dragPitch, duration, 100, 'grand-piano');
             }
+
+            isDragging = false;
+            dragStartStep = -1;
+            dragCurrentStep = -1;
+            dragPitch = -1;
+
+            await tick();
+        }
+    }
+
+    function handleMouseLeave() {
+        if (isDragging) {
+            handleMouseUp();
         }
     }
 
@@ -99,15 +171,6 @@
         }
     }
 
-    function hasNoteAt(pitch: number, step: number): MelodyNote | undefined {
-        const beat = step / 4;
-        return notes.find(n =>
-            n.pitch === pitch &&
-            beat >= n.startBeat &&
-            beat < n.startBeat + n.duration
-        );
-    }
-
     function handleKeydown(e: KeyboardEvent) {
         if (selectedNoteId && (e.key === 'Delete' || e.key === 'Backspace')) {
             e.preventDefault();
@@ -116,12 +179,29 @@
             onNoteSelect?.(null);
         }
     }
+
+    // Check if step is in current drag range
+    function isInDragRange(pitch: number, step: number): boolean {
+        if (!isDragging || pitch !== dragPitch) return false;
+        return step >= dragStartStep && step <= dragCurrentStep;
+    }
 </script>
 
-<svelte:window on:keydown={handleKeydown} />
+<svelte:window onkeydown={handleKeydown} onmouseup={handleMouseUp} />
 
 <div class="midi-roll" class:drums-mode={mode === 'drums'}>
-    <div class="scroll-container">
+    <!-- Bar numbers header -->
+    <div class="bar-header" style="padding-left: {KEY_WIDTH}px;">
+        <div class="bar-numbers" style="width: {gridWidth}px;">
+            {#each Array(bars) as _, barIdx}
+                <div class="bar-number" style="width: {beatsPerBar * 4 * CELL_SIZE}px;">
+                    {barIdx + 1}
+                </div>
+            {/each}
+        </div>
+    </div>
+
+    <div class="scroll-container" onmouseleave={handleMouseLeave} role="application">
         <div class="inner-container" style="height: {gridHeight}px;">
             <!-- Keys column - scrolls with grid -->
             <div class="keys-column" style="width: {KEY_WIDTH}px;">
@@ -157,20 +237,27 @@
                             style="top: {rowIdx * CELL_SIZE}px; height: {CELL_SIZE}px;"
                         >
                             {#each Array(totalSteps) as _, step}
-                                {@const note = hasNoteAt(pitch, step)}
                                 {@const isBeat = step % 4 === 0}
                                 {@const isBar = step % (beatsPerBar * 4) === 0}
-                                <button
-                                    type="button"
+                                {@const coverage = noteCoverageMap.get(`${pitch}_${step}`)}
+                                {@const inDrag = isInDragRange(pitch, step)}
+                                <div
                                     class="cell"
-                                    class:has-note={!!note}
-                                    class:selected={note?.id === selectedNoteId}
-                                    class:beat-line={isBeat}
+                                    class:has-note={!!coverage}
+                                    class:note-start={coverage?.isStart}
+                                    class:note-end={coverage?.isEnd}
+                                    class:note-middle={coverage && !coverage.isStart && !coverage.isEnd}
+                                    class:selected={coverage?.note.id === selectedNoteId}
+                                    class:beat-line={isBeat && !isBar}
                                     class:bar-line={isBar}
+                                    class:dragging={inDrag}
                                     style="width: {CELL_SIZE}px; height: {CELL_SIZE}px;"
-                                    onclick={() => handleCellClick(pitch, step)}
-                                    aria-label="{note ? 'Remove' : 'Add'} note"
-                                ></button>
+                                    onmousedown={(e) => handleMouseDown(pitch, step, e)}
+                                    onmouseenter={() => handleMouseMove(step)}
+                                    role="button"
+                                    tabindex="-1"
+                                    aria-label="{coverage ? 'Remove' : 'Add'} note"
+                                ></div>
                             {/each}
                         </div>
                     {/each}
@@ -195,6 +282,32 @@
         overflow: hidden;
         height: 100%;
         min-height: 300px;
+    }
+
+    /* Bar header with bar numbers */
+    .bar-header {
+        display: flex;
+        background: var(--bg-tertiary, #252525);
+        border-bottom: 1px solid var(--border-primary, #444);
+        height: 24px;
+        flex-shrink: 0;
+        overflow: hidden;
+    }
+
+    .bar-numbers {
+        display: flex;
+    }
+
+    .bar-number {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        padding-left: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-secondary, #888);
+        border-right: 2px solid var(--border-accent, #555);
+        box-sizing: border-box;
     }
 
     .scroll-container {
@@ -228,12 +341,13 @@
         font-size: 9px;
         box-sizing: border-box;
         flex-shrink: 0;
+        min-height: 0;
     }
 
     .white-key {
         background: var(--bg-tertiary, #4a4a4a);
         color: var(--text-secondary, #999);
-        border-bottom: 1px solid var(--border-secondary, #3a3a3a);
+        box-shadow: inset 0 -1px 0 var(--border-secondary, #3a3a3a);
     }
 
     .white-key:hover {
@@ -243,7 +357,7 @@
     .black-key {
         background: var(--bg-primary, #2d2d2d);
         color: var(--text-muted, #666);
-        border-bottom: 1px solid var(--border-primary, #252525);
+        box-shadow: inset 0 -1px 0 var(--border-primary, #252525);
     }
 
     .black-key:hover {
@@ -253,7 +367,7 @@
     .drum-key {
         background: var(--bg-tertiary, #3a3a3a);
         color: var(--text-primary, #ccc);
-        border-bottom: 1px solid var(--border-primary, #333);
+        box-shadow: inset 0 -1px 0 var(--border-primary, #333);
         justify-content: flex-start;
         font-weight: 500;
         font-size: 10px;
@@ -285,6 +399,7 @@
         left: 0;
         right: 0;
         display: flex;
+        overflow: hidden;
     }
 
     .white-row {
@@ -304,37 +419,74 @@
     }
 
     .scale-row {
-        background: rgba(146, 211, 110, 0.08);
+        background: rgba(146, 211, 110, 0.04);
     }
 
     .cell {
         flex-shrink: 0;
         border: none;
-        border-right: 1px solid var(--border-secondary, #404040);
+        border-right: 1px solid var(--border-secondary, #383838);
         background: transparent;
-        cursor: pointer;
+        cursor: crosshair;
         padding: 0;
         box-sizing: border-box;
+        pointer-events: auto;
+        position: relative;
+        isolation: isolate;
     }
 
     .cell:hover {
-        background: rgba(146, 211, 110, 0.25);
+        background: rgba(146, 211, 110, 0.2);
     }
 
+    /* Beat lines - every 4 steps (quarter note) */
     .cell.beat-line {
-        border-right-color: var(--border-primary, #4a4a4a);
+        border-right: 1px solid var(--border-primary, #505050);
     }
 
+    /* Bar lines - stronger, every bar */
     .cell.bar-line {
-        border-right: 2px solid var(--border-accent, #5a5a5a);
+        border-right: 2px solid var(--accent-primary, #92d36e);
     }
 
+    /* Note styling with sustain visualization */
     .cell.has-note {
         background: var(--accent-primary, #92d36e);
+        border-right-color: var(--accent-hover, #7bc45a);
+    }
+
+    /* Note start - rounded left edge */
+    .cell.note-start {
+        border-top-left-radius: 3px;
+        border-bottom-left-radius: 3px;
+    }
+
+    /* Note end - rounded right edge */
+    .cell.note-end {
+        border-top-right-radius: 3px;
+        border-bottom-right-radius: 3px;
+        border-right: 1px solid var(--border-secondary, #383838);
+    }
+
+    /* Note middle - no rounding, seamless connection */
+    .cell.note-middle {
+        border-radius: 0;
+    }
+
+    /* Single cell note (start and end) */
+    .cell.note-start.note-end {
+        border-radius: 3px;
     }
 
     .cell.has-note:hover {
         background: var(--accent-hover, #a8e07a);
+    }
+
+    /* Dragging preview */
+    .cell.dragging {
+        background: rgba(146, 211, 110, 0.5);
+        border-top-left-radius: 3px;
+        border-bottom-left-radius: 3px;
     }
 
     .cell.selected {
@@ -349,6 +501,7 @@
         background: #ff5500;
         z-index: 20;
         pointer-events: none;
+        box-shadow: 0 0 4px rgba(255, 85, 0, 0.5);
     }
 
     @media (max-width: 768px) {
@@ -362,6 +515,10 @@
 
         .key-label {
             font-size: 8px;
+        }
+
+        .bar-number {
+            font-size: 10px;
         }
     }
 </style>

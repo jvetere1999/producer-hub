@@ -3,6 +3,7 @@
 
   Global persistent audio player that appears at the bottom of the screen.
   Shows waveform, playback controls, and track info.
+  Persists queue state across page refreshes.
 
   @component
 -->
@@ -19,17 +20,24 @@
         seek,
         setVolume,
         loadPlayerSettings,
-        savePlayerSettings
+        savePlayerSettings,
+        loadQueueState,
+        saveQueueState,
+        saveQueueStateImmediate,
+        migratePlayerStorage
     } from '$lib/player';
     import { IconButton } from '$lib/components/ui';
     import { toasts } from '$lib/stores/toast';
+    import Waveform from '$lib/player/Waveform.svelte';
 
     let currentTime = 0;
     let duration = 0;
     let volume = 0.8;
     let showVolumeSlider = false;
+    let showWaveform = true;
     let progressBar: HTMLDivElement;
     let lastLoadedTrackId: string | null = null;  // Guard against infinite loop
+    let queueRestored = false; // Track if we've restored queue
 
     // Subscribe to store
     let unsubscribe: () => void;
@@ -37,11 +45,25 @@
     onMount(() => {
         initAudioController();
 
+        // Migrate storage if needed
+        migratePlayerStorage();
+
         // Load saved settings
         const savedSettings = loadPlayerSettings();
         playerStore.updateSettings(savedSettings);
         volume = savedSettings.volume;
         setVolume(volume);
+
+        // Restore queue state from localStorage
+        const savedQueue = loadQueueState();
+        if (savedQueue && savedQueue.queue.length > 0) {
+            playerStore.restoreQueue(
+                savedQueue.queue,
+                savedQueue.queueIndex,
+                savedQueue.currentTime
+            );
+            queueRestored = true;
+        }
 
         unsubscribe = playerStore.subscribe(state => {
             currentTime = state.currentTime;
@@ -52,12 +74,28 @@
                 lastLoadedTrackId = state.currentTrack.id;
                 loadAndPlay(state.currentTrack.audioUrl);
             }
+
+            // Persist queue state (debounced)
+            if (state.queue.length > 0) {
+                saveQueueState(state.queue, state.queueIndex, state.currentTime);
+            }
         });
+
+        // Save queue immediately before page unload
+        window.addEventListener('beforeunload', handleBeforeUnload);
     });
 
     onDestroy(() => {
         if (unsubscribe) unsubscribe();
+        window.removeEventListener('beforeunload', handleBeforeUnload);
     });
+
+    function handleBeforeUnload() {
+        const state = playerStore.getState();
+        if (state.queue.length > 0) {
+            saveQueueStateImmediate(state.queue, state.queueIndex, state.currentTime);
+        }
+    }
 
     // Show toast when player error occurs
     let lastErrorShown = '';
@@ -124,25 +162,45 @@
             seek(Math.max(0, currentTime - step));
         }
     }
+
+    function handleWaveformSeek(time: number) {
+        seek(time);
+    }
 </script>
 
 {#if $playerVisible && track}
     <div class="bottom-player" role="region" aria-label="Audio player">
-        <!-- Progress bar (clickable) -->
-        <div
-            class="progress-track"
-            bind:this={progressBar}
-            onclick={handleProgressClick}
-            onkeydown={handleProgressKeydown}
-            role="slider"
-            aria-label="Seek"
-            aria-valuemin="0"
-            aria-valuemax={duration}
-            aria-valuenow={currentTime}
-            tabindex="0"
-        >
-            <div class="progress-fill" style="width: {progress}%"></div>
-        </div>
+        <!-- Waveform display (replaces simple progress bar) -->
+        {#if showWaveform && track.audioUrl}
+            <div class="waveform-wrapper">
+                <Waveform
+                    audioUrl={track.audioUrl}
+                    trackId={track.id}
+                    {currentTime}
+                    {duration}
+                    onSeek={handleWaveformSeek}
+                    height={32}
+                    barWidth={2}
+                    barGap={1}
+                />
+            </div>
+        {:else}
+            <!-- Fallback progress bar -->
+            <div
+                class="progress-track"
+                bind:this={progressBar}
+                onclick={handleProgressClick}
+                onkeydown={handleProgressKeydown}
+                role="slider"
+                aria-label="Seek"
+                aria-valuemin="0"
+                aria-valuemax={duration}
+                aria-valuenow={currentTime}
+                tabindex="0"
+            >
+                <div class="progress-fill" style="width: {progress}%"></div>
+            </div>
+        {/if}
 
         <div class="player-content">
             <!-- Track info -->
@@ -304,6 +362,10 @@
         padding-right: var(--safe-area-inset-right);
         /* Ensure player content is always above home indicator */
         min-height: var(--player-height);
+    }
+
+    .waveform-wrapper {
+        padding: var(--space-1) var(--space-4) 0;
     }
 
     .progress-track {

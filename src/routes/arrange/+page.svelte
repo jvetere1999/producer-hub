@@ -105,6 +105,9 @@
     }
 
     // Playback
+    let lastPlayedBeat = -1;
+    let playedNoteIds = new Set<string>();
+
     function handlePlay() {
         if (isPlaying) {
             handleStop();
@@ -113,22 +116,30 @@
 
         isPlaying = true;
         currentBeat = 0;
+        lastPlayedBeat = -1;
+        playedNoteIds.clear();
 
         const msPerBeat = 60000 / arrangement.bpm;
         const tickMs = msPerBeat / 4;
 
         playbackInterval = setInterval(() => {
-            // Play metronome
-            if (currentBeat % 1 < 0.1) {
-                playClick(currentBeat % arrangement.timeSignature[0] === 0);
+            // Only play metronome on new beats
+            const beatFloor = Math.floor(currentBeat);
+            if (beatFloor !== lastPlayedBeat) {
+                playClick(beatFloor % arrangement.timeSignature[0] === 0);
+                lastPlayedBeat = beatFloor;
             }
 
-            // Play notes at current beat
+            // Play notes at current beat - using step-based comparison for precision
+            const currentStep = Math.round(currentBeat * 4);
             arrangement.lanes.forEach(lane => {
                 if (lane.muted) return;
 
                 lane.notes.forEach(note => {
-                    if (Math.abs(note.startBeat - currentBeat) < 0.1) {
+                    const noteStep = Math.round(note.startBeat * 4);
+                    const noteKey = `${note.id}-${currentStep}`;
+                    if (noteStep === currentStep && !playedNoteIds.has(noteKey)) {
+                        playedNoteIds.add(noteKey);
                         const instrument = lane.type === 'drums' ? 'drum' : 'grand-piano';
                         playNote(note.pitch, note.duration * (msPerBeat / 1000), note.velocity, instrument as any);
                     }
@@ -138,6 +149,7 @@
             currentBeat += 0.25;
             if (currentBeat >= totalBeats) {
                 currentBeat = 0;
+                playedNoteIds.clear();
             }
         }, tickMs);
     }
@@ -493,6 +505,7 @@
         <!-- Editor Area -->
         <div class="editor-area">
             {#if selectedLane}
+                {#key selectedLane.id}
                 <MidiRoll
                     mode={selectedLane.type === 'melody' ? 'melody' : 'drums'}
                     notes={selectedLane.notes}
@@ -500,8 +513,9 @@
                     bars={arrangement.bars}
                     beatsPerBar={arrangement.timeSignature[0]}
                     {currentBeat}
-                    onNotesChange={(notes) => handleNotesChange(selectedLane.id, notes)}
+                    onNotesChange={(newNotes) => handleNotesChange(selectedLane.id, newNotes)}
                 />
+                {/key}
             {:else}
                 <div class="no-lane">
                     <p>Select a lane to edit</p>
@@ -664,6 +678,8 @@
         border-bottom: 1px solid var(--border-primary, #333);
         flex-shrink: 0;
         gap: 12px;
+        position: relative;
+        z-index: 100;
     }
 
     .header-left {
@@ -727,6 +743,9 @@
         display: flex;
         gap: 4px;
         flex-shrink: 0;
+        /* Ensure this is above the global settings cog */
+        position: relative;
+        z-index: 110;
     }
 
     .header-btn {
@@ -735,7 +754,7 @@
         border: none;
         border-radius: 4px;
         background: transparent;
-        color: #888;
+        color: var(--text-muted, #888);
         cursor: pointer;
         display: flex;
         align-items: center;
@@ -743,8 +762,8 @@
     }
 
     .header-btn:hover {
-        background: #333;
-        color: #fff;
+        background: var(--bg-tertiary, #333);
+        color: var(--text-primary, #fff);
     }
 
     /* Transport */
@@ -753,8 +772,8 @@
         align-items: center;
         justify-content: space-between;
         padding: 6px 16px;
-        background: #252525;
-        border-bottom: 1px solid #333;
+        background: var(--bg-secondary, #252525);
+        border-bottom: 1px solid var(--border-primary, #333);
         flex-shrink: 0;
         gap: 16px;
     }
@@ -770,8 +789,8 @@
         height: 32px;
         border: none;
         border-radius: 4px;
-        background: #3a3a3a;
-        color: #ccc;
+        background: var(--bg-tertiary, #3a3a3a);
+        color: var(--text-secondary, #ccc);
         cursor: pointer;
         display: flex;
         align-items: center;
@@ -779,30 +798,30 @@
     }
 
     .transport-btn:hover {
-        background: #4a4a4a;
+        background: var(--bg-hover, #4a4a4a);
     }
 
     .play-btn {
         width: 40px;
         height: 40px;
-        background: #92d36e;
-        color: #1a1a1a;
+        background: var(--accent-primary, #92d36e);
+        color: var(--bg-primary, #1a1a1a);
     }
 
     .play-btn:hover {
-        background: #a8e07a;
+        background: var(--accent-hover, #a8e07a);
     }
 
     .play-btn.playing {
-        background: #ff5500;
-        color: #fff;
+        background: var(--accent-danger, #ff5500);
+        color: var(--text-primary, #fff);
     }
 
     .beat-display {
         font-family: 'SF Mono', 'Monaco', monospace;
         font-size: 18px;
         font-weight: 600;
-        color: #92d36e;
+        color: var(--accent-primary, #92d36e);
         min-width: 70px;
         text-align: center;
     }
@@ -818,16 +837,16 @@
         align-items: center;
         gap: 6px;
         font-size: 11px;
-        color: #888;
+        color: var(--text-muted, #888);
     }
 
     .transport-setting input,
     .transport-setting select {
         height: 26px;
-        background: #333;
-        border: 1px solid #444;
+        background: var(--bg-tertiary, #333);
+        border: 1px solid var(--border-secondary, #444);
         border-radius: 3px;
-        color: #fff;
+        color: var(--text-primary, #fff);
         font-size: 12px;
         padding: 0 6px;
     }
@@ -856,8 +875,8 @@
     .lane-sidebar {
         width: 180px;
         flex-shrink: 0;
-        background: #1e1e1e;
-        border-right: 1px solid #333;
+        background: var(--bg-secondary, #1e1e1e);
+        border-right: 1px solid var(--border-primary, #333);
         display: flex;
         flex-direction: column;
         overflow-y: auto;
@@ -867,36 +886,36 @@
         display: flex;
         gap: 4px;
         padding: 8px;
-        border-bottom: 1px solid #333;
+        border-bottom: 1px solid var(--border-primary, #333);
     }
 
     .add-lane-btn {
         flex: 1;
         height: 26px;
-        border: 1px dashed #444;
+        border: 1px dashed var(--border-secondary, #444);
         border-radius: 3px;
         background: transparent;
-        color: #666;
+        color: var(--text-muted, #666);
         font-size: 10px;
         cursor: pointer;
     }
 
     .add-lane-btn:hover {
-        border-color: #666;
-        color: #aaa;
+        border-color: var(--text-muted, #666);
+        color: var(--text-secondary, #aaa);
     }
 
     .lane-header {
         display: flex;
         align-items: center;
         padding: 4px 8px;
-        border-left: 3px solid #666;
-        border-bottom: 1px solid #2a2a2a;
-        background: #222;
+        border-left: 3px solid var(--text-muted, #666);
+        border-bottom: 1px solid var(--border-secondary, #2a2a2a);
+        background: var(--bg-tertiary, #222);
     }
 
     .lane-header.selected {
-        background: #2a2a2a;
+        background: var(--bg-hover, #2a2a2a);
     }
 
     .lane-header.muted {
@@ -911,14 +930,14 @@
         padding: 6px 4px;
         background: transparent;
         border: none;
-        color: #ccc;
+        color: var(--text-secondary, #ccc);
         cursor: pointer;
         text-align: left;
         font-size: 12px;
     }
 
     .lane-name-btn:hover {
-        color: #fff;
+        color: var(--text-primary, #fff);
     }
 
     .lane-icon {
@@ -941,33 +960,33 @@
         height: 18px;
         border: none;
         border-radius: 2px;
-        background: #3a3a3a;
-        color: #666;
+        background: var(--bg-tertiary, #3a3a3a);
+        color: var(--text-muted, #666);
         font-size: 9px;
         font-weight: 600;
         cursor: pointer;
     }
 
     .lane-ctrl:hover {
-        background: #4a4a4a;
-        color: #aaa;
+        background: var(--bg-hover, #4a4a4a);
+        color: var(--text-secondary, #aaa);
     }
 
     .lane-ctrl.active {
-        background: #ff5500;
-        color: #fff;
+        background: var(--accent-danger, #ff5500);
+        color: var(--text-primary, #fff);
     }
 
     .lane-ctrl.delete:hover {
-        background: #ef4444;
-        color: #fff;
+        background: var(--accent-danger, #ef4444);
+        color: var(--text-primary, #fff);
     }
 
     /* Editor Area */
     .editor-area {
         flex: 1;
         overflow: hidden;
-        background: #1a1a1a;
+        background: var(--bg-primary, #1a1a1a);
     }
 
     .no-lane {
@@ -975,22 +994,22 @@
         align-items: center;
         justify-content: center;
         height: 100%;
-        color: #555;
+        color: var(--text-muted, #555);
     }
 
     /* Device Rack */
     .device-rack {
         flex-shrink: 0;
-        background: #1e1e1e;
-        border-top: 1px solid #333;
+        background: var(--bg-secondary, #1e1e1e);
+        border-top: 1px solid var(--border-primary, #333);
     }
 
     .device-tabs {
         display: flex;
         gap: 2px;
         padding: 4px 8px;
-        background: #252525;
-        border-bottom: 1px solid #333;
+        background: var(--bg-secondary, #252525);
+        border-bottom: 1px solid var(--border-primary, #333);
         overflow-x: auto;
     }
 
@@ -998,21 +1017,21 @@
         padding: 6px 12px;
         border: none;
         border-radius: 3px 3px 0 0;
-        background: #333;
-        color: #888;
+        background: var(--bg-tertiary, #333);
+        color: var(--text-muted, #888);
         font-size: 11px;
         cursor: pointer;
         white-space: nowrap;
     }
 
     .device-tab:hover:not(:disabled) {
-        background: #3a3a3a;
-        color: #ccc;
+        background: var(--bg-hover, #3a3a3a);
+        color: var(--text-secondary, #ccc);
     }
 
     .device-tab.active {
-        background: #1e1e1e;
-        color: #fff;
+        background: var(--bg-secondary, #1e1e1e);
+        color: var(--text-primary, #fff);
     }
 
     .device-tab:disabled {
@@ -1035,7 +1054,7 @@
         align-items: center;
         justify-content: center;
         height: 120px;
-        color: #555;
+        color: var(--text-muted, #555);
         font-size: 12px;
     }
 
@@ -1051,22 +1070,22 @@
     .help-topics h4 {
         margin: 0 0 8px;
         font-size: 12px;
-        color: #888;
+        color: var(--text-muted, #888);
     }
 
     .help-topics button {
         margin: 4px;
         padding: 6px 12px;
-        background: #333;
-        border: 1px solid #444;
+        background: var(--bg-tertiary, #333);
+        border: 1px solid var(--border-secondary, #444);
         border-radius: 4px;
-        color: #ccc;
+        color: var(--text-secondary, #ccc);
         font-size: 12px;
         cursor: pointer;
     }
 
     .help-topics button:hover {
-        background: #444;
+        background: var(--bg-hover, #444);
     }
 
     .share-content {
@@ -1075,7 +1094,7 @@
 
     .share-content p {
         margin: 0 0 12px;
-        color: #aaa;
+        color: var(--text-secondary, #aaa);
         font-size: 13px;
     }
 
@@ -1088,30 +1107,30 @@
         flex: 1;
         height: 36px;
         padding: 0 12px;
-        background: #2a2a2a;
-        border: 1px solid #3a3a3a;
+        background: var(--bg-tertiary, #2a2a2a);
+        border: 1px solid var(--border-secondary, #3a3a3a);
         border-radius: 4px;
-        color: #fff;
+        color: var(--text-primary, #fff);
         font-size: 12px;
     }
 
     .share-url button {
         padding: 0 16px;
-        background: #92d36e;
+        background: var(--accent-primary, #92d36e);
         border: none;
         border-radius: 4px;
-        color: #1a1a1a;
+        color: var(--bg-primary, #1a1a1a);
         font-weight: 500;
         cursor: pointer;
     }
 
     .share-url button:hover {
-        background: #a8e07a;
+        background: var(--accent-hover, #a8e07a);
     }
 
     .share-note {
         font-size: 11px;
-        color: #666;
+        color: var(--text-muted, #666);
     }
 
     /* Mobile */
