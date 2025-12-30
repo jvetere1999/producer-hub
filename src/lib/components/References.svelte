@@ -8,10 +8,9 @@
   @component
 -->
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
-	import Waveform from './Waveform.svelte';
+	import { onMount } from 'svelte';
 	import AudioAnalysisPanel from './AudioAnalysisPanel.svelte';
-	import { playerStore, type QueueTrack } from '$lib/player';
+	import { playerStore, type QueueTrack, seek } from '$lib/player';
 	import {
 		loadReferences,
 		saveReferences,
@@ -48,19 +47,11 @@
 	let selectedTrackArrayBuffer: ArrayBuffer | null = null;
 	let showAnalysisPanel = false;
 
-	// Playback state
-	let audio: HTMLAudioElement | null = null;
-	let isPlaying = false;
-	let currentTime = 0;
-	let duration = 0;
-	let volume = 0.8;
-
 	// UI state
 	let isCreatingLibrary = false;
 	let newLibraryName = '';
 	let waveformProgress: WaveformProgress | null = null;
 	let isAnalyzing = false;
-	let showPlayerModal = false;
 	let processingCount = 0;
 
 	// Marker creation
@@ -71,37 +62,8 @@
 	onMount(() => {
 		state = loadReferences();
 		libraries = listReferenceLibraries(state);
-
-		audio = new Audio();
-		audio.volume = volume;
-
-		audio.addEventListener('timeupdate', () => {
-			currentTime = audio?.currentTime || 0;
-		});
-
-		audio.addEventListener('loadedmetadata', () => {
-			duration = audio?.duration || 0;
-		});
-
-		audio.addEventListener('ended', () => {
-			isPlaying = false;
-		});
-
-		audio.addEventListener('play', () => {
-			isPlaying = true;
-		});
-
-		audio.addEventListener('pause', () => {
-			isPlaying = false;
-		});
 	});
 
-	onDestroy(() => {
-		if (audio) {
-			audio.pause();
-			audio.src = '';
-		}
-	});
 
 	function refreshLibraries() {
 		libraries = listReferenceLibraries(state);
@@ -123,35 +85,67 @@
 		selectedLibrary = getReferenceLibrary(state, id) || null;
 		selectedTrackId = null;
 		selectedTrack = null;
-		stopPlayback();
 	}
 
+	/**
+	 * Select and play a track via the global player
+	 * Builds queue from all tracks in the library, starts playing the selected one
+	 */
 	async function selectTrack(track: ReferenceTrack) {
+		if (!selectedLibrary) return;
+
 		selectedTrackId = track.id;
 		selectedTrack = track;
 		showAnalysisPanel = true;
-		showPlayerModal = true;
 
-		// Load audio from IndexedDB
-		const result = await getBlob(track.blobId);
-		if (result && audio) {
-			const blob = result.blob instanceof Blob ? result.blob : new Blob([result.blob]);
+		// Build queue from all tracks in the library
+		const trackIndex = selectedLibrary.tracks.findIndex(t => t.id === track.id);
 
-			// Load for playback
-			audio.src = URL.createObjectURL(blob);
-			audio.load();
-
-			// Load as ArrayBuffer for analysis
+		// Load all track URLs and build queue
+		const queueTracks: QueueTrack[] = [];
+		for (const t of selectedLibrary.tracks) {
 			try {
+				const stored = await getBlob(t.blobId);
+				if (stored?.blob) {
+					const blob = stored.blob instanceof Blob
+						? stored.blob
+						: new Blob([stored.blob], { type: t.mime || 'audio/mpeg' });
+					const audioUrl = URL.createObjectURL(blob);
+
+					queueTracks.push({
+						id: t.id,
+						title: t.name,
+						artist: selectedLibrary.name,
+						source: 'Reference Library',
+						audioUrl,
+						duration: t.durationSec,
+						waveform: t.waveform ? { peaks: t.waveform.peaks } : undefined
+					});
+				}
+			} catch (e) {
+				console.error('Failed to load track:', t.name, e);
+			}
+		}
+
+		// Set the queue and start playing from the selected track
+		if (queueTracks.length > 0) {
+			playerStore.setQueue(queueTracks, trackIndex >= 0 ? trackIndex : 0);
+		}
+
+		// Load ArrayBuffer for analysis panel
+		try {
+			const result = await getBlob(track.blobId);
+			if (result) {
+				const blob = result.blob instanceof Blob ? result.blob : new Blob([result.blob]);
 				selectedTrackArrayBuffer = await blob.arrayBuffer();
 
 				// If track doesn't have analysis, perform it automatically
 				if (!track.analysis && selectedTrackArrayBuffer) {
 					performAutoAnalysis(track.id, selectedTrackArrayBuffer);
 				}
-			} catch (e) {
-				console.error('Failed to load array buffer:', e);
 			}
+		} catch (e) {
+			console.error('Failed to load array buffer:', e);
 		}
 	}
 
@@ -465,109 +459,11 @@
 		}
 	}
 
-	function togglePlayback() {
-		if (!audio) return;
-
-		if (isPlaying) {
-			audio.pause();
-		} else {
-			audio.play();
-		}
-	}
-
-	function stopPlayback() {
-		if (audio) {
-			audio.pause();
-			audio.currentTime = 0;
-		}
-		currentTime = 0;
-		isPlaying = false;
-	}
-
-	/**
-	 * Play a reference track through the global BottomPlayer
-	 * This enables continuous playback with the persistent player
-	 */
-	async function playInGlobalPlayer(track: ReferenceTrack) {
-		if (!selectedLibrary) return;
-
-		try {
-			// Get the audio blob from IndexedDB
-			const stored = await getBlob(track.blobId);
-			if (!stored || !stored.blob) {
-				console.error('Could not load audio blob');
-				return;
-			}
-
-			// Handle both Blob and ArrayBuffer
-			let blob: Blob;
-			if (stored.blob instanceof Blob) {
-				blob = stored.blob;
-			} else {
-				// It's an ArrayBuffer, convert to Blob
-				blob = new Blob([stored.blob], { type: track.mime || 'audio/mpeg' });
-			}
-
-			// Create object URL for the audio
-			const audioUrl = URL.createObjectURL(blob);
-
-			// Create a single track queue for now
-			const queueTrack: QueueTrack = {
-				id: track.id,
-				title: track.name,
-				artist: selectedLibrary.name,
-				source: 'Reference Library',
-				audioUrl: audioUrl,
-				duration: track.durationSec,
-				waveform: track.waveform ? { peaks: track.waveform.peaks } : undefined
-			};
-
-			// Set the queue with just this track
-			playerStore.setQueue([queueTrack], 0);
-
-			// Stop local audio before closing (so it doesn't conflict with global player)
-			stopPlayback();
-
-			// Close the modal without stopping global playback
-			closePlayerModalKeepPlaying();
-		} catch (e) {
-			console.error('Failed to play in global player:', e);
-		}
-	}
-
-	function closePlayerModal() {
-		showPlayerModal = false;
-		showAnalysisPanel = false;
-		// Only stop the local audio player, not the global BottomPlayer
-		stopPlayback();
-		selectedTrackId = null;
-		selectedTrack = null;
-		selectedTrackArrayBuffer = null;
-	}
-
-	/**
-	 * Close the modal without stopping any playback
-	 * Used when switching to global player
-	 */
-	function closePlayerModalKeepPlaying() {
-		showPlayerModal = false;
+	function closeAnalysisPanel() {
 		showAnalysisPanel = false;
 		selectedTrackId = null;
 		selectedTrack = null;
 		selectedTrackArrayBuffer = null;
-	}
-
-	function handleSeek(time: number) {
-		if (audio) {
-			audio.currentTime = time;
-			currentTime = time;
-		}
-	}
-
-	function handleVolumeChange(e: Event) {
-		const value = parseFloat((e.target as HTMLInputElement).value);
-		volume = value;
-		if (audio) audio.volume = value;
 	}
 
 	function startAddMarker(time: number) {
@@ -592,9 +488,6 @@
 		showMarkerInput = false;
 	}
 
-	function addMarkerAtPlayhead() {
-		startAddMarker(currentTime);
-	}
 
 	function deleteTrack(trackId: string) {
 		if (!selectedLibrary || !selectedLibraryId) return;
@@ -846,15 +739,6 @@
 					{/each}
 				{/if}
 			</div>
-
-			{#if selectedTrack}
-				<div class="player-status">
-					<span>♫ Now loaded: {selectedTrack.name}</span>
-					<button class="btn btn-small" onclick={() => showPlayerModal = true}>
-						Open Player
-					</button>
-				</div>
-			{/if}
 		{:else}
 			<div class="empty-state">
 				<p>Select a library or create a new one</p>
@@ -862,111 +746,47 @@
 		{/if}
 	</div>
 
-	<!-- Full-Window Player Modal -->
-	{#if showPlayerModal && selectedTrack}
-		<div class="player-modal-backdrop" onclick={closePlayerModal} role="presentation">
-			<!-- svelte-ignore a11y_no_static_element_interactions -->
-			<!-- svelte-ignore a11y_click_events_have_key_events -->
-			<div class="player-modal" onclick={(e) => e.stopPropagation()}>
-				<!-- Modal Header -->
-				<div class="modal-header">
-					<div class="modal-title">
-						<h2>♫ {selectedTrack.name}</h2>
-						{#if selectedTrack.analysis}
-							<span class="analysis-badge">
-								{#if selectedTrack.analysis.bpm}~{selectedTrack.analysis.bpm} BPM{/if}
-								{#if selectedTrack.analysis.key} · {selectedTrack.analysis.key}{/if}
-								<span class="heuristic">(auto-detected)</span>
-							</span>
-						{/if}
-					</div>
-					<button class="modal-close" onclick={closePlayerModal}>✕</button>
-				</div>
-
-				<!-- Modal Content -->
-				<div class="modal-content">
-					<!-- Audio Analysis Panel -->
-					{#if showAnalysisPanel}
-						<AudioAnalysisPanel
-							track={selectedTrack}
-						/>
-					{/if}
-
-					<!-- Waveform Section -->
-					<div class="waveform-section">
-						{#if waveformProgress}
-							<div class="progress-bar">
-								<div class="progress-fill" style="width: {waveformProgress.progress * 100}%"></div>
-								<span class="progress-text">{waveformProgress.stage}...</span>
-							</div>
-						{:else}
-							<Waveform
-								waveform={selectedTrack.waveform}
-								{currentTime}
-								{duration}
-								annotations={selectedTrack.annotations}
-								onSeek={handleSeek}
-								onAddMarker={startAddMarker}
-							/>
-						{/if}
-					</div>
-
-					<!-- Transport Controls -->
-					<div class="transport-section">
-						<div class="transport">
-							<button class="btn-transport" onclick={togglePlayback}>
-								{isPlaying ? '⏸' : '▶'}
-							</button>
-							<button class="btn-transport" onclick={stopPlayback}>⏹</button>
-							<button class="btn-transport" onclick={addMarkerAtPlayhead} title="Add marker (M)">
-								⚑
-							</button>
-							<button
-								class="btn-transport btn-global-player"
-								onclick={() => selectedTrack && playInGlobalPlayer(selectedTrack)}
-								title="Play in continuous player (bottom bar)"
-							>
-								🔄
-							</button>
-
-							<div class="time-display">
-								<span>{formatTime(currentTime)} / {formatTime(duration)}</span>
-							</div>
-
-							<div class="volume-control">
-								<span>♪</span>
-								<input
-									type="range"
-									min="0"
-									max="1"
-									step="0.01"
-									value={volume}
-									oninput={handleVolumeChange}
-									class="volume-slider"
-								/>
-							</div>
-						</div>
-					</div>
-
-					<!-- Markers Section -->
-					{#if selectedTrack.annotations?.markers.length}
-						<div class="markers-section">
-							<h4>Markers</h4>
-							<div class="markers-list">
-								{#each selectedTrack.annotations.markers as marker (marker.id)}
-									<button
-										class="marker-chip"
-										style="border-color: {marker.color}"
-										onclick={() => handleSeek(marker.t)}
-									>
-										<span class="marker-time">{formatTime(marker.t)}</span>
-										<span class="marker-label">{decodeBase64(marker.labelEncoded)}</span>
-									</button>
-								{/each}
-							</div>
-						</div>
+	<!-- Analysis Panel (shows to the right when a track is selected) -->
+	{#if showAnalysisPanel && selectedTrack}
+		<div class="analysis-sidebar">
+			<div class="analysis-header">
+				<div class="analysis-title">
+					<h3>{selectedTrack.name}</h3>
+					{#if selectedTrack.analysis}
+						<span class="analysis-badge">
+							{#if selectedTrack.analysis.bpm}~{selectedTrack.analysis.bpm} BPM{/if}
+							{#if selectedTrack.analysis.key} · {selectedTrack.analysis.key}{/if}
+						</span>
 					{/if}
 				</div>
+				<button class="btn-close" onclick={closeAnalysisPanel} aria-label="Close analysis" type="button">
+					<svg class="close-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+						<path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+					</svg>
+				</button>
+			</div>
+
+			<div class="analysis-content">
+				<AudioAnalysisPanel track={selectedTrack} />
+
+				<!-- Markers Section -->
+				{#if selectedTrack.annotations?.markers.length}
+					<div class="markers-section">
+						<h4>Markers</h4>
+						<div class="markers-list">
+							{#each selectedTrack.annotations.markers as marker (marker.id)}
+								<button
+									class="marker-chip"
+									style="border-color: {marker.color}"
+									onclick={() => playerStore.setCurrentTime && seek(marker.t)}
+								>
+									<span class="marker-time">{formatTime(marker.t)}</span>
+									<span class="marker-label">{decodeBase64(marker.labelEncoded)}</span>
+								</button>
+							{/each}
+						</div>
+					</div>
+				{/if}
 			</div>
 		</div>
 	{/if}
@@ -1211,12 +1031,38 @@
 	}
 
 	.btn-transport {
-		padding: 8px 12px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 44px;
+		height: 44px;
+		padding: 0;
 		background: var(--accent);
 		border: 1px solid var(--border);
 		border-radius: 6px;
 		cursor: pointer;
-		font-size: 16px;
+		color: var(--text-primary, #fff);
+		transition: all 0.15s;
+	}
+
+	.btn-transport:hover {
+		filter: brightness(1.1);
+	}
+
+	.btn-transport:focus-visible {
+		outline: 2px solid var(--accent-primary, #ff764d);
+		outline-offset: 2px;
+	}
+
+	.transport-icon {
+		width: 24px;
+		height: 24px;
+	}
+
+	.volume-icon {
+		width: 20px;
+		height: 20px;
+		color: var(--text-muted, #888);
 	}
 
 	.btn-transport.btn-global-player {
@@ -1600,6 +1446,87 @@
 		color: var(--muted);
 		cursor: not-allowed;
 		text-decoration: none;
+	}
+
+	/* Analysis Sidebar */
+	.analysis-sidebar {
+		width: 350px;
+		min-width: 350px;
+		border-left: 1px solid var(--border);
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
+		background: var(--bg-secondary, var(--bg));
+	}
+
+	.analysis-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+		padding: 16px;
+		border-bottom: 1px solid var(--border);
+		gap: 12px;
+	}
+
+	.analysis-title h3 {
+		margin: 0 0 4px 0;
+		font-size: 14px;
+		font-weight: 600;
+		word-break: break-word;
+	}
+
+	.analysis-badge {
+		font-size: 12px;
+		color: var(--muted);
+	}
+
+	.btn-close {
+		width: 32px;
+		height: 32px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: transparent;
+		border: none;
+		border-radius: 6px;
+		cursor: pointer;
+		color: var(--muted);
+		flex-shrink: 0;
+	}
+
+	.btn-close:hover {
+		background: var(--surface-hover, #444);
+		color: var(--text-primary, #fff);
+	}
+
+	.close-icon {
+		width: 18px;
+		height: 18px;
+	}
+
+	.analysis-content {
+		flex: 1;
+		overflow-y: auto;
+		padding: 16px;
+	}
+
+	@media (max-width: 1024px) {
+		.analysis-sidebar {
+			position: fixed;
+			top: 0;
+			right: 0;
+			bottom: 0;
+			width: 100%;
+			max-width: 400px;
+			z-index: 1000;
+			box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
+		}
+	}
+
+	@media (max-width: 480px) {
+		.analysis-sidebar {
+			max-width: 100%;
+		}
 	}
 </style>
 

@@ -13,6 +13,11 @@ import {
     loadPlayerSettings,
     savePlayerSettings
 } from '../persist';
+import {
+    initAudioController,
+    getAudioElement,
+    disposeAudioController
+} from '../audio';
 
 // Mock localStorage
 const mockStorage: Record<string, string> = {};
@@ -22,6 +27,43 @@ vi.stubGlobal('localStorage', {
     removeItem: (key: string) => { delete mockStorage[key]; },
     clear: () => { Object.keys(mockStorage).forEach(k => delete mockStorage[k]); }
 });
+
+// Mock Audio constructor for Node.js environment
+class MockAudio {
+    src = '';
+    preload = '';
+    volume = 1;
+    currentTime = 0;
+    duration = 0;
+    paused = true;
+    private listeners: Record<string, Function[]> = {};
+
+    addEventListener(event: string, callback: Function) {
+        if (!this.listeners[event]) {
+            this.listeners[event] = [];
+        }
+        this.listeners[event].push(callback);
+    }
+
+    removeEventListener(event: string, callback: Function) {
+        if (this.listeners[event]) {
+            this.listeners[event] = this.listeners[event].filter(cb => cb !== callback);
+        }
+    }
+
+    play() {
+        this.paused = false;
+        return Promise.resolve();
+    }
+
+    pause() {
+        this.paused = true;
+    }
+
+    load() {}
+}
+
+vi.stubGlobal('Audio', MockAudio);
 
 const createMockTrack = (id: string): QueueTrack => ({
     id,
@@ -206,6 +248,66 @@ describe('Player Persistence', () => {
 
         const settings = loadPlayerSettings();
         expect(settings).toEqual(DEFAULT_SETTINGS);
+    });
+});
+
+describe('Audio Controller - Single Audio Element Guarantee', () => {
+    beforeEach(() => {
+        disposeAudioController();
+        playerStore.reset();
+    });
+
+    it('returns the same audio element on multiple init calls', () => {
+        const audio1 = initAudioController();
+        const audio2 = initAudioController();
+
+        expect(audio1).toBe(audio2);
+    });
+
+    it('getAudioElement returns the initialized audio element', () => {
+        const audio = initAudioController();
+        const retrieved = getAudioElement();
+
+        expect(retrieved).toBe(audio);
+    });
+
+    it('getAudioElement returns null before initialization', () => {
+        disposeAudioController();
+        const audio = getAudioElement();
+
+        expect(audio).toBeNull();
+    });
+
+    it('changing tracks updates the same audio element instead of creating new one', () => {
+        const audio = initAudioController();
+        const tracks = [createMockTrack('1'), createMockTrack('2')];
+
+        playerStore.setQueue(tracks, 0);
+
+        // Verify same audio element
+        expect(getAudioElement()).toBe(audio);
+
+        // Change track
+        playerStore.next();
+
+        // Still same audio element
+        expect(getAudioElement()).toBe(audio);
+    });
+
+    it('store transitions to loading state when track changes', () => {
+        const tracks = [createMockTrack('1'), createMockTrack('2')];
+        playerStore.setQueue(tracks, 0);
+
+        // After setQueue, status should be loading
+        let state = get(playerStore);
+        expect(state.status).toBe('loading');
+        expect(state.currentTrack?.id).toBe('1');
+
+        // After next(), should transition to loading for new track
+        playerStore.next();
+        state = get(playerStore);
+        expect(state.status).toBe('loading');
+        expect(state.currentTrack?.id).toBe('2');
     });
 });
 

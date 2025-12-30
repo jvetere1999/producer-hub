@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { registerSW } from 'virtual:pwa-register';
 	import { base } from '$app/paths';
 	import { goto } from '$app/navigation';
@@ -7,13 +7,23 @@
 	import { isOnboardingCompleted } from '$lib/onboarding';
 	import SettingsPanel from '$lib/components/SettingsPanel.svelte';
 	import BottomPlayer from '$lib/components/BottomPlayer.svelte';
-	import { playerVisible } from '$lib/player';
+	import { playerVisible, playerStore, initAudioController } from '$lib/player';
 
 	let settingsOpen = false;
 	let mounted = false;
 
 	// Safe reactive check for playerVisible with fallback
 	$: isPlayerVisible = $playerVisible ?? false;
+
+	// Test event handler for E2E tests
+	function handleTestPlayerQueue(e: CustomEvent) {
+		const { tracks, startIndex } = e.detail;
+		if (tracks && Array.isArray(tracks)) {
+			// Initialize audio controller first
+			initAudioController();
+			playerStore.setQueue(tracks, startIndex || 0);
+		}
+	}
 
 	onMount(() => {
 		registerSW({ immediate: true });
@@ -25,6 +35,21 @@
 
 		if (!isExcludedRoute && !isOnboardingCompleted()) {
 			goto(`${base}/onboarding`);
+		}
+
+		// Register test event listener for E2E tests
+		window.addEventListener('test:set-player-queue', handleTestPlayerQueue as EventListener);
+
+		// Expose playerStore for E2E tests (only in browser)
+		if (typeof window !== 'undefined') {
+			(window as any).__playerStore = playerStore;
+			(window as any).__initAudioController = initAudioController;
+		}
+	});
+
+	onDestroy(() => {
+		if (typeof window !== 'undefined') {
+			window.removeEventListener('test:set-player-queue', handleTestPlayerQueue as EventListener);
 		}
 	});
 
