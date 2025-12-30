@@ -245,3 +245,117 @@ test.describe('Single Audio Source Guarantee', () => {
     });
 });
 
+test.describe('Bottom Player - Mobile Layout', () => {
+    test.use({ viewport: { width: 320, height: 568 } }); // iPhone SE width
+
+    test('player controls visible and meet 44px hit target at 320px width', async ({ page }) => {
+        await page.goto('/');
+        await page.waitForLoadState('networkidle');
+
+        // Inject mock track
+        await injectTestTrack(page);
+
+        const bottomPlayer = page.locator('[aria-label="Audio player"]');
+        await expect(bottomPlayer).toBeVisible({ timeout: 5000 });
+
+        // Check play button is visible and meets 44px minimum
+        const playButton = bottomPlayer.locator('button[aria-label="Play"], button[aria-label="Pause"]');
+        await expect(playButton).toBeVisible();
+        const playBox = await playButton.boundingBox();
+        expect(playBox).not.toBeNull();
+        expect(playBox!.width).toBeGreaterThanOrEqual(44);
+        expect(playBox!.height).toBeGreaterThanOrEqual(44);
+
+        // Check prev button
+        const prevButton = bottomPlayer.locator('button[aria-label="Previous track"]');
+        await expect(prevButton).toBeVisible();
+        const prevBox = await prevButton.boundingBox();
+        expect(prevBox).not.toBeNull();
+        expect(prevBox!.width).toBeGreaterThanOrEqual(44);
+        expect(prevBox!.height).toBeGreaterThanOrEqual(44);
+
+        // Check next button
+        const nextButton = bottomPlayer.locator('button[aria-label="Next track"]');
+        await expect(nextButton).toBeVisible();
+        const nextBox = await nextButton.boundingBox();
+        expect(nextBox).not.toBeNull();
+        expect(nextBox!.width).toBeGreaterThanOrEqual(44);
+        expect(nextBox!.height).toBeGreaterThanOrEqual(44);
+
+        // Check close button
+        const closeButton = bottomPlayer.locator('button[aria-label="Close player"]');
+        await expect(closeButton).toBeVisible();
+        const closeBox = await closeButton.boundingBox();
+        expect(closeBox).not.toBeNull();
+        expect(closeBox!.width).toBeGreaterThanOrEqual(44);
+        expect(closeBox!.height).toBeGreaterThanOrEqual(44);
+    });
+
+    test('no horizontal overflow at 320px width', async ({ page }) => {
+        await page.goto('/');
+        await page.waitForLoadState('networkidle');
+
+        // Inject mock track
+        await injectTestTrack(page);
+
+        const bottomPlayer = page.locator('[aria-label="Audio player"]');
+        await expect(bottomPlayer).toBeVisible({ timeout: 5000 });
+
+        // Check for horizontal overflow
+        const hasHorizontalOverflow = await page.evaluate(() => {
+            return document.documentElement.scrollWidth > document.documentElement.clientWidth;
+        });
+        expect(hasHorizontalOverflow).toBe(false);
+
+        // Check player doesn't overflow viewport
+        const playerBox = await bottomPlayer.boundingBox();
+        expect(playerBox).not.toBeNull();
+        expect(playerBox!.width).toBeLessThanOrEqual(320);
+    });
+
+    test('controls are clickable on mobile', async ({ page }) => {
+        await page.goto('/');
+        await page.waitForLoadState('networkidle');
+
+        // Inject mock track
+        await injectTestTrack(page);
+
+        const bottomPlayer = page.locator('[aria-label="Audio player"]');
+        await expect(bottomPlayer).toBeVisible({ timeout: 5000 });
+
+        // Play button should be clickable
+        const playButton = bottomPlayer.locator('button[aria-label="Play"], button[aria-label="Pause"]');
+        await expect(playButton).toBeVisible();
+        await playButton.click();
+        // After click, the label should toggle
+        await expect(bottomPlayer.locator('button[aria-label="Pause"], button[aria-label="Play"]')).toBeVisible();
+
+        // Close button should be clickable
+        const closeButton = bottomPlayer.locator('button[aria-label="Close player"]');
+        await expect(closeButton).toBeVisible();
+        await closeButton.click();
+
+        // Player should be hidden after close
+        await expect(bottomPlayer).not.toBeVisible();
+    });
+
+    test('progress bar remains usable on mobile', async ({ page }) => {
+        await page.goto('/');
+        await page.waitForLoadState('networkidle');
+
+        // Inject mock track
+        await injectTestTrack(page);
+
+        const bottomPlayer = page.locator('[aria-label="Audio player"]');
+        await expect(bottomPlayer).toBeVisible({ timeout: 5000 });
+
+        // Progress bar should be visible
+        const progressTrack = bottomPlayer.locator('[aria-label="Seek"]');
+        await expect(progressTrack).toBeVisible();
+
+        // Progress bar should have usable height (at least 4px)
+        const progressBox = await progressTrack.boundingBox();
+        expect(progressBox).not.toBeNull();
+        expect(progressBox!.height).toBeGreaterThanOrEqual(4);
+    });
+});

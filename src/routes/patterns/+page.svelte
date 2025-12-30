@@ -10,6 +10,7 @@
     import { onMount, onDestroy } from 'svelte';
     import { base } from '$app/paths';
     import SEOHead from '$lib/components/SEOHead.svelte';
+    import { PageHeader } from '$lib/components/ui';
     import DrumRack from '$lib/patterns/DrumRack.svelte';
     import MidiRoll from '$lib/patterns/MidiRoll.svelte';
     import Transport from '$lib/patterns/Transport.svelte';
@@ -200,17 +201,19 @@
 
 <div class="patterns-page">
     <!-- Compact Header -->
-    <header class="page-header">
-        <a href="{base}/" class="back-link" aria-label="Back to home">←</a>
-        <div class="header-title">
-            <h1>⬢ Pattern Builder</h1>
-        </div>
-        <div class="header-actions">
+    <PageHeader
+        title="Pattern Builder"
+        icon="⬢"
+        size="md"
+        backHref="{base}/"
+        backLabel="Back to home"
+    >
+        {#snippet actions()}
             <button class="action-btn" onclick={() => showVelocity = !showVelocity} title="Toggle velocity view">
                 ≡
             </button>
-        </div>
-    </header>
+        {/snippet}
+    </PageHeader>
 
     <!-- Scrollable Content -->
     <main class="main-content">
@@ -301,60 +304,7 @@
         background: var(--bg-primary, #1a1a1a);
     }
 
-    /* Fixed Header */
-    .page-header {
-        flex-shrink: 0;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px 16px;
-        padding-top: calc(12px + env(safe-area-inset-top));
-        padding-left: calc(16px + env(safe-area-inset-left));
-        padding-right: calc(16px + env(safe-area-inset-right));
-        background: var(--bg-secondary, #242424);
-        border-bottom: 1px solid var(--border-default, #333);
-        z-index: 100;
-    }
-
-    .back-link {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 44px;
-        height: 44px;
-        background: var(--bg-tertiary, #333);
-        border-radius: 10px;
-        color: var(--text-primary, #fff);
-        text-decoration: none;
-        font-size: 18px;
-        flex-shrink: 0;
-    }
-
-    .back-link:hover {
-        background: var(--surface-hover, #444);
-    }
-
-    .header-title {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .header-title h1 {
-        margin: 0;
-        font-size: 18px;
-        font-weight: 600;
-        color: var(--text-primary, #fff);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .header-actions {
-        display: flex;
-        gap: 8px;
-        flex-shrink: 0;
-    }
-
+    /* Action button in header */
     .action-btn {
         width: 44px;
         height: 44px;
@@ -363,13 +313,20 @@
         justify-content: center;
         background: var(--bg-tertiary, #333);
         border: none;
-        border-radius: 10px;
+        border-radius: var(--radius-lg, 10px);
+        color: var(--text-primary, #fff);
         font-size: 18px;
         cursor: pointer;
+        transition: background var(--transition-base, 0.15s);
     }
 
     .action-btn:hover {
         background: var(--surface-hover, #444);
+    }
+
+    .action-btn:focus-visible {
+        outline: var(--focus-ring);
+        outline-offset: var(--focus-ring-offset);
     }
 
     /* Scrollable Content */
@@ -487,14 +444,6 @@
 
     /* Mobile Layout */
     @media (max-width: 768px) {
-        .page-header {
-            padding: 8px 12px;
-            padding-top: calc(8px + env(safe-area-inset-top));
-        }
-
-        .header-title h1 {
-            font-size: 16px;
-        }
 
         .main-content {
             padding: 12px;

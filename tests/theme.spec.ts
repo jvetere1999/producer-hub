@@ -25,8 +25,8 @@ test.describe('Theme System', () => {
             getComputedStyle(document.documentElement).getPropertyValue('--bg-primary').trim()
         );
 
-        // Open settings via the cog button
-        await page.locator('.settings-cog').click();
+        // Open settings via the cog button (uses aria-label)
+        await page.getByRole('button', { name: 'Open settings' }).click();
 
         // Find and click a theme option (e.g., "Dark" or "Light")
         const themeSection = page.locator('.settings-panel');
@@ -52,7 +52,7 @@ test.describe('Theme System', () => {
         await page.waitForLoadState('networkidle');
 
         // Open settings
-        await page.locator('.settings-cog').click();
+        await page.getByRole('button', { name: 'Open settings' }).click();
 
         // Select dark theme if visible
         const darkTheme = page.locator('button:has-text("Dark")');
@@ -115,8 +115,8 @@ test.describe('iPhone Viewport', () => {
         await page.goto('/');
         await page.waitForLoadState('networkidle');
 
-        // Settings button should be visible (the cog icon)
-        const settingsButton = page.locator('.settings-cog');
+        // Settings button should be visible (uses aria-label)
+        const settingsButton = page.getByRole('button', { name: 'Open settings' });
         await expect(settingsButton).toBeVisible({ timeout: 5000 });
 
         // Should be clickable

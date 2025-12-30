@@ -5,16 +5,45 @@
   - Fixed header with navigation dropdowns
   - Scrollable content area
   - iOS/iPad PWA compatibility
+  - Mobile-optimized navigation with Sheet overlay
 
   @component
 -->
 <script lang="ts">
     import { base } from '$app/paths';
     import { page } from '$app/stores';
+    import { playerVisible } from '$lib/player';
+    import { Sheet } from '$lib/components/ui';
+    import { onMount } from 'svelte';
 
     export let title: string = 'Producer Hub';
     export let showBackButton: boolean = false;
     export let onBack: (() => void) | undefined = undefined;
+
+    // Reactive check for player visibility
+    $: isPlayerVisible = $playerVisible ?? false;
+
+    // Mobile detection for Sheet vs dropdown
+    let isMobile = $state(false);
+    let mobileSheetOpen = $state(false);
+    let activeSheetCategory = $state<NavCategoryKey | null>(null);
+
+    onMount(() => {
+        const mediaQuery = window.matchMedia('(max-width: 640px)');
+        isMobile = mediaQuery.matches;
+
+        const handleChange = (e: MediaQueryListEvent) => {
+            isMobile = e.matches;
+            // Close sheet if switching to desktop
+            if (!e.matches) {
+                mobileSheetOpen = false;
+                activeSheetCategory = null;
+            }
+        };
+
+        mediaQuery.addEventListener('change', handleChange);
+        return () => mediaQuery.removeEventListener('change', handleChange);
+    });
 
     // Navigation types
     type NavCategoryKey = 'shortcuts' | 'tools' | 'create';
@@ -63,15 +92,32 @@
     };
 
     function toggleDropdown(category: NavCategoryKey) {
-        activeDropdown = activeDropdown === category ? null : category;
+        // Check viewport width directly for reliable mobile detection
+        const isMobileViewport = typeof window !== 'undefined' && window.innerWidth <= 640;
+
+        if (isMobileViewport) {
+            // On mobile, open Sheet
+            activeSheetCategory = category;
+            mobileSheetOpen = true;
+            activeDropdown = null;
+        } else {
+            // On desktop, use dropdown
+            activeDropdown = activeDropdown === category ? null : category;
+        }
     }
 
     function closeDropdowns() {
         activeDropdown = null;
     }
 
+    function closeMobileSheet() {
+        mobileSheetOpen = false;
+        activeSheetCategory = null;
+    }
+
     function handleNavClick(item: NavItem) {
         closeDropdowns();
+        closeMobileSheet();
         if (item.tab) {
             // Dispatch custom event for tab switching
             window.dispatchEvent(new CustomEvent('navigate-tab', { detail: { tab: item.tab } }));
@@ -157,7 +203,7 @@
     </header>
 
     <!-- Scrollable Content Area -->
-    <main class="app-content">
+    <main class="app-content" class:has-player={isPlayerVisible}>
         <slot />
     </main>
 </div>
@@ -167,57 +213,107 @@
     <button class="backdrop" onclick={closeDropdowns} aria-label="Close menu"></button>
 {/if}
 
+<!-- Mobile Navigation Sheet -->
+{#if activeSheetCategory && navigation[activeSheetCategory]}
+    <Sheet
+        bind:open={mobileSheetOpen}
+        onClose={closeMobileSheet}
+        title={navigation[activeSheetCategory].label}
+        size="full"
+    >
+        <nav class="mobile-nav-menu" role="menu">
+            {#each navigation[activeSheetCategory].items as item}
+                {#if item.href && !item.tab}
+                    <a
+                        href={item.disabled ? undefined : item.href}
+                        class="mobile-nav-item"
+                        class:disabled={item.disabled}
+                        class:current={currentPath === item.href}
+                        role="menuitem"
+                        onclick={closeMobileSheet}
+                    >
+                        <span class="mobile-nav-icon">{item.icon}</span>
+                        <span class="mobile-nav-label">{item.label}</span>
+                        {#if item.disabled}
+                            <span class="mobile-coming-soon">Coming Soon</span>
+                        {/if}
+                    </a>
+                {:else}
+                    <button
+                        class="mobile-nav-item"
+                        role="menuitem"
+                        onclick={() => handleNavClick(item)}
+                    >
+                        <span class="mobile-nav-icon">{item.icon}</span>
+                        <span class="mobile-nav-label">{item.label}</span>
+                    </button>
+                {/if}
+            {/each}
+        </nav>
+    </Sheet>
+{/if}
+
 <style>
     .app-shell {
         display: flex;
         flex-direction: column;
-        height: 100vh;
-        height: 100dvh; /* Dynamic viewport height for iOS */
+        /* Fill the parent container (main-wrapper) */
+        height: 100%;
+        width: 100%;
+        /* Prevent shell from scrolling - only content scrolls */
         overflow: hidden;
         background: var(--bg-primary, #1a1a1a);
     }
 
     .app-header {
         flex-shrink: 0;
+        position: sticky;
+        top: 0;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 16px;
-        padding: 12px 16px;
+        gap: var(--space-4);
+        padding: var(--space-3) var(--space-4);
         background: var(--bg-secondary, #242424);
-        border-bottom: 1px solid var(--border-default, #333);
-        z-index: 100;
+        border-bottom: var(--border-1) solid var(--border-default, #333);
+        z-index: var(--z-sticky);
         /* iOS safe area */
-        padding-top: calc(12px + env(safe-area-inset-top));
-        padding-left: calc(16px + env(safe-area-inset-left));
-        padding-right: calc(16px + env(safe-area-inset-right));
+        padding-top: calc(var(--space-3) + env(safe-area-inset-top));
+        padding-left: calc(var(--space-4) + env(safe-area-inset-left));
+        padding-right: calc(var(--space-4) + env(safe-area-inset-right));
     }
 
     .header-left {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: var(--space-3);
         flex-shrink: 0;
     }
 
     .back-btn {
-        padding: 8px 12px;
+        padding: var(--space-2) var(--space-3);
         background: var(--bg-tertiary, #333);
         border: none;
-        border-radius: 6px;
+        border-radius: var(--radius-md);
         color: var(--text-primary, #fff);
-        font-size: 14px;
+        font-size: var(--text-base);
         cursor: pointer;
-        min-height: 44px;
+        min-height: var(--touch-target);
+        transition: background var(--transition-base);
     }
 
     .back-btn:hover {
         background: var(--surface-hover, #444);
     }
 
+    .back-btn:focus-visible {
+        outline: var(--focus-ring);
+        outline-offset: var(--focus-ring-offset);
+    }
+
     .app-title {
-        font-size: 18px;
-        font-weight: 600;
+        font-size: var(--text-xl);
+        font-weight: var(--font-semibold);
         color: var(--text-primary, #fff);
         margin: 0;
         white-space: nowrap;
@@ -226,7 +322,7 @@
     .header-nav {
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: var(--space-1);
         flex: 1;
         justify-content: center;
     }
@@ -238,17 +334,17 @@
     .nav-trigger {
         display: flex;
         align-items: center;
-        gap: 6px;
-        padding: 10px 14px;
+        gap: var(--space-1-5);
+        padding: var(--space-2-5) var(--space-3-5);
         background: transparent;
         border: none;
-        border-radius: 8px;
+        border-radius: var(--radius-lg);
         color: var(--text-secondary, #aaa);
-        font-size: 14px;
-        font-weight: 500;
+        font-size: var(--text-base);
+        font-weight: var(--font-medium);
         cursor: pointer;
-        min-height: 44px;
-        transition: all 0.15s;
+        min-height: var(--touch-target);
+        transition: all var(--transition-base);
     }
 
     .nav-trigger:hover,
@@ -257,45 +353,55 @@
         color: var(--text-primary, #fff);
     }
 
+    .nav-trigger:focus-visible {
+        outline: var(--focus-ring);
+        outline-offset: var(--focus-ring-offset);
+    }
+
     .dropdown-arrow {
-        font-size: 10px;
+        font-size: var(--text-xs);
         opacity: 0.6;
     }
 
     .dropdown-menu {
         position: absolute;
-        top: calc(100% + 4px);
+        top: calc(100% + var(--space-1));
         left: 50%;
         transform: translateX(-50%);
         min-width: 200px;
         background: var(--bg-secondary, #2a2a2a);
-        border: 1px solid var(--border-default, #444);
-        border-radius: 12px;
-        padding: 6px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-        z-index: 200;
+        border: var(--border-1) solid var(--border-default, #444);
+        border-radius: var(--radius-xl);
+        padding: var(--space-1-5);
+        box-shadow: var(--shadow-elevated);
+        z-index: var(--z-overlay);
     }
 
     .dropdown-item {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: var(--space-2-5);
         width: 100%;
-        padding: 12px 14px;
+        padding: var(--space-3) var(--space-3-5);
         background: transparent;
         border: none;
-        border-radius: 8px;
+        border-radius: var(--radius-lg);
         color: var(--text-primary, #fff);
-        font-size: 14px;
+        font-size: var(--text-base);
         text-align: left;
         text-decoration: none;
         cursor: pointer;
-        min-height: 44px;
-        transition: background 0.15s;
+        min-height: var(--touch-target);
+        transition: background var(--transition-base);
     }
 
     .dropdown-item:hover:not(.disabled) {
         background: var(--surface-hover, #3a3a3a);
+    }
+
+    .dropdown-item:focus-visible {
+        outline: var(--focus-ring);
+        outline-offset: calc(-1 * var(--focus-ring-offset));
     }
 
     .dropdown-item.current {
@@ -309,8 +415,8 @@
     }
 
     .item-icon {
-        font-size: 16px;
-        width: 24px;
+        font-size: var(--text-lg);
+        width: var(--space-6);
         text-align: center;
     }
 
@@ -319,30 +425,42 @@
     }
 
     .coming-soon {
-        font-size: 10px;
-        padding: 2px 6px;
+        font-size: var(--text-xs);
+        padding: var(--space-0-5) var(--space-1-5);
         background: var(--accent-secondary, #50b8b8)33;
         color: var(--accent-secondary, #50b8b8);
-        border-radius: 4px;
+        border-radius: var(--radius-sm);
         text-transform: uppercase;
-        font-weight: 600;
+        font-weight: var(--font-semibold);
     }
 
     .header-right {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: var(--space-2);
         flex-shrink: 0;
     }
 
     .app-content {
         flex: 1;
+        /* This is the scroll container */
         overflow-y: auto;
         overflow-x: hidden;
-        /* Smooth scrolling on iOS */
+        /* Smooth momentum scrolling on iOS */
         -webkit-overflow-scrolling: touch;
-        /* iOS safe area for bottom */
+        /* Prevent scroll chaining to parent */
+        overscroll-behavior: contain;
+        /* iOS safe area for sides */
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+        /* Bottom safe area handled by layout wrapper when player visible */
         padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .app-content.has-player {
+        /* When player is visible, the layout wrapper handles bottom offset */
+        /* Just need minimal bottom padding for spacing */
+        padding-bottom: var(--space-4);
     }
 
     .backdrop {
@@ -350,7 +468,7 @@
         inset: 0;
         background: transparent;
         border: none;
-        z-index: 50;
+        z-index: var(--z-dropdown);
         cursor: default;
     }
 
@@ -358,13 +476,13 @@
     @media (max-width: 768px) {
         .app-header {
             flex-wrap: wrap;
-            gap: 8px;
-            padding: 8px 12px;
-            padding-top: calc(8px + env(safe-area-inset-top));
+            gap: var(--space-2);
+            padding: var(--space-2) var(--space-3);
+            padding-top: calc(var(--space-2) + env(safe-area-inset-top));
         }
 
         .app-title {
-            font-size: 16px;
+            font-size: var(--text-lg);
         }
 
         .header-nav {
@@ -372,8 +490,8 @@
             width: 100%;
             justify-content: flex-start;
             overflow-x: auto;
-            gap: 2px;
-            padding-bottom: 4px;
+            gap: var(--space-0-5);
+            padding-bottom: var(--space-1);
             /* Hide scrollbar but keep functionality */
             scrollbar-width: none;
             -ms-overflow-style: none;
@@ -384,8 +502,8 @@
         }
 
         .nav-trigger {
-            padding: 8px 12px;
-            font-size: 13px;
+            padding: var(--space-2) var(--space-3);
+            font-size: var(--text-sm);
             white-space: nowrap;
         }
 
@@ -399,9 +517,81 @@
     /* iPad specific */
     @media (min-width: 768px) and (max-width: 1024px) {
         .app-header {
-            padding: 12px 20px;
-            padding-top: calc(12px + env(safe-area-inset-top));
+            padding: var(--space-3) var(--space-5);
+            padding-top: calc(var(--space-3) + env(safe-area-inset-top));
         }
+    }
+
+    /* Mobile Navigation Sheet Menu */
+    .mobile-nav-menu {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+        padding: var(--space-2) 0;
+    }
+
+    .mobile-nav-item {
+        display: flex;
+        align-items: center;
+        gap: var(--space-4);
+        width: 100%;
+        padding: var(--space-4) var(--space-4);
+        background: var(--bg-tertiary, #333);
+        border: none;
+        border-radius: var(--radius-xl);
+        color: var(--text-primary, #fff);
+        font-size: var(--text-lg);
+        text-align: left;
+        text-decoration: none;
+        cursor: pointer;
+        min-height: var(--space-14);
+        transition: all var(--transition-base);
+    }
+
+    .mobile-nav-item:hover:not(.disabled) {
+        background: var(--surface-hover, #444);
+    }
+
+    .mobile-nav-item:focus-visible {
+        outline: var(--focus-ring);
+        outline-offset: var(--focus-ring-offset);
+    }
+
+    .mobile-nav-item:active:not(.disabled) {
+        background: var(--surface-active, #555);
+        transform: scale(0.98);
+    }
+
+    .mobile-nav-item.current {
+        background: var(--accent-primary, #3b82f6)22;
+        border: var(--border-2) solid var(--accent-primary, #3b82f6);
+    }
+
+    .mobile-nav-item.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .mobile-nav-icon {
+        font-size: var(--text-2xl);
+        width: var(--space-10);
+        text-align: center;
+        flex-shrink: 0;
+    }
+
+    .mobile-nav-label {
+        flex: 1;
+        font-weight: var(--font-medium);
+    }
+
+    .mobile-coming-soon {
+        font-size: var(--text-xs);
+        padding: var(--space-1) var(--space-2);
+        background: var(--accent-secondary, #50b8b8)33;
+        color: var(--accent-secondary, #50b8b8);
+        border-radius: var(--radius-md);
+        text-transform: uppercase;
+        font-weight: var(--font-semibold);
     }
 </style>
 
