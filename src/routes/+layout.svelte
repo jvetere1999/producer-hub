@@ -183,4 +183,27 @@
 		/* Bottom player height: ~72px + safe area */
 		bottom: calc(72px + env(safe-area-inset-bottom));
 	}
+
+	/* Input avoidance - ensure focused inputs scroll into view */
+	:global(input:focus),
+	:global(textarea:focus),
+	:global(select:focus) {
+		/* Scroll margin ensures element is visible above the bottom player */
+		scroll-margin-bottom: calc(80px + env(safe-area-inset-bottom));
+	}
+
+	/* When player is visible, increase scroll margin for focused inputs */
+	.main-wrapper.has-player :global(input:focus),
+	.main-wrapper.has-player :global(textarea:focus),
+	.main-wrapper.has-player :global(select:focus) {
+		scroll-margin-bottom: calc(100px + env(safe-area-inset-bottom));
+	}
+
+	/* iOS keyboard avoidance - use visual viewport to handle virtual keyboard */
+	@supports (height: 100dvh) {
+		:global(body) {
+			/* Dynamic viewport height accounts for iOS keyboard */
+			min-height: 100dvh;
+		}
+	}
 </style>
