@@ -225,6 +225,21 @@
             activeTab = tab as typeof activeTab;
         });
 
+        // Restore UI state (filters, search query)
+        const savedState = loadUIState();
+        if (savedState.query !== undefined) query = savedState.query;
+        if (savedState.product !== undefined) product = savedState.product;
+        if (savedState.type !== undefined) type = savedState.type;
+        if (savedState.group !== undefined) group = savedState.group;
+        if (savedState.kind !== undefined) kind = savedState.kind;
+        if (savedState.selectedFacets !== undefined) selectedFacets = savedState.selectedFacets;
+        if (savedState.favoritesOnly !== undefined) favoritesOnly = savedState.favoritesOnly;
+
+        // Set up tab navigation callback for keyboard shortcuts
+        setTabNavigationCallback((tab) => {
+            activeTab = tab as typeof activeTab;
+        });
+
         // Initialize hub commands
         registerDefaultCommands((tab) => {
             activeTab = tab as typeof activeTab;
