@@ -89,12 +89,35 @@ export async function loadAndPlay(url: string): Promise<void> {
     if (!audio) return;
 
     try {
+        // Reset the audio element for new source
+        audio.pause();
+        audio.currentTime = 0;
         audio.src = url;
-        // Note: Status is already 'loading' from setQueue, the 'play'/'playing' events update status
+
+        // Wait for the audio to be ready
+        await new Promise<void>((resolve, reject) => {
+            const onCanPlay = () => {
+                audio?.removeEventListener('canplay', onCanPlay);
+                audio?.removeEventListener('error', onError);
+                resolve();
+            };
+            const onError = () => {
+                audio?.removeEventListener('canplay', onCanPlay);
+                audio?.removeEventListener('error', onError);
+                reject(new Error('Failed to load audio'));
+            };
+            audio?.addEventListener('canplay', onCanPlay);
+            audio?.addEventListener('error', onError);
+            audio?.load();
+        });
+
+        // Try to play
         await audio.play();
     } catch (e) {
         console.error('Failed to play audio:', e);
-        playerStore.setError('Failed to play audio');
+        // Set status to paused so the UI shows play button
+        playerStore.setStatus('paused');
+        playerStore.setError('Click play to start audio');
     }
 }
 
