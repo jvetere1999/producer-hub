@@ -10,6 +10,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import AudioAnalysisPanel from './AudioAnalysisPanel.svelte';
+	import { PageHeader } from '$lib/components/ui';
 	import { playerStore, type QueueTrack, seek } from '$lib/player';
 	import {
 		loadReferences,
@@ -606,10 +607,11 @@
 <div class="references">
 	<!-- Sidebar: Libraries -->
 	<div class="sidebar">
-		<div class="sidebar-header">
-			<h2>Libraries</h2>
-			<button class="btn btn-primary btn-small" onclick={startCreateLibrary}>+ New</button>
-		</div>
+		<PageHeader title="Libraries" icon="♫" size="sm">
+			{#snippet actions()}
+				<button class="btn btn-primary btn-small" onclick={startCreateLibrary}>+ New</button>
+			{/snippet}
+		</PageHeader>
 
 		{#if isCreatingLibrary}
 			<div class="create-form">

@@ -8,6 +8,7 @@
 -->
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { PageHeader } from '$lib/components/ui';
 	import {
 		loadProjects,
 		saveProjects,
@@ -261,10 +262,11 @@
 <div class="projects">
 	<!-- Sidebar: Projects List -->
 	<div class="sidebar">
-		<div class="sidebar-header">
-			<h2>Projects</h2>
-			<button class="btn btn-primary btn-small" onclick={startCreate}>+ New</button>
-		</div>
+		<PageHeader title="Projects" icon="◈" size="sm">
+			{#snippet actions()}
+				<button class="btn btn-primary btn-small" onclick={startCreate}>+ New</button>
+			{/snippet}
+		</PageHeader>
 
 		<div class="filters">
 			<input

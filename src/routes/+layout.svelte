@@ -8,6 +8,8 @@
 	import SettingsPanel from '$lib/components/SettingsPanel.svelte';
 	import BottomPlayer from '$lib/components/BottomPlayer.svelte';
 	import { playerVisible, playerStore, initAudioController } from '$lib/player';
+	import { IconButton } from '$lib/components/ui';
+	import '$lib/design-tokens.css';
 
 	let settingsOpen = false;
 	let mounted = false;
@@ -79,17 +81,20 @@
 <svelte:window on:keydown={handleGlobalKeydown} />
 
 <!-- Settings Cog Button (always visible, fixed position) -->
-<button
-	class="settings-cog"
-	on:click={openSettings}
-	aria-label="Open settings"
-	title="Settings (⌘,)"
->
-	<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-		<circle cx="12" cy="12" r="3"/>
-		<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-	</svg>
-</button>
+<div class="settings-cog-wrapper">
+	<IconButton
+		ariaLabel="Open settings"
+		title="Settings (⌘,)"
+		variant="secondary"
+		size="md"
+		onclick={openSettings}
+	>
+		<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<circle cx="12" cy="12" r="3"/>
+			<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+		</svg>
+	</IconButton>
+</div>
 
 {#if mounted}
 	<!-- Settings Panel -->
@@ -107,52 +112,42 @@
 
 
 <style>
-	/* Settings Cog Button */
-	.settings-cog {
+	/* Settings Cog Wrapper - positions the IconButton */
+	.settings-cog-wrapper {
 		position: fixed;
-		top: 1rem;
-		right: 1rem;
-		z-index: 1000;
-		width: 44px;
-		height: 44px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: var(--bg-secondary, #2d2d2d);
-		border: 1px solid var(--border-default, #3d3d3d);
-		border-radius: 50%;
-		color: var(--text-secondary, #999);
-		cursor: pointer;
-		transition: all 0.2s ease;
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+		top: var(--space-4);
+		right: var(--space-4);
+		z-index: var(--z-modal);
+		/* Account for iOS safe area */
+		top: calc(var(--space-4) + env(safe-area-inset-top));
+		right: calc(var(--space-4) + env(safe-area-inset-right));
 	}
 
-	.settings-cog:hover {
-		color: var(--text-primary, #fff);
-		background: var(--surface-hover, #3d3d3d);
+	.settings-cog-wrapper :global(button) {
+		box-shadow: var(--shadow-md);
+	}
+
+	.settings-cog-wrapper :global(button:hover) {
 		transform: rotate(45deg);
 	}
 
-	.settings-cog:focus {
-		outline: 2px solid var(--accent-primary, #3b82f6);
-		outline-offset: 2px;
-	}
-
-	/* iOS Safe Area Insets */
+	/* Base HTML/Body scroll setup */
 	:global(html) {
-		/* Support for iOS notch/home indicator */
-		padding-top: env(safe-area-inset-top);
-		padding-left: env(safe-area-inset-left);
-		padding-right: env(safe-area-inset-right);
+		/* Prevent iOS rubber-banding on html */
+		height: 100%;
+		overflow: hidden;
 	}
 
 	:global(body) {
+		/* Body fills viewport and is the scroll container */
+		height: 100%;
+		overflow: hidden;
 		/* Prevent layout jumps on iOS */
 		-webkit-text-size-adjust: 100%;
-		/* Smooth momentum scrolling */
-		-webkit-overflow-scrolling: touch;
 		/* Prevent pull-to-refresh interference */
 		overscroll-behavior-y: contain;
+		/* Ensure proper stacking context */
+		position: relative;
 	}
 
 	/* Touch-friendly button targets (minimum 44px) */
@@ -168,20 +163,24 @@
 	@media (hover: none) {
 		:global(button:hover),
 		:global(a:hover) {
-			/* Prevent sticky hover states on touch - no additional styles needed */
+			/* Prevent sticky hover states on touch */
 			background: inherit;
 		}
 	}
 
-	/* Main wrapper - full viewport */
+	/* Main wrapper - fills viewport, contains scroll */
 	.main-wrapper {
-		min-height: 100vh;
-		min-height: 100dvh;
+		position: fixed;
+		inset: 0;
 		display: flex;
 		flex-direction: column;
+		/* This is the primary scroll container */
+		overflow: hidden;
 	}
 
+	/* When player is visible, reserve space at bottom */
 	.main-wrapper.has-player {
-		padding-bottom: 80px; /* Space for bottom player */
+		/* Bottom player height: ~72px + safe area */
+		bottom: calc(72px + env(safe-area-inset-bottom));
 	}
 </style>

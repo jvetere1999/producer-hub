@@ -254,20 +254,20 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        z-index: 1200;
-        padding: 1rem;
+        z-index: var(--z-tooltip);
+        padding: var(--space-4);
     }
 
     .settings-modal {
         background: var(--bg-secondary, #2d2d2d);
-        border-radius: 12px;
+        border-radius: var(--radius-xl);
         width: 100%;
         max-width: 550px;
         min-height: 400px;
         max-height: 70vh;
         display: flex;
         flex-direction: column;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        box-shadow: var(--shadow-modal);
         overflow: hidden;
     }
 
@@ -275,29 +275,36 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 0.875rem 1.25rem;
-        border-bottom: 1px solid var(--border-default, #3d3d3d);
+        padding: var(--space-3-5) var(--space-5);
+        border-bottom: var(--border-1) solid var(--border-default, #3d3d3d);
         flex-shrink: 0;
     }
 
     .settings-header h2 {
         margin: 0;
-        font-size: 1.125rem;
+        font-size: var(--text-xl);
         color: var(--text-primary, #fff);
     }
 
     .close-btn {
         background: none;
         border: none;
-        font-size: 1.25rem;
+        font-size: var(--text-2xl);
         color: var(--text-secondary, #999);
         cursor: pointer;
-        padding: 0.5rem;
+        padding: var(--space-2);
         min-height: auto;
+        border-radius: var(--radius-md);
+        transition: color var(--transition-base);
     }
 
     .close-btn:hover {
         color: var(--text-primary, #fff);
+    }
+
+    .close-btn:focus-visible {
+        outline: var(--focus-ring);
+        outline-offset: var(--focus-ring-offset);
     }
 
     .settings-content {
@@ -309,8 +316,8 @@
 
     .settings-nav {
         width: 140px;
-        border-right: 1px solid var(--border-default, #3d3d3d);
-        padding: 0.5rem;
+        border-right: var(--border-1) solid var(--border-default, #3d3d3d);
+        padding: var(--space-2);
         flex-shrink: 0;
         overflow-y: auto;
     }
@@ -318,15 +325,16 @@
     .nav-item {
         display: block;
         width: 100%;
-        padding: 0.625rem 0.75rem;
+        padding: var(--space-2-5) var(--space-3);
         background: none;
         border: none;
-        border-radius: 6px;
+        border-radius: var(--radius-md);
         text-align: left;
         color: var(--text-secondary, #999);
         cursor: pointer;
-        font-size: 0.8125rem;
+        font-size: var(--text-sm);
         min-height: auto;
+        transition: background var(--transition-base);
     }
 
     .nav-item:hover {
@@ -338,72 +346,88 @@
         color: white;
     }
 
+    .nav-item:focus-visible {
+        outline: var(--focus-ring);
+        outline-offset: var(--focus-ring-offset);
+    }
+
     .settings-panel {
         flex: 1;
-        padding: 1rem 1.25rem;
+        padding: var(--space-4) var(--space-5);
         overflow-y: auto;
         min-height: 0;
     }
 
     .settings-panel h3 {
-        margin: 0 0 0.75rem 0;
-        font-size: 0.9375rem;
+        margin: 0 0 var(--space-3) 0;
+        font-size: var(--text-base);
         color: var(--text-primary, #fff);
     }
 
     .settings-panel h3:not(:first-child) {
-        margin-top: 1.25rem;
+        margin-top: var(--space-5);
     }
 
     .section-desc {
         color: var(--text-secondary, #999);
-        font-size: 0.8125rem;
-        margin: 0 0 0.75rem 0;
-        line-height: 1.4;
+        font-size: var(--text-sm);
+        margin: 0 0 var(--space-3) 0;
+        line-height: var(--leading-snug);
     }
 
     .setting-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 0.5rem 0;
-        border-bottom: 1px solid var(--border-subtle, #3d3d3d);
+        padding: var(--space-2) 0;
+        border-bottom: var(--border-1) solid var(--border-subtle, #3d3d3d);
     }
 
     .setting-row label {
         color: var(--text-primary, #fff);
-        font-size: 0.875rem;
+        font-size: var(--text-base);
     }
 
     .setting-row select {
-        padding: 0.375rem 0.5rem;
-        border-radius: 6px;
-        border: 1px solid var(--border-default, #3d3d3d);
+        padding: var(--space-1-5) var(--space-2);
+        border-radius: var(--radius-md);
+        border: var(--border-1) solid var(--border-default, #3d3d3d);
         background: var(--bg-tertiary, #3d3d3d);
         color: var(--text-primary, #fff);
-        font-size: 0.875rem;
+        font-size: var(--text-base);
         min-width: 140px;
     }
 
+    .setting-row select:focus {
+        outline: var(--focus-ring);
+        outline-offset: var(--focus-ring-offset);
+    }
+
     .btn-secondary {
-        padding: 0.5rem 1rem;
+        padding: var(--space-2) var(--space-4);
         background: var(--bg-tertiary, #3d3d3d);
         border: none;
-        border-radius: 6px;
+        border-radius: var(--radius-md);
         color: var(--text-primary, #fff);
         cursor: pointer;
-        font-size: 0.8125rem;
+        font-size: var(--text-sm);
         min-height: auto;
+        transition: background var(--transition-base);
     }
 
     .btn-secondary:hover {
         background: var(--surface-hover, #4d4d4d);
     }
 
+    .btn-secondary:focus-visible {
+        outline: var(--focus-ring);
+        outline-offset: var(--focus-ring-offset);
+    }
+
     .products-list {
         display: flex;
         flex-direction: column;
-        gap: 0.375rem;
+        gap: var(--space-1-5);
         max-height: 250px;
         overflow-y: auto;
     }
@@ -411,11 +435,12 @@
     .product-toggle {
         display: flex;
         align-items: center;
-        gap: 0.625rem;
-        padding: 0.5rem 0.625rem;
+        gap: var(--space-2-5);
+        padding: var(--space-2) var(--space-2-5);
         background: var(--bg-tertiary, #3d3d3d);
-        border-radius: 6px;
+        border-radius: var(--radius-md);
         cursor: pointer;
+        transition: background var(--transition-base);
     }
 
     .product-toggle:hover {
@@ -423,36 +448,41 @@
     }
 
     .product-toggle input {
-        width: 16px;
-        height: 16px;
+        width: var(--space-4);
+        height: var(--space-4);
+    }
+
+    .product-toggle input:focus-visible {
+        outline: var(--focus-ring);
+        outline-offset: var(--focus-ring-offset);
     }
 
     .product-info {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: var(--space-2);
         color: var(--text-primary, #fff);
-        font-size: 0.875rem;
+        font-size: var(--text-base);
     }
 
     .product-icon {
-        width: 20px;
-        height: 20px;
+        width: var(--space-5);
+        height: var(--space-5);
     }
 
     .sync-status {
         background: var(--bg-tertiary, #3d3d3d);
-        border-radius: 6px;
-        padding: 0.75rem;
-        margin-bottom: 0.75rem;
+        border-radius: var(--radius-md);
+        padding: var(--space-3);
+        margin-bottom: var(--space-3);
     }
 
     .status-row {
         display: flex;
         justify-content: space-between;
-        padding: 0.125rem 0;
+        padding: var(--space-0-5) 0;
         color: var(--text-secondary, #999);
-        font-size: 0.8125rem;
+        font-size: var(--text-sm);
     }
 
     .status-value {
@@ -460,7 +490,7 @@
     }
 
     .coming-soon {
-        font-size: 0.8125rem;
+        font-size: var(--text-sm);
         color: var(--text-muted, #666);
         font-style: italic;
     }
@@ -468,30 +498,30 @@
     .shortcuts-list {
         display: flex;
         flex-direction: column;
-        gap: 0.25rem;
+        gap: var(--space-1);
     }
 
     .shortcut-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 0.375rem 0;
-        border-bottom: 1px solid var(--border-subtle, #3d3d3d);
+        padding: var(--space-1-5) 0;
+        border-bottom: var(--border-1) solid var(--border-subtle, #3d3d3d);
     }
 
     .shortcut-keys {
         font-family: monospace;
-        font-size: 0.75rem;
+        font-size: var(--text-xs);
         background: var(--keycap-bg, #3d3d3d);
         color: var(--keycap-text, #fff);
-        padding: 0.1875rem 0.375rem;
-        border-radius: 3px;
-        border: 1px solid var(--keycap-border, #5d5d5d);
+        padding: var(--space-0-5) var(--space-1-5);
+        border-radius: var(--radius-sm);
+        border: var(--border-1) solid var(--keycap-border, #5d5d5d);
     }
 
     .shortcut-action {
         color: var(--text-secondary, #999);
-        font-size: 0.8125rem;
+        font-size: var(--text-sm);
     }
 
     @media (max-width: 600px) {
@@ -509,15 +539,15 @@
             display: flex;
             overflow-x: auto;
             border-right: none;
-            border-bottom: 1px solid var(--border-default, #3d3d3d);
-            padding: 0.375rem;
-            gap: 0.375rem;
+            border-bottom: var(--border-1) solid var(--border-default, #3d3d3d);
+            padding: var(--space-1-5);
+            gap: var(--space-1-5);
         }
 
         .nav-item {
             flex-shrink: 0;
             white-space: nowrap;
-            padding: 0.5rem 0.625rem;
+            padding: var(--space-2) var(--space-2-5);
         }
     }
 </style>

@@ -18,7 +18,8 @@ test.describe('Pattern Builder', () => {
     });
 
     test('loads the patterns page', async ({ page }) => {
-        await expect(page.locator('h1')).toContainText('Pattern Builder');
+        // PageHeader uses h2 for the title
+        await expect(page.locator('.page-header-title')).toContainText('Pattern Builder');
     });
 
     test('displays template selector', async ({ page }) => {

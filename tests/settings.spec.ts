@@ -19,8 +19,8 @@ test.describe('Settings Panel', () => {
         await page.goto('/');
         await page.waitForLoadState('networkidle');
 
-        // Settings cog should be visible
-        const settingsCog = page.locator('.settings-cog');
+        // Settings cog should be visible (now uses IconButton with aria-label)
+        const settingsCog = page.getByRole('button', { name: 'Open settings' });
         await expect(settingsCog).toBeVisible({ timeout: 10000 });
     });
 
@@ -29,7 +29,7 @@ test.describe('Settings Panel', () => {
         await page.waitForLoadState('networkidle');
 
         // Click settings cog
-        await page.locator('.settings-cog').click();
+        await page.getByRole('button', { name: 'Open settings' }).click();
 
         // Settings modal should appear
         await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
@@ -37,7 +37,7 @@ test.describe('Settings Panel', () => {
 
     test('settings panel has navigation sections', async ({ page }) => {
         await page.goto('/');
-        await page.locator('.settings-cog').click();
+        await page.getByRole('button', { name: 'Open settings' }).click();
 
         // All sections should be present - use exact match to avoid duplicates
         await expect(page.getByRole('button', { name: /General/i })).toBeVisible();
@@ -48,7 +48,7 @@ test.describe('Settings Panel', () => {
 
     test('keyboard shortcuts section shows shortcuts', async ({ page }) => {
         await page.goto('/');
-        await page.locator('.settings-cog').click();
+        await page.getByRole('button', { name: 'Open settings' }).click();
 
         // Navigate to keyboard section
         await page.getByRole('button', { name: /Keyboard/i }).click();
@@ -69,7 +69,7 @@ test.describe('Settings Panel', () => {
 
     test('Escape closes settings panel', async ({ page }) => {
         await page.goto('/');
-        await page.locator('.settings-cog').click();
+        await page.getByRole('button', { name: 'Open settings' }).click();
 
         // Settings should be open
         await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
