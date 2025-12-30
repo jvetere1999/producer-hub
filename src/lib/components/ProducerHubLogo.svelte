@@ -1,0 +1,54 @@
+<!--
+  ProducerHubLogo Component
+
+  Inline SVG logo for Producer Hub that matches the favicon.
+  Use this instead of emoji in headers.
+
+  @component
+-->
+<script lang="ts">
+    export let size: number = 24;
+    export let className: string = '';
+</script>
+
+<svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 64 64"
+    class="producer-hub-logo {className}"
+    aria-hidden="true"
+>
+    <defs>
+        <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+        </linearGradient>
+    </defs>
+
+    <!-- Background Circle -->
+    <circle cx="32" cy="32" r="30" fill="url(#logoGradient)"/>
+
+    <!-- Stylized "P" + Waveform -->
+    <g fill="#ffffff">
+        <!-- P shape -->
+        <rect x="16" y="16" width="4" height="32" rx="2"/>
+        <rect x="16" y="16" width="16" height="4" rx="2"/>
+        <rect x="28" y="16" width="4" height="14" rx="2"/>
+        <rect x="16" y="26" width="16" height="4" rx="2"/>
+
+        <!-- Waveform bars -->
+        <rect x="36" y="24" width="3" height="16" rx="1.5"/>
+        <rect x="42" y="20" width="3" height="24" rx="1.5"/>
+        <rect x="48" y="26" width="3" height="12" rx="1.5"/>
+    </g>
+</svg>
+
+<style>
+    .producer-hub-logo {
+        display: inline-block;
+        vertical-align: middle;
+        flex-shrink: 0;
+    }
+</style>
+

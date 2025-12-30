@@ -11,6 +11,7 @@
 	import { onMount, onDestroy } from 'svelte';
 	import Waveform from './Waveform.svelte';
 	import AudioAnalysisPanel from './AudioAnalysisPanel.svelte';
+	import { playerStore, type QueueTrack } from '$lib/player';
 	import {
 		loadReferences,
 		saveReferences,
@@ -483,10 +484,74 @@
 		isPlaying = false;
 	}
 
+	/**
+	 * Play a reference track through the global BottomPlayer
+	 * This enables continuous playback with the persistent player
+	 */
+	async function playInGlobalPlayer(track: ReferenceTrack) {
+		if (!selectedLibrary) return;
+
+		try {
+			// Get the audio blob from IndexedDB
+			const stored = await getBlob(track.blobId);
+			if (!stored || !stored.blob) {
+				console.error('Could not load audio blob');
+				return;
+			}
+
+			// Handle both Blob and ArrayBuffer
+			let blob: Blob;
+			if (stored.blob instanceof Blob) {
+				blob = stored.blob;
+			} else {
+				// It's an ArrayBuffer, convert to Blob
+				blob = new Blob([stored.blob], { type: track.mime || 'audio/mpeg' });
+			}
+
+			// Create object URL for the audio
+			const audioUrl = URL.createObjectURL(blob);
+
+			// Create a single track queue for now
+			const queueTrack: QueueTrack = {
+				id: track.id,
+				title: track.name,
+				artist: selectedLibrary.name,
+				source: 'Reference Library',
+				audioUrl: audioUrl,
+				duration: track.durationSec,
+				waveform: track.waveform ? { peaks: track.waveform.peaks } : undefined
+			};
+
+			// Set the queue with just this track
+			playerStore.setQueue([queueTrack], 0);
+
+			// Stop local audio before closing (so it doesn't conflict with global player)
+			stopPlayback();
+
+			// Close the modal without stopping global playback
+			closePlayerModalKeepPlaying();
+		} catch (e) {
+			console.error('Failed to play in global player:', e);
+		}
+	}
+
 	function closePlayerModal() {
 		showPlayerModal = false;
 		showAnalysisPanel = false;
+		// Only stop the local audio player, not the global BottomPlayer
 		stopPlayback();
+		selectedTrackId = null;
+		selectedTrack = null;
+		selectedTrackArrayBuffer = null;
+	}
+
+	/**
+	 * Close the modal without stopping any playback
+	 * Used when switching to global player
+	 */
+	function closePlayerModalKeepPlaying() {
+		showPlayerModal = false;
+		showAnalysisPanel = false;
 		selectedTrackId = null;
 		selectedTrack = null;
 		selectedTrackArrayBuffer = null;
@@ -856,6 +921,13 @@
 							<button class="btn-transport" onclick={addMarkerAtPlayhead} title="Add marker (M)">
 								⚑
 							</button>
+							<button
+								class="btn-transport btn-global-player"
+								onclick={() => selectedTrack && playInGlobalPlayer(selectedTrack)}
+								title="Play in continuous player (bottom bar)"
+							>
+								🔄
+							</button>
 
 							<div class="time-display">
 								<span>{formatTime(currentTime)} / {formatTime(duration)}</span>
@@ -1145,6 +1217,15 @@
 		border-radius: 6px;
 		cursor: pointer;
 		font-size: 16px;
+	}
+
+	.btn-transport.btn-global-player {
+		background: var(--accent-secondary, #50b8b8);
+		margin-left: 8px;
+	}
+
+	.btn-transport.btn-global-player:hover {
+		background: var(--accent-secondary-hover, #3da0a0);
 	}
 
 	.volume-control {

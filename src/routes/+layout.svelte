@@ -6,9 +6,14 @@
 	import { page } from '$app/stores';
 	import { isOnboardingCompleted } from '$lib/onboarding';
 	import SettingsPanel from '$lib/components/SettingsPanel.svelte';
+	import BottomPlayer from '$lib/components/BottomPlayer.svelte';
+	import { playerVisible } from '$lib/player';
 
 	let settingsOpen = false;
 	let mounted = false;
+
+	// Safe reactive check for playerVisible with fallback
+	$: isPlayerVisible = $playerVisible ?? false;
 
 	onMount(() => {
 		registerSW({ immediate: true });
@@ -48,33 +53,33 @@
 
 <svelte:window on:keydown={handleGlobalKeydown} />
 
-{#if mounted}
-	<!-- Settings Cog Button (fixed position) -->
-	<button
-		class="settings-cog"
-		on:click={openSettings}
-		aria-label="Open settings"
-		title="Settings (⌘,)"
-	>
-		<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-			<circle cx="12" cy="12" r="3"/>
-			<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-		</svg>
-	</button>
+<!-- Settings Cog Button (always visible, fixed position) -->
+<button
+	class="settings-cog"
+	on:click={openSettings}
+	aria-label="Open settings"
+	title="Settings (⌘,)"
+>
+	<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+		<circle cx="12" cy="12" r="3"/>
+		<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+	</svg>
+</button>
 
+{#if mounted}
 	<!-- Settings Panel -->
 	<SettingsPanel bind:isOpen={settingsOpen} on:close={closeSettings} />
+
+	<!-- Global Audio Player (only rendered when player is visible) -->
+	{#if isPlayerVisible}
+		<BottomPlayer />
+	{/if}
 {/if}
 
-<slot />
+<div class="main-wrapper" class:has-player={isPlayerVisible}>
+	<slot />
+</div>
 
-<footer class="site-footer">
-	<div class="footer-content">
-		<span>© {new Date().getFullYear()} Producer Hub</span>
-		<span class="separator">•</span>
-		<a href="{base}/privacy">Privacy Policy</a>
-	</div>
-</footer>
 
 <style>
 	/* Settings Cog Button */
@@ -143,38 +148,15 @@
 		}
 	}
 
-	.site-footer {
-		margin-top: 2rem;
-		padding: 1rem;
-		/* Account for iOS home indicator */
-		padding-bottom: calc(1rem + env(safe-area-inset-bottom));
-		text-align: center;
-		font-size: 0.875rem;
-		color: var(--text-muted, #6b7280);
-		border-top: 1px solid var(--border-default, #374151);
-		background: var(--bg-secondary, transparent);
-	}
-
-	.footer-content {
+	/* Main wrapper - full viewport */
+	.main-wrapper {
+		min-height: 100vh;
+		min-height: 100dvh;
 		display: flex;
-		justify-content: center;
-		align-items: center;
-		gap: 0.5rem;
-		flex-wrap: wrap;
+		flex-direction: column;
 	}
 
-	.separator {
-		opacity: 0.5;
-	}
-
-	.site-footer a {
-		color: var(--accent-primary, #3b82f6);
-		text-decoration: none;
-	}
-
-	.site-footer a:hover {
-		text-decoration: underline;
-		color: var(--accent-secondary, #50b8b8);
+	.main-wrapper.has-player {
+		padding-bottom: 80px; /* Space for bottom player */
 	}
 </style>
-

@@ -1,4 +1,5 @@
 import adapterStatic from '@sveltejs/adapter-static';
+import adapterCloudflare from '@sveltejs/adapter-cloudflare';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 const dev = process.env.NODE_ENV === 'development';
@@ -15,14 +16,12 @@ const deployTarget = process.env.DEPLOY_TARGET ?? 'static';
 // Select adapter based on deployment target
 function getAdapter() {
 	if (deployTarget === 'cloudflare') {
-		// Dynamic import for Cloudflare adapter (install with: npm i -D @sveltejs/adapter-cloudflare)
-		// For now, fall back to static adapter - uncomment when adapter-cloudflare is installed
-		// const adapterCloudflare = await import('@sveltejs/adapter-cloudflare');
-		// return adapterCloudflare.default();
-		return adapterStatic({
-			pages: 'build',
-			assets: 'build',
-			fallback: 'index.html' // SPA fallback for Cloudflare
+		return adapterCloudflare({
+			// Use Pages mode (default)
+			routes: {
+				include: ['/*'],
+				exclude: ['<all>']
+			}
 		});
 	}
 

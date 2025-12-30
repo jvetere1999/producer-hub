@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { filterShortcuts, groupShortcutsByGroup } from '$lib/filter';
+import { filterShortcuts, groupShortcutsByGroup, filterShortcutsByProducts, filterProducts } from '$lib/filter';
 import type { ShortcutWithProduct } from '$lib';
 
 // Test data factory
@@ -167,8 +167,6 @@ describe('groupShortcutsByGroup', () => {
 });
 
 describe('filterShortcutsByProducts', () => {
-    // Import the new function
-    const { filterShortcutsByProducts } = await import('$lib/filter');
 
     const shortcuts: ShortcutWithProduct[] = [
         createShortcut({ id: 'a:1', productId: 'ableton' }),
@@ -201,7 +199,6 @@ describe('filterShortcutsByProducts', () => {
 });
 
 describe('filterProducts', () => {
-    const { filterProducts } = await import('$lib/filter');
 
     const products = [
         { productId: 'ableton', name: 'Ableton' },
