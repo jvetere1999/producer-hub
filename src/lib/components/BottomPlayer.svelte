@@ -29,6 +29,7 @@
     let volume = 0.8;
     let showVolumeSlider = false;
     let progressBar: HTMLDivElement;
+    let lastLoadedTrackId: string | null = null;  // Guard against infinite loop
 
     // Subscribe to store
     let unsubscribe: () => void;
@@ -46,8 +47,9 @@
             currentTime = state.currentTime;
             duration = state.duration;
 
-            // Load new track when it changes
-            if (state.currentTrack && state.status === 'loading') {
+            // Load new track when it changes (with guard to prevent infinite loop)
+            if (state.currentTrack && state.status === 'loading' && state.currentTrack.id !== lastLoadedTrackId) {
+                lastLoadedTrackId = state.currentTrack.id;
                 loadAndPlay(state.currentTrack.audioUrl);
             }
         });
@@ -99,6 +101,7 @@
     }
 
     function handleClose() {
+        lastLoadedTrackId = null;  // Reset guard so track can be loaded again
         playerStore.setVisible(false);
     }
 
@@ -394,7 +397,7 @@
 
     .error-message {
         padding: 8px 16px;
-        background: var(--accent-error, #ff5252)22;
+        background: rgba(255, 82, 82, 0.13);
         color: var(--accent-error, #ff5252);
         font-size: 12px;
         display: flex;

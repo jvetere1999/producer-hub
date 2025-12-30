@@ -165,6 +165,7 @@
 
     const TAB_STORAGE_KEY = 'producerhub_active_tab';
     const VALID_TABS = ['shortcuts', 'infobase', 'projects', 'inbox', 'references', 'collections', 'search'] as const;
+    let tabLoaded = false;  // Guard to prevent overwriting saved tab on initial render
 
     function loadActiveTab(): typeof activeTab {
         try {
@@ -179,6 +180,7 @@
     }
 
     function saveActiveTab(tab: typeof activeTab) {
+        if (!tabLoaded) return;  // Don't save until we've loaded the initial value
         try {
             localStorage.setItem(TAB_STORAGE_KEY, tab);
         } catch (e) {
@@ -186,7 +188,7 @@
         }
     }
 
-    // Save tab whenever it changes
+    // Save tab whenever it changes (after initial load)
     $: saveActiveTab(activeTab);
 
     // ============================================
@@ -206,6 +208,7 @@
 
         keyOS = getKeyOSPreference();
         activeTab = loadActiveTab();
+        tabLoaded = true;  // Now it's safe to save tab changes
 
         // Restore UI state (filters, search query)
         const savedState = loadUIState();

@@ -90,7 +90,7 @@ export async function loadAndPlay(url: string): Promise<void> {
 
     try {
         audio.src = url;
-        playerStore.setStatus('loading');
+        // Note: Status is already 'loading' from setQueue, the 'play'/'playing' events update status
         await audio.play();
     } catch (e) {
         console.error('Failed to play audio:', e);
