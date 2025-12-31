@@ -17,6 +17,7 @@
         initAudioController,
         loadAndPlay,
         togglePlayPause,
+        pause,
         seek,
         setVolume,
         loadPlayerSettings,
@@ -24,7 +25,8 @@
         loadQueueState,
         saveQueueState,
         saveQueueStateImmediate,
-        migratePlayerStorage
+        migratePlayerStorage,
+        clearQueueState
     } from '$lib/player';
     import { IconButton } from '$lib/components/ui';
     import { toasts } from '$lib/stores/toast';
@@ -146,7 +148,13 @@
     }
 
     function handleClose() {
-        lastLoadedTrackId = null;  // Reset guard so track can be loaded again
+        // Stop playback first
+        pause();
+        // Clear the queue
+        playerStore.clearQueue();
+        clearQueueState();
+        // Reset guard so track can be loaded again later
+        lastLoadedTrackId = null;
         playerStore.setVisible(false);
     }
 

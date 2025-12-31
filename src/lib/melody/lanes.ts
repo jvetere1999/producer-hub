@@ -386,17 +386,18 @@ function validateArrangement(arr: unknown): arr is Arrangement {
 
 function migrateArrangement(payload: SerializedArrangement): Arrangement {
     const { v, data } = payload;
-    let migrated = { ...data };
+    const migrated = { ...data };
 
     // Migration from v1 to v2: add schemaVersion, noteMode
     if (v < 2) {
         migrated.schemaVersion = ARRANGEMENT_SCHEMA_VERSION;
-        migrated.lanes = migrated.lanes.map(lane => {
-            if (!('noteMode' in lane)) {
-                return {
-                    ...lane,
-                    noteMode: lane.type === 'drums' ? 'oneShot' : 'sustain',
-                } as Lane;
+        // Use type assertion to work around strict type checking during migration
+        // Old v1 data may not have noteMode property
+        migrated.lanes = migrated.lanes.map((lane: Lane) => {
+            const laneAny = lane as Lane & { noteMode?: NoteMode };
+            if (laneAny.noteMode === undefined) {
+                const noteMode: NoteMode = lane.type === 'drums' ? 'oneShot' : 'sustain';
+                return { ...lane, noteMode };
             }
             return lane;
         });

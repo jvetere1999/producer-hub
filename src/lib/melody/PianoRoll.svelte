@@ -13,6 +13,7 @@
         type ScaleConfig,
         isInScale,
         midiToNote,
+        noteToMidi,
         createNote,
         getVoicedChordNotes,
         detectChordsInSequence,
@@ -34,6 +35,12 @@
     export let onNoteSelect: ((noteId: string | null) => void) | undefined = undefined;
     export let onChordSelect: ((chordId: string | null) => void) | undefined = undefined;
     export let onPlayNote: ((pitch: number) => void) | undefined = undefined;
+
+    // Helper to check if a pitch is the root note of the scale
+    function isScaleRoot(pitch: number): boolean {
+        const rootMidi = noteToMidi(scale.root, 0);
+        return pitch % 12 === rootMidi % 12;
+    }
 
     // Display range (3 octaves: C2 to C5)
     const minDisplayPitch = 36; // C2
@@ -157,12 +164,16 @@
                 {@const pitch = maxDisplayPitch - 1 - i}
                 {@const isBlack = isBlackKey(pitch)}
                 {@const isC = pitch % 12 === 0}
+                {@const inScale = isInScale(pitch, scale)}
+                {@const isRoot = isScaleRoot(pitch)}
                 <button
                     type="button"
                     class="key"
                     class:black-key={isBlack}
                     class:white-key={!isBlack}
                     class:c-key={isC}
+                    class:in-scale={inScale && !isRoot}
+                    class:scale-root={isRoot}
                     onclick={() => handleKeyClick(pitch)}
                     aria-label="Play {getNoteLabel(pitch)}"
                 >
@@ -187,11 +198,15 @@
                     {@const pitch = maxDisplayPitch - 1 - i}
                     {@const isBlack = isBlackKey(pitch)}
                     {@const isC = pitch % 12 === 0}
+                    {@const inScale = isInScale(pitch, scale)}
+                    {@const isRoot = isScaleRoot(pitch)}
                     <div
                         class="grid-row"
                         class:black-row={isBlack}
                         class:white-row={!isBlack}
                         class:c-row={isC}
+                        class:scale-row={inScale && !isRoot}
+                        class:scale-root-row={isRoot}
                         style="top: {i * ROW_HEIGHT}px; height: {ROW_HEIGHT}px;"
                     ></div>
                 {/each}
@@ -347,6 +362,18 @@
         border-bottom: 1px solid #555;
     }
 
+    /* Scale highlighting for keys */
+    .key.in-scale {
+        background: rgba(146, 211, 110, 0.15) !important;
+        border-left: 2px solid #92d36e;
+    }
+
+    /* Root note key - stronger highlight */
+    .key.scale-root {
+        background: rgba(146, 211, 110, 0.25) !important;
+        border-left: 3px solid #92d36e;
+    }
+
     .key-name {
         font-weight: 500;
         font-size: 8px;
@@ -382,6 +409,16 @@
 
     .c-row {
         border-bottom: 1px solid #4a4a4a;
+    }
+
+    /* Scale highlighting - notes in the current scale */
+    .scale-row {
+        background: rgba(146, 211, 110, 0.08);
+    }
+
+    /* Root note row - stronger highlight */
+    .scale-root-row {
+        background: rgba(146, 211, 110, 0.15);
     }
 
     /* Grid lines */

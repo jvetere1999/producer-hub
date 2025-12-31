@@ -10,12 +10,13 @@ import {
     type ScaleConfig,
     type ChordRhythmPattern,
     type VoicingStyle,
+    type ChordProgressionTemplate,
     NOTE_NAMES,
     createChordBlock,
     noteToMidi,
     generateId,
 } from './model';
-import { parseNumeral, type ChordProgressionTemplate } from './templates';
+import { parseNumeral } from './templates';
 
 /**
  * Generates chord blocks from a progression template

@@ -368,6 +368,27 @@ describe('ClipRef - Validation', () => {
 });
 
 describe('ClipRef - Migration', () => {
+    it('migrates v1 payload to v2', () => {
+        const v1Payload: SerializedClipPayload = {
+            v: 1,
+            clips: [{
+                id: 'c1',
+                k: 'drumLane',
+                n: 'Test',
+                sb: 1,
+                lb: 4,
+                m: { b: 120, k: 'C', s: 'major', t: [4, 4] },
+                ls: { i: 'kit', nm: 'oneShot', v: 100, q: '1/16' },
+                nt: [{ p: 36, s: 0, d: 0.5, v: 100 }],
+            }],
+        };
+
+        const migrated = migratePayload(v1Payload);
+        expect(migrated.v).toBe(2);
+        expect(migrated.clips).toHaveLength(1);
+        expect(migrated.clips[0].nt).toHaveLength(1);
+    });
+
     it('migrates payload at current version unchanged', () => {
         const payload: SerializedClipPayload = {
             v: CLIP_REF_SCHEMA_VERSION,

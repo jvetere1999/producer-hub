@@ -3,16 +3,17 @@
  *
  * Allows lanes to be linked to projects as reusable clips.
  * Supports versioned schema for URL-embedding and local storage.
+ * Aligned with unified Lane Builder architecture.
  */
 
 import type { MelodyNote, ScaleConfig } from './model';
-import type { Lane, LaneType } from './lanes';
+import type { Lane, LaneType, NoteMode as LaneNoteMode } from './lanes';
 
 // ============================================
 // Schema Version
 // ============================================
 
-export const CLIP_REF_SCHEMA_VERSION = 1;
+export const CLIP_REF_SCHEMA_VERSION = 2; // v2 adds bpm/key override, improved metadata
 export const MAX_URL_PAYLOAD_SIZE = 8000; // ~8KB limit for URL safety
 
 // ============================================
@@ -28,6 +29,7 @@ export interface LaneSettings {
     noteMode: NoteMode;
     velocityDefault: number;
     quantizeGrid: QuantizeGrid;
+    color?: string;
 }
 
 export type QuantizeGrid = '1/4' | '1/8' | '1/16' | '1/32' | 'off';
@@ -51,6 +53,10 @@ export interface ProjectClipRef {
     notes: MelodyNote[];     // Actual note data
     createdAt: string;
     updatedAt: string;
+    // v2 additions
+    bpmOverride?: number;    // Optional tempo override
+    keyOverride?: string;    // Optional key override
+    projectId?: string;      // Back-reference to parent project
 }
 
 // ============================================
@@ -115,8 +121,15 @@ export function createClipRefFromLane(
     lengthBars: number = 4,
     metadata: ClipMetadata
 ): ProjectClipRef {
-    const kind: ClipKind = lane.type === 'drums' ? 'drumLane' : 'melodyLane';
+    const kind: ClipKind = lane.type === 'drums' ? 'drumLane' :
+                           lane.type === 'chord' ? 'chordLane' : 'melodyLane';
     const now = new Date().toISOString();
+
+    // Get notes from the lane (chord lanes have chords, others have notes)
+    let notes: MelodyNote[] = [];
+    if (lane.type !== 'chord') {
+        notes = [...(lane as any).notes];
+    }
 
     return {
         id: generateClipId(),
@@ -127,7 +140,7 @@ export function createClipRefFromLane(
         lengthBars,
         metadata,
         laneSettings: createDefaultLaneSettings(kind),
-        notes: [...lane.notes],
+        notes,
         createdAt: now,
         updatedAt: now,
     };
@@ -318,19 +331,32 @@ export function validateSerializedClip(clip: unknown): clip is SerializedClip {
 // Migration
 // ============================================
 
+/**
+ * Migrate v1 payload to v2
+ * v2 adds: bpmOverride, keyOverride, projectId, color in laneSettings
+ */
+function migrateV1toV2(payload: SerializedClipPayload): SerializedClipPayload {
+    // v1 structure is compatible with v2, just update version
+    return {
+        v: 2,
+        clips: payload.clips,
+    };
+}
+
 export function migratePayload(payload: SerializedClipPayload): SerializedClipPayload {
-    // Currently only version 1 exists
-    if (payload.v === CLIP_REF_SCHEMA_VERSION) {
-        return payload;
+    let current = payload;
+
+    // Migrate from v1 to v2
+    if (current.v === 1) {
+        current = migrateV1toV2(current);
     }
 
-    // Future: Add migration logic for older versions
-    // For now, return as-is or reject if version is newer
-    if (payload.v > CLIP_REF_SCHEMA_VERSION) {
-        console.warn(`Clip payload version ${payload.v} is newer than supported ${CLIP_REF_SCHEMA_VERSION}`);
+    // Check if version is too new
+    if (current.v > CLIP_REF_SCHEMA_VERSION) {
+        console.warn(`Clip payload version ${current.v} is newer than supported ${CLIP_REF_SCHEMA_VERSION}`);
     }
 
-    return payload;
+    return current;
 }
 
 // ============================================

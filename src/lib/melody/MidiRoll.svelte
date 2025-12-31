@@ -15,6 +15,7 @@
         isInScale,
         createNote,
         playNote,
+        noteToMidi,
     } from '$lib/melody';
     import { playDrumSound } from '$lib/melody/audio';
     import { DRUM_SOUNDS, DEFAULT_DRUM_PITCHES } from '$lib/melody/lanes';
@@ -41,6 +42,13 @@
     let dragStartStep = -1;
     let dragCurrentStep = -1;
     let dragPitch = -1;
+
+    // Helper to check if a pitch is the root note of the scale
+    function isScaleRoot(pitch: number, scaleConfig: ScaleConfig): boolean {
+        const rootMidi = noteToMidi(scaleConfig.root, 0); // Get root in lowest octave
+        return pitch % 12 === rootMidi % 12;
+    }
+
 
     // Computed values
     $: pitchRange = mode === 'drums' ? drumPitches : generatePitchRange(36, 84);
@@ -207,12 +215,16 @@
             <div class="keys-column" style="width: {KEY_WIDTH}px;">
                 {#each pitchRange as pitch, i}
                     {@const isBlack = mode === 'melody' && isBlackKey(pitch)}
+                    {@const inScale = mode === 'melody' && scale && isInScale(pitch, scale)}
+                    {@const isRoot = mode === 'melody' && scale && isScaleRoot(pitch, scale)}
                     <button
                         type="button"
                         class="key"
                         class:black-key={isBlack}
                         class:white-key={mode === 'melody' && !isBlack}
                         class:drum-key={mode === 'drums'}
+                        class:in-scale={inScale && !isRoot}
+                        class:scale-root={isRoot}
                         style="height: {CELL_SIZE}px;"
                         onclick={() => handleKeyClick(pitch)}
                         aria-label="Play {getNoteName(pitch)}"
@@ -228,12 +240,14 @@
                     {#each pitchRange as pitch, rowIdx}
                         {@const isBlack = mode === 'melody' && isBlackKey(pitch)}
                         {@const inScale = mode === 'melody' && scale && isInScale(pitch, scale)}
+                        {@const isRoot = mode === 'melody' && scale && isScaleRoot(pitch, scale)}
                         <div
                             class="grid-row"
                             class:black-row={isBlack}
                             class:white-row={mode === 'melody' && !isBlack}
                             class:drum-row={mode === 'drums'}
-                            class:scale-row={inScale}
+                            class:scale-row={inScale && !isRoot}
+                            class:scale-root-row={isRoot}
                             style="top: {rowIdx * CELL_SIZE}px; height: {CELL_SIZE}px;"
                         >
                             {#each Array(totalSteps) as _, step}
@@ -277,7 +291,7 @@
         display: flex;
         flex-direction: column;
         background: var(--bg-secondary, #1e1e1e);
-        border: 1px solid var(--border-primary, #333);
+        border: 1px solid var(--border-default, #333);
         border-radius: 4px;
         overflow: hidden;
         height: 100%;
@@ -288,7 +302,7 @@
     .bar-header {
         display: flex;
         background: var(--bg-tertiary, #252525);
-        border-bottom: 1px solid var(--border-primary, #444);
+        border-bottom: 1px solid var(--border-default, #444);
         height: 24px;
         flex-shrink: 0;
         overflow: hidden;
@@ -325,7 +339,7 @@
         display: flex;
         flex-direction: column;
         background: var(--bg-tertiary, #252525);
-        border-right: 1px solid var(--border-primary, #333);
+        border-right: 1px solid var(--border-default, #333);
         position: sticky;
         left: 0;
         z-index: 10;
@@ -347,17 +361,17 @@
     .white-key {
         background: var(--bg-tertiary, #4a4a4a);
         color: var(--text-secondary, #999);
-        box-shadow: inset 0 -1px 0 var(--border-secondary, #3a3a3a);
+        box-shadow: inset 0 -1px 0 var(--border-subtle, #3a3a3a);
     }
 
     .white-key:hover {
-        background: var(--bg-hover, #5a5a5a);
+        background: var(--surface-hover, #5a5a5a);
     }
 
     .black-key {
         background: var(--bg-primary, #2d2d2d);
         color: var(--text-muted, #666);
-        box-shadow: inset 0 -1px 0 var(--border-primary, #252525);
+        box-shadow: inset 0 -1px 0 var(--border-default, #252525);
     }
 
     .black-key:hover {
@@ -367,14 +381,14 @@
     .drum-key {
         background: var(--bg-tertiary, #3a3a3a);
         color: var(--text-primary, #ccc);
-        box-shadow: inset 0 -1px 0 var(--border-primary, #333);
+        box-shadow: inset 0 -1px 0 var(--border-default, #333);
         justify-content: flex-start;
         font-weight: 500;
         font-size: 10px;
     }
 
     .drum-key:hover {
-        background: var(--bg-hover, #4a4a4a);
+        background: var(--surface-hover, #4a4a4a);
     }
 
     .key-label {
@@ -419,13 +433,31 @@
     }
 
     .scale-row {
-        background: rgba(146, 211, 110, 0.04);
+        background: rgba(146, 211, 110, 0.08);
+    }
+
+    /* Root note row - stronger highlight */
+    .scale-root-row {
+        background: rgba(146, 211, 110, 0.15);
+    }
+
+    /* Scale highlighting for keys */
+    .key.in-scale {
+        background: rgba(146, 211, 110, 0.15) !important;
+        border-left: 3px solid var(--accent-primary, #92d36e);
+    }
+
+    /* Root note of scale - stronger highlight */
+    .key.scale-root {
+        background: rgba(146, 211, 110, 0.25) !important;
+        border-left: 4px solid var(--accent-primary, #92d36e);
+        font-weight: 700;
     }
 
     .cell {
         flex-shrink: 0;
         border: none;
-        border-right: 1px solid var(--border-secondary, #383838);
+        border-left: 1px solid var(--border-subtle, #383838);
         background: transparent;
         cursor: crosshair;
         padding: 0;
@@ -439,14 +471,14 @@
         background: rgba(146, 211, 110, 0.2);
     }
 
-    /* Beat lines - every 4 steps (quarter note) */
+    /* Beat lines - every 4 steps (quarter note), at the START of the beat */
     .cell.beat-line {
-        border-right: 1px solid var(--border-primary, #505050);
+        border-left: 1px solid var(--border-default, #505050);
     }
 
-    /* Bar lines - stronger, every bar */
+    /* Bar lines - stronger, at the START of the bar */
     .cell.bar-line {
-        border-right: 2px solid var(--accent-primary, #92d36e);
+        border-left: 2px solid var(--accent-primary, #92d36e);
     }
 
     /* Note styling with sustain visualization */
@@ -465,7 +497,7 @@
     .cell.note-end {
         border-top-right-radius: 3px;
         border-bottom-right-radius: 3px;
-        border-right: 1px solid var(--border-secondary, #383838);
+        border-right: 1px solid var(--border-subtle, #383838);
     }
 
     /* Note middle - no rounding, seamless connection */

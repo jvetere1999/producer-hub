@@ -11,7 +11,7 @@
 	import { onMount } from 'svelte';
 	import AudioAnalysisPanel from './AudioAnalysisPanel.svelte';
 	import { PageHeader, EmptyState } from '$lib/components/ui';
-	import { playerStore, type QueueTrack, seek } from '$lib/player';
+	import { playerStore, type QueueTrack, seek, pause } from '$lib/player';
 	import { toasts } from '$lib/stores/toast';
 	import {
 		loadReferences,
@@ -506,7 +506,7 @@
 		if (selectedTrackId === trackId) {
 			selectedTrackId = null;
 			selectedTrack = null;
-			stopPlayback();
+			pause();
 		}
 	}
 
@@ -788,7 +788,7 @@
 								<button
 									class="marker-chip"
 									style="border-color: {marker.color}"
-									onclick={() => playerStore.setCurrentTime && seek(marker.t)}
+									onclick={() => seek(marker.t)}
 								>
 									<span class="marker-time">{formatTime(marker.t)}</span>
 									<span class="marker-label">{decodeBase64(marker.labelEncoded)}</span>

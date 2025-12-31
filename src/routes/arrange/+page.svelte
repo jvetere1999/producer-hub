@@ -38,6 +38,13 @@
         regenerateVoicings,
         setInversion,
     } from '$lib/melody';
+    import {
+        exportDrumLaneToMidi,
+        exportMelodyLaneToMidi,
+        exportLanesToMidi,
+        downloadMidi,
+    } from '$lib/storage/midiExport';
+    import { getTemplateById } from '$lib/storage/builtinTemplates';
 
     // State
     let arrangement: Arrangement = createArrangement('New Arrangement');
@@ -47,6 +54,7 @@
     let playbackInterval: ReturnType<typeof setInterval> | null = null;
     let showHelp = false;
     let showShareDialog = false;
+    let showExportDialog = false;
     let shareUrl = '';
     let infoTopic = 'general';
 
@@ -134,8 +142,10 @@
             const currentStep = Math.round(currentBeat * 4);
             arrangement.lanes.forEach(lane => {
                 if (lane.muted) return;
+                if (lane.type === 'chord') return; // Skip chord lanes for now
 
-                lane.notes.forEach(note => {
+                const notes = (lane as any).notes || [];
+                notes.forEach((note: MelodyNote) => {
                     const noteStep = Math.round(note.startBeat * 4);
                     const noteKey = `${note.id}-${currentStep}`;
                     if (noteStep === currentStep && !playedNoteIds.has(noteKey)) {
@@ -231,8 +241,29 @@
             updatedAt: new Date().toISOString(),
         };
 
-        // Generate progression using pack's progressionId
-        // For now, just update settings - progression will be selected separately
+        // Apply drum pattern if pack has one
+        if (pack.drumTemplateId) {
+            const drumTemplate = getTemplateById(pack.drumTemplateId);
+            if (drumTemplate && drumTemplate.type === 'drums') {
+                // Find or create a drum lane
+                let drumLane = arrangement.lanes.find(l => l.type === 'drums');
+                if (!drumLane) {
+                    // Add a drum lane
+                    arrangement = addLane(arrangement, 'drums');
+                    drumLane = arrangement.lanes.find(l => l.type === 'drums');
+                }
+                if (drumLane) {
+                    // Apply the drum template notes
+                    const drumNotes = drumTemplate.notes.map(n => ({
+                        ...n,
+                        id: crypto.randomUUID(),
+                    }));
+                    arrangement = updateLane(arrangement, drumLane.id, { notes: drumNotes });
+                    // Select the drum lane to show the pattern
+                    selectedLaneId = drumLane.id;
+                }
+            }
+        }
     }
 
     function handleVoicingChange(style: VoicingStyle) {
@@ -337,6 +368,93 @@
         selectedPackId = null;
     }
 
+    // MIDI Export handlers
+    function handleExportMidi() {
+        showExportDialog = true;
+    }
+
+    function exportAllLanes() {
+        try {
+            // Convert arrangement lanes to LaneExportInput format
+            const lanes = arrangement.lanes
+                .filter(lane => lane.type !== 'chord') // ChordLanes handled separately
+                .map(lane => ({
+                    type: lane.type as 'melody' | 'drums',
+                    name: lane.name,
+                    notes: (lane as any).notes.map((n: MelodyNote) => ({
+                        pitch: n.pitch,
+                        startBeat: n.startBeat,
+                        duration: n.duration,
+                        velocity: n.velocity,
+                    })),
+                    laneSettings: {
+                        instrumentId: lane.type === 'drums' ? 'acoustic-kit' : 'grand-piano',
+                        noteMode: lane.noteMode || (lane.type === 'drums' ? 'oneShot' : 'sustain'),
+                        velocityDefault: 100,
+                        quantizeGrid: '1/16' as const,
+                        color: lane.color,
+                    },
+                }));
+
+            if (lanes.length === 0) {
+                alert('No lanes to export');
+                return;
+            }
+
+            const result = exportLanesToMidi(lanes, {
+                bpm: arrangement.bpm,
+                timeSignatureNum: arrangement.timeSignature[0],
+                timeSignatureDenom: arrangement.timeSignature[1],
+                key: arrangement.key,
+                trackName: arrangement.name,
+            });
+            downloadMidi(result);
+            showExportDialog = false;
+        } catch (e) {
+            console.error('Failed to export MIDI:', e);
+            alert('Failed to export MIDI file');
+        }
+    }
+
+    function exportSelectedLane() {
+        if (!selectedLane || selectedLane.type === 'chord') {
+            alert('Cannot export chord lanes directly');
+            return;
+        }
+
+        try {
+            const notes = (selectedLane as any).notes || [];
+            const laneSettings = {
+                instrumentId: selectedLane.type === 'drums' ? 'acoustic-kit' : 'grand-piano',
+                noteMode: selectedLane.noteMode || (selectedLane.type === 'drums' ? 'oneShot' : 'sustain'),
+                velocityDefault: 100,
+                quantizeGrid: '1/16' as const,
+                color: selectedLane.color,
+            };
+
+            const metadata = {
+                bpm: arrangement.bpm,
+                timeSignatureNum: arrangement.timeSignature[0],
+                timeSignatureDenom: arrangement.timeSignature[1],
+                key: arrangement.key,
+                trackName: selectedLane.name,
+            };
+
+            let result;
+            if (selectedLane.type === 'drums') {
+                result = exportDrumLaneToMidi(notes, laneSettings, metadata);
+            } else {
+                result = exportMelodyLaneToMidi(notes, laneSettings, metadata);
+            }
+
+            downloadMidi(result);
+            showExportDialog = false;
+        } catch (e) {
+            console.error('Failed to export MIDI:', e);
+            alert('Failed to export MIDI file');
+        }
+    }
+
     function toggleDevice(device: typeof activeDevice) {
         activeDevice = activeDevice === device ? 'none' : device;
     }
@@ -373,6 +491,13 @@
                     <polyline points="14,2 14,8 20,8"/>
                     <line x1="12" y1="18" x2="12" y2="12"/>
                     <line x1="9" y1="15" x2="15" y2="15"/>
+                </svg>
+            </button>
+            <button class="header-btn" onclick={handleExportMidi} title="Export MIDI" data-testid="export-midi-btn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
                 </svg>
             </button>
             <button class="header-btn" onclick={handleShare} title="Share">
@@ -504,11 +629,11 @@
 
         <!-- Editor Area -->
         <div class="editor-area">
-            {#if selectedLane}
+            {#if selectedLane && selectedLane.type !== 'chord'}
                 {#key selectedLane.id}
                 <MidiRoll
                     mode={selectedLane.type === 'melody' ? 'melody' : 'drums'}
-                    notes={selectedLane.notes}
+                    notes={selectedLane.type === 'drums' ? selectedLane.notes : selectedLane.notes}
                     scale={selectedLane.type === 'melody' ? arrangement.scale : undefined}
                     bars={arrangement.bars}
                     beatsPerBar={arrangement.timeSignature[0]}
@@ -516,6 +641,10 @@
                     onNotesChange={(newNotes) => handleNotesChange(selectedLane.id, newNotes)}
                 />
                 {/key}
+            {:else if selectedLane && selectedLane.type === 'chord'}
+                <div class="no-lane">
+                    <p>Chord lanes use the progression selector</p>
+                </div>
             {:else}
                 <div class="no-lane">
                     <p>Select a lane to edit</p>
@@ -653,6 +782,30 @@
             <p class="share-note">Note: The arrangement is embedded in the URL.</p>
         </div>
     </Sheet>
+
+    <!-- Export MIDI Dialog -->
+    <Sheet bind:open={showExportDialog} onClose={() => showExportDialog = false} title="Export MIDI">
+        <div class="export-content">
+            <p>Export your arrangement as a MIDI file.</p>
+            <div class="export-options">
+                <button class="export-option" onclick={exportAllLanes} data-testid="export-all">
+                    <span class="export-icon">🎼</span>
+                    <span class="export-label">Export All Lanes</span>
+                    <span class="export-desc">All {arrangement.lanes.length} lane(s) as a single MIDI file</span>
+                </button>
+                {#if selectedLane}
+                    <button class="export-option" onclick={exportSelectedLane} data-testid="export-selected">
+                        <span class="export-icon">{selectedLane.type === 'drums' ? '🥁' : '🎹'}</span>
+                        <span class="export-label">Export "{selectedLane.name}"</span>
+                        <span class="export-desc">Selected lane only</span>
+                    </button>
+                {/if}
+            </div>
+            <p class="export-note">
+                <strong>Note:</strong> MIDI export is instrument-agnostic. Use the exported file in your DAW with any virtual instrument.
+            </p>
+        </div>
+    </Sheet>
 </div>
 
 <style>
@@ -675,7 +828,7 @@
         padding: 8px 16px;
         padding-right: max(16px, env(safe-area-inset-right));
         background: var(--bg-secondary, #222);
-        border-bottom: 1px solid var(--border-primary, #333);
+        border-bottom: 1px solid var(--border-default, #333);
         flex-shrink: 0;
         gap: 12px;
         position: relative;
@@ -773,7 +926,7 @@
         justify-content: space-between;
         padding: 6px 16px;
         background: var(--bg-secondary, #252525);
-        border-bottom: 1px solid var(--border-primary, #333);
+        border-bottom: 1px solid var(--border-default, #333);
         flex-shrink: 0;
         gap: 16px;
     }
@@ -798,7 +951,7 @@
     }
 
     .transport-btn:hover {
-        background: var(--bg-hover, #4a4a4a);
+        background: var(--surface-hover, #4a4a4a);
     }
 
     .play-btn {
@@ -809,7 +962,7 @@
     }
 
     .play-btn:hover {
-        background: var(--accent-hover, #a8e07a);
+        background: var(--accent-primary, #a8e07a);
     }
 
     .play-btn.playing {
@@ -844,7 +997,7 @@
     .transport-setting select {
         height: 26px;
         background: var(--bg-tertiary, #333);
-        border: 1px solid var(--border-secondary, #444);
+        border: 1px solid var(--border-subtle, #444);
         border-radius: 3px;
         color: var(--text-primary, #fff);
         font-size: 12px;
@@ -876,7 +1029,7 @@
         width: 180px;
         flex-shrink: 0;
         background: var(--bg-secondary, #1e1e1e);
-        border-right: 1px solid var(--border-primary, #333);
+        border-right: 1px solid var(--border-default, #333);
         display: flex;
         flex-direction: column;
         overflow-y: auto;
@@ -886,13 +1039,13 @@
         display: flex;
         gap: 4px;
         padding: 8px;
-        border-bottom: 1px solid var(--border-primary, #333);
+        border-bottom: 1px solid var(--border-default, #333);
     }
 
     .add-lane-btn {
         flex: 1;
         height: 26px;
-        border: 1px dashed var(--border-secondary, #444);
+        border: 1px dashed var(--border-subtle, #444);
         border-radius: 3px;
         background: transparent;
         color: var(--text-muted, #666);
@@ -910,12 +1063,12 @@
         align-items: center;
         padding: 4px 8px;
         border-left: 3px solid var(--text-muted, #666);
-        border-bottom: 1px solid var(--border-secondary, #2a2a2a);
+        border-bottom: 1px solid var(--border-subtle, #2a2a2a);
         background: var(--bg-tertiary, #222);
     }
 
     .lane-header.selected {
-        background: var(--bg-hover, #2a2a2a);
+        background: var(--surface-hover, #2a2a2a);
     }
 
     .lane-header.muted {
@@ -968,7 +1121,7 @@
     }
 
     .lane-ctrl:hover {
-        background: var(--bg-hover, #4a4a4a);
+        background: var(--surface-hover, #4a4a4a);
         color: var(--text-secondary, #aaa);
     }
 
@@ -1001,7 +1154,7 @@
     .device-rack {
         flex-shrink: 0;
         background: var(--bg-secondary, #1e1e1e);
-        border-top: 1px solid var(--border-primary, #333);
+        border-top: 1px solid var(--border-default, #333);
     }
 
     .device-tabs {
@@ -1009,7 +1162,7 @@
         gap: 2px;
         padding: 4px 8px;
         background: var(--bg-secondary, #252525);
-        border-bottom: 1px solid var(--border-primary, #333);
+        border-bottom: 1px solid var(--border-default, #333);
         overflow-x: auto;
     }
 
@@ -1025,7 +1178,7 @@
     }
 
     .device-tab:hover:not(:disabled) {
-        background: var(--bg-hover, #3a3a3a);
+        background: var(--surface-hover, #3a3a3a);
         color: var(--text-secondary, #ccc);
     }
 
@@ -1077,7 +1230,7 @@
         margin: 4px;
         padding: 6px 12px;
         background: var(--bg-tertiary, #333);
-        border: 1px solid var(--border-secondary, #444);
+        border: 1px solid var(--border-subtle, #444);
         border-radius: 4px;
         color: var(--text-secondary, #ccc);
         font-size: 12px;
@@ -1085,7 +1238,7 @@
     }
 
     .help-topics button:hover {
-        background: var(--bg-hover, #444);
+        background: var(--surface-hover, #444);
     }
 
     .share-content {
@@ -1108,7 +1261,7 @@
         height: 36px;
         padding: 0 12px;
         background: var(--bg-tertiary, #2a2a2a);
-        border: 1px solid var(--border-secondary, #3a3a3a);
+        border: 1px solid var(--border-subtle, #3a3a3a);
         border-radius: 4px;
         color: var(--text-primary, #fff);
         font-size: 12px;
@@ -1125,12 +1278,71 @@
     }
 
     .share-url button:hover {
-        background: var(--accent-hover, #a8e07a);
+        background: var(--accent-primary, #a8e07a);
     }
 
     .share-note {
         font-size: 11px;
         color: var(--text-muted, #666);
+    }
+
+    /* Export Dialog */
+    .export-content {
+        padding: 16px;
+    }
+
+    .export-content > p {
+        margin: 0 0 16px;
+        color: var(--text-secondary, #aaa);
+        font-size: 13px;
+    }
+
+    .export-options {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .export-option {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+        padding: 16px;
+        background: var(--bg-tertiary, #2a2a2a);
+        border: 1px solid var(--border-subtle, #3a3a3a);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.15s, border-color 0.15s;
+        text-align: left;
+    }
+
+    .export-option:hover {
+        background: var(--surface-hover, #333);
+        border-color: var(--accent-primary, #92d36e);
+    }
+
+    .export-icon {
+        font-size: 24px;
+    }
+
+    .export-label {
+        font-weight: 600;
+        color: var(--text-primary, #fff);
+    }
+
+    .export-desc {
+        font-size: 12px;
+        color: var(--text-muted, #888);
+    }
+
+    .export-note {
+        font-size: 11px;
+        color: var(--text-muted, #666);
+        background: var(--bg-tertiary, #2a2a2a);
+        padding: 12px;
+        border-radius: 6px;
     }
 
     /* Mobile */

@@ -15,13 +15,26 @@
     import { playerVisible } from '$lib/player';
     import { Sheet } from '$lib/components/ui';
     import { onMount } from 'svelte';
+    import type { Snippet } from 'svelte';
 
-    export let title: string = 'Producer Hub';
-    export let showBackButton: boolean = false;
-    export let onBack: (() => void) | undefined = undefined;
+    interface Props {
+        title?: string;
+        showBackButton?: boolean;
+        onBack?: () => void;
+        children?: Snippet;
+        headerActions?: Snippet;
+    }
+
+    let {
+        title = 'Producer Hub',
+        showBackButton = false,
+        onBack,
+        children,
+        headerActions,
+    }: Props = $props();
 
     // Reactive check for player visibility
-    $: isPlayerVisible = $playerVisible ?? false;
+    let isPlayerVisible = $derived($playerVisible ?? false);
 
     // Mobile detection for Sheet vs dropdown
     let isMobile = $state(false);
@@ -131,7 +144,7 @@
     }
 
     // Check if current page matches
-    $: currentPath = $page.url.pathname;
+    let currentPath = $derived($page.url.pathname);
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
@@ -198,13 +211,17 @@
         </nav>
 
         <div class="header-right">
-            <slot name="header-actions" />
+            {#if headerActions}
+                {@render headerActions()}
+            {/if}
         </div>
     </header>
 
     <!-- Scrollable Content Area -->
     <main class="app-content" class:has-player={isPlayerVisible}>
-        <slot />
+        {#if children}
+            {@render children()}
+        {/if}
     </main>
 </div>
 

@@ -54,6 +54,9 @@ export interface GenrePack {
 
     // Optional melody motif (simple pattern)
     melodyMotif?: MelodyMotif;
+
+    // Optional drum template reference (from builtinTemplates)
+    drumTemplateId?: string;
 }
 
 export interface MelodyMotif {
@@ -95,6 +98,7 @@ export const GENRE_PACKS: GenrePack[] = [
             swingAmount: 0.1,
             linkToGlobalSwing: false,
         },
+        drumTemplateId: 'four-on-the-floor',
         melodyMotif: {
             name: 'Deep Lead',
             notes: [
@@ -125,6 +129,7 @@ export const GENRE_PACKS: GenrePack[] = [
             swingAmount: 0.05,
             linkToGlobalSwing: false,
         },
+        drumTemplateId: 'four-on-the-floor',
     },
 
     // Techno
@@ -149,6 +154,7 @@ export const GENRE_PACKS: GenrePack[] = [
             swingAmount: 0,
             linkToGlobalSwing: false,
         },
+        drumTemplateId: 'four-on-the-floor',
     },
     {
         id: 'techno-melodic',
@@ -171,6 +177,7 @@ export const GENRE_PACKS: GenrePack[] = [
             swingAmount: 0,
             linkToGlobalSwing: false,
         },
+        drumTemplateId: 'four-on-the-floor',
         melodyMotif: {
             name: 'Melodic Arp',
             notes: [
@@ -204,6 +211,7 @@ export const GENRE_PACKS: GenrePack[] = [
             swingAmount: 0,
             linkToGlobalSwing: false,
         },
+        drumTemplateId: 'syncopated-funk',
     },
     {
         id: 'dubstep-melodic',
@@ -226,6 +234,7 @@ export const GENRE_PACKS: GenrePack[] = [
             swingAmount: 0,
             linkToGlobalSwing: false,
         },
+        drumTemplateId: 'syncopated-funk',
         melodyMotif: {
             name: 'Epic Lead',
             notes: [
@@ -258,6 +267,7 @@ export const GENRE_PACKS: GenrePack[] = [
             swingAmount: 0,
             linkToGlobalSwing: false,
         },
+        drumTemplateId: 'syncopated-funk',
     },
     {
         id: 'riddim-briddim',
@@ -280,6 +290,7 @@ export const GENRE_PACKS: GenrePack[] = [
             swingAmount: 0,
             linkToGlobalSwing: false,
         },
+        drumTemplateId: 'syncopated-funk',
     },
 
     // DnB
@@ -304,6 +315,7 @@ export const GENRE_PACKS: GenrePack[] = [
             swingAmount: 0.15,
             linkToGlobalSwing: false,
         },
+        drumTemplateId: 'breakbeat-jungle',
         melodyMotif: {
             name: 'Liquid Lead',
             notes: [
@@ -334,6 +346,7 @@ export const GENRE_PACKS: GenrePack[] = [
             swingAmount: 0,
             linkToGlobalSwing: false,
         },
+        drumTemplateId: 'breakbeat-jungle',
     },
     {
         id: 'dnb-jungle',
@@ -356,6 +369,7 @@ export const GENRE_PACKS: GenrePack[] = [
             swingAmount: 0.2,
             linkToGlobalSwing: false,
         },
+        drumTemplateId: 'breakbeat-jungle',
     },
 
     // Trap
@@ -380,6 +394,7 @@ export const GENRE_PACKS: GenrePack[] = [
             swingAmount: 0.1,
             linkToGlobalSwing: false,
         },
+        drumTemplateId: 'trap-808-pattern',
         melodyMotif: {
             name: 'Dark Melody',
             notes: [
@@ -410,6 +425,7 @@ export const GENRE_PACKS: GenrePack[] = [
             swingAmount: 0.05,
             linkToGlobalSwing: false,
         },
+        drumTemplateId: 'trap-808-pattern',
         melodyMotif: {
             name: 'Melodic Lead',
             notes: [
@@ -441,6 +457,7 @@ export const GENRE_PACKS: GenrePack[] = [
             swingAmount: 0,
             linkToGlobalSwing: false,
         },
+        drumTemplateId: 'trap-808-pattern',
     },
 ];
 

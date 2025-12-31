@@ -31,9 +31,9 @@
 		registerSW({ immediate: true });
 		mounted = true;
 
-		// Check if onboarding is needed (only on main routes, not on onboarding or privacy)
+		// Check if onboarding is needed (only on main routes, not on onboarding, privacy, or templates)
 		const path = $page.url.pathname;
-		const isExcludedRoute = path.includes('/onboarding') || path.includes('/privacy');
+		const isExcludedRoute = path.includes('/onboarding') || path.includes('/privacy') || path.includes('/templates');
 
 		if (!isExcludedRoute && !isOnboardingCompleted()) {
 			goto(`${base}/onboarding`);

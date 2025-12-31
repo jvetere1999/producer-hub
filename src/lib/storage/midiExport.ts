@@ -139,7 +139,10 @@ export interface MidiNote {
  * Validate and clamp a MIDI note number
  */
 export function validateNotePitch(pitch: number): number {
-    if (!Number.isFinite(pitch)) return 60; // Middle C
+    if (Number.isNaN(pitch)) return 60; // Middle C default
+    if (!Number.isFinite(pitch)) {
+        return pitch > 0 ? 127 : 0; // Infinity -> 127, -Infinity -> 0
+    }
     return Math.max(0, Math.min(127, Math.round(pitch)));
 }
 
@@ -747,9 +750,18 @@ export function exportLanesToMidi(
 
     // One track per lane
     let maxTick = 0;
+    let melodyChannelIndex = 0; // Track melody channels separately
     for (let i = 0; i < lanes.length; i++) {
         const lane = lanes[i];
-        const channel = lane.type === 'drums' ? DRUM_CHANNEL : (i % 9); // Avoid channel 10 for non-drums
+        let channel: number;
+        if (lane.type === 'drums') {
+            channel = DRUM_CHANNEL; // Channel 10 (index 9)
+        } else {
+            // Assign melody channels starting at 0, skipping channel 10
+            channel = melodyChannelIndex % 9; // Use 0-8, skip 9 (drums)
+            if (channel >= 9) channel = 0; // Safety
+            melodyChannelIndex++;
+        }
         const gridTicks = getQuantizeGridTicks(lane.laneSettings.quantizeGrid ?? 'off');
         const isOneShot = lane.type === 'drums' && lane.laneSettings.noteMode === 'oneShot';
 
@@ -815,7 +827,7 @@ export function exportLanesToMidi(
  * Trigger a file download in the browser
  */
 export function downloadMidi(result: MidiExportResult): void {
-    const blob = new Blob([result.data.buffer], { type: result.mimeType });
+    const blob = new Blob([new Uint8Array(result.data)], { type: result.mimeType });
     const url = URL.createObjectURL(blob);
 
     const link = document.createElement('a');
