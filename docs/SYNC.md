@@ -2,9 +2,23 @@
 
 This document describes the iCloud sync implementation for Producer Hub.
 
+**Last Updated:** December 2024  
+**Schema Version:** 2
+
 ## Overview
 
 Producer Hub uses a **local-first** architecture where all data is stored locally and can optionally be synced to iCloud Drive. The sync system uses encrypted vault files to protect user data.
+
+### What Gets Synced
+
+- **Projects** - Project metadata, notes, checklists, timelines
+- **Reference Libraries** - Reference track metadata and audio blobs
+- **Info Base** - Knowledge notes and categories
+- **Settings** - Theme, product selection preferences
+- **Lane Templates** - Melody, drum, and chord patterns (Schema v2)
+- **Chord Progressions** - Saved chord progression templates (Schema v2)
+- **Audio Loops** - User audio loops with metadata (Schema v2)
+- **Project Clips** - Lane/loop references attached to projects (Schema v2)
 
 ## Architecture
 
@@ -39,19 +53,158 @@ vault/
 
 ## Data Model
 
-### VaultMeta
+### VaultMeta (Schema v2)
 
 Contains references to all synced entities:
 
 ```typescript
 interface VaultMeta {
-    schemaVersion: 1;
+    schemaVersion: 2;
     deviceId: string;
     updatedAt: string;
+
+    // Core entities (v1)
     projects?: ProjectRef[];
     referenceLibraries?: LibraryRef[];
     infobase?: InfobaseRef[];
     settings?: SettingsRef;
+
+    // Lane Builder entities (v2)
+    laneTemplates?: LaneTemplateRef[];
+    chordProgressions?: ChordProgressionRef[];
+    audioLoops?: AudioLoopRef[];
+    projectClips?: ProjectClipRefEntry[];
+}
+```
+
+### Lane Template Types
+
+Lane templates use a standardized note model for all pattern types:
+
+```typescript
+interface LaneTemplateRef {
+    id: string;
+    name: string;
+    type: 'melody' | 'drums' | 'chord';
+    updatedAt: string;
+    createdAt: string;
+
+    // Lane settings
+    laneSettings: SyncLaneSettings;
+
+    // Standardized note model
+    notes: SyncNote[];
+
+    // Musical metadata
+    bpm: number;
+    bars: number;
+    timeSignature: [number, number];
+    key: string;
+    scaleType: string;
+
+    // Organization
+    tags?: string[];
+    genre?: string;
+
+    // Content hash for merge conflict detection
+    contentHash: string;
+}
+
+interface SyncNote {
+    pitch: number;      // MIDI note number
+    startBeat: number;  // Position in beats
+    duration: number;   // Duration in beats
+    velocity: number;   // 1-127
+}
+
+interface SyncLaneSettings {
+    instrumentId: string;
+    noteMode: 'oneShot' | 'sustain';
+    velocityDefault: number;
+    quantizeGrid: '1/4' | '1/8' | '1/16' | '1/32' | 'off';
+    color: string;
+}
+```
+
+### Chord Progressions
+
+Chord progression templates store reusable chord patterns:
+
+```typescript
+interface ChordProgressionRef {
+    id: string;
+    name: string;
+    updatedAt: string;
+    createdAt: string;
+
+    // Progression data
+    numerals: string[];      // e.g., ['I', 'V', 'vi', 'IV']
+    durations: number[];     // Duration of each chord in beats
+    rhythmPattern: string;   // Pattern identifier
+
+    // Metadata
+    genre: string;
+    description: string;
+    key: string;
+    scaleType: string;
+
+    // Content hash for merge conflict detection
+    contentHash: string;
+}
+```
+
+### Audio Loops
+
+Audio loops store user-imported audio with metadata:
+
+```typescript
+interface AudioLoopRef {
+    id: string;
+    name: string;
+    updatedAt: string;
+    createdAt: string;
+
+    // Blob reference
+    blobId: string;
+    blobHash: string;
+
+    // Audio metadata
+    mimeType: string;
+    durationMs: number;
+    sampleRate: number;
+    channels: number;
+
+    // Musical metadata (optional)
+    bpm?: number;
+    key?: string;
+    bars?: number;
+
+    // Organization
+    tags?: string[];
+}
+```
+
+### Project Clips
+
+Project clips link lane templates or audio loops to projects:
+
+```typescript
+interface ProjectClipRefEntry {
+    id: string;
+    projectId: string;
+    updatedAt: string;
+    createdAt: string;
+
+    // Reference to source
+    sourceType: 'laneTemplate' | 'audioLoop';
+    sourceId: string;
+
+    // Position in project
+    startBar: number;
+    lengthBars: number;
+
+    // Override settings (optional)
+    laneSettingsOverride?: Partial<SyncLaneSettings>;
 }
 ```
 
@@ -59,9 +212,29 @@ interface VaultMeta {
 
 Large files (audio, images) are stored as content-addressed blobs:
 
-- ID = SHA256 hash of content
-- Deduplicated automatically
-- Synced independently of metadata
+- **ID**: SHA256 hash of content
+- **Deduplication**: Automatic (same content = same ID)
+- **Synced Independently**: Blobs sync separately from metadata
+
+```typescript
+interface BlobEntry {
+    id: string;           // SHA256 hash
+    size: number;
+    mimeType: string;
+    createdAt: string;
+    checksum: string;
+    contentType?: 'audioLoop' | 'reference' | 'other';
+}
+```
+
+**Allowed MIME Types:**
+- `audio/wav`, `audio/mpeg`, `audio/mp3`, `audio/ogg`
+- `audio/webm`, `audio/aac`, `audio/flac`
+- `application/octet-stream` (binary audio data)
+
+**Size Limits:**
+- Max blob size: 50 MB
+- Max bundle size: 500 MB
 
 ## Sync Algorithm
 
@@ -77,17 +250,35 @@ Conflicts are recorded with both versions:
 
 ```typescript
 interface ConflictRecord {
-    entityType: 'project' | 'library' | 'infobase' | 'settings';
+    entityType: 'project' | 'library' | 'infobase' | 'settings' 
+              | 'laneTemplate' | 'chordProgression' | 'audioLoop' | 'projectClip';
     entityId: string;
     localValue: unknown;
     remoteValue: unknown;
     localDeviceId: string;
     remoteDeviceId: string;
-    // ...
+    localTimestamp: string;
+    remoteTimestamp: string;
 }
 ```
 
 Users can resolve conflicts manually in Settings.
+
+### Conflict Resolution
+
+The `ConflictResolver.svelte` component provides a UI for reviewing and resolving conflicts:
+
+- **Conflict Summaries**: Sanitized display of changes (no raw sensitive data shown)
+- **Side-by-side Comparison**: View local vs remote versions
+- **Resolution Options**: Keep local, keep remote, or merge manually
+- **Batch Resolution**: Apply resolution to similar conflicts
+
+Conflict summaries categorize changes by type:
+- `settings` - Lane/template settings changes
+- `notes` - Note content changes
+- `clips` - Clip reference changes
+- `metadata` - Name, tags, genre changes
+- `position` - Position/timing changes
 
 ## Limitations
 

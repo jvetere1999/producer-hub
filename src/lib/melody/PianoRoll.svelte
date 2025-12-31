@@ -362,18 +362,6 @@
         border-bottom: 1px solid #555;
     }
 
-    /* Scale highlighting for keys */
-    .key.in-scale {
-        background: rgba(146, 211, 110, 0.15) !important;
-        border-left: 2px solid #92d36e;
-    }
-
-    /* Root note key - stronger highlight */
-    .key.scale-root {
-        background: rgba(146, 211, 110, 0.25) !important;
-        border-left: 3px solid #92d36e;
-    }
-
     .key-name {
         font-weight: 500;
         font-size: 8px;

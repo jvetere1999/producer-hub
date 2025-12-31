@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
+    import { onMount, onDestroy } from 'svelte';
     import { browser } from '$app/environment';
     import { base } from '$app/paths';
     import SEOHead from '$lib/components/SEOHead.svelte';
@@ -114,6 +114,15 @@
     $: if (browser && arrangement.id) {
         saveArrangement(arrangement);
     }
+
+    // Cleanup on page leave
+    onDestroy(() => {
+        if (playbackInterval) {
+            clearInterval(playbackInterval);
+            playbackInterval = null;
+        }
+        isPlaying = false;
+    });
 
     // Playback
     let lastPlayedBeat = -1;
@@ -256,12 +265,32 @@
                     drumLane = arrangement.lanes.find(l => l.type === 'drums');
                 }
                 if (drumLane) {
-                    // Apply the drum template notes
-                    const drumNotes = drumTemplate.notes.map(n => ({
-                        ...n,
-                        id: crypto.randomUUID(),
-                    }));
-                    arrangement = updateLane(arrangement, drumLane.id, { notes: drumNotes });
+                    // Tile the drum template to fill the entire arrangement
+                    const templateBars = drumTemplate.bars || 1;
+                    const beatsPerBar = arrangement.timeSignature[0];
+                    const templateBeats = templateBars * beatsPerBar;
+                    const totalBeatsNeeded = arrangement.bars * beatsPerBar;
+
+                    const tiledNotes: MelodyNote[] = [];
+                    let iteration = 0;
+
+                    while (iteration * templateBeats < totalBeatsNeeded) {
+                        const offsetBeats = iteration * templateBeats;
+                        drumTemplate.notes.forEach(n => {
+                            const newStartBeat = n.startBeat + offsetBeats;
+                            // Only add if within arrangement bounds
+                            if (newStartBeat < totalBeatsNeeded) {
+                                tiledNotes.push({
+                                    ...n,
+                                    id: crypto.randomUUID(),
+                                    startBeat: newStartBeat,
+                                });
+                            }
+                        });
+                        iteration++;
+                    }
+
+                    arrangement = updateLane(arrangement, drumLane.id, { notes: tiledNotes });
                     // Select the drum lane to show the pattern
                     selectedLaneId = drumLane.id;
                 }
