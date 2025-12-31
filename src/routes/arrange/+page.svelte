@@ -45,6 +45,7 @@
         downloadMidi,
     } from '$lib/storage/midiExport';
     import { getTemplateById } from '$lib/storage/builtinTemplates';
+    import { loadProjects, type Project } from '$lib/hub';
 
     // State
     let arrangement: Arrangement = createArrangement('New Arrangement');
@@ -55,6 +56,8 @@
     let showHelp = false;
     let showShareDialog = false;
     let showExportDialog = false;
+    let showLinkProjectDialog = false;
+    let availableProjects: Project[] = [];
     let shareUrl = '';
     let infoTopic = 'general';
 
@@ -347,6 +350,36 @@
         showShareDialog = true;
     }
 
+    // Project linking
+    function handleOpenLinkDialog() {
+        const projectsState = loadProjects();
+        availableProjects = Object.values(projectsState.projects);
+        showLinkProjectDialog = true;
+    }
+
+    function handleLinkToProject(projectId: string) {
+        arrangement = {
+            ...arrangement,
+            projectId,
+            updatedAt: new Date().toISOString(),
+        };
+        showLinkProjectDialog = false;
+        saveArrangement(arrangement);
+    }
+
+    function handleUnlinkProject() {
+        arrangement = {
+            ...arrangement,
+            projectId: undefined,
+            updatedAt: new Date().toISOString(),
+        };
+        saveArrangement(arrangement);
+    }
+
+    $: linkedProject = arrangement.projectId
+        ? availableProjects.find(p => p.id === arrangement.projectId)
+        : null;
+
     async function handleCopyUrl() {
         try {
             await navigator.clipboard.writeText(shareUrl);
@@ -485,6 +518,12 @@
             </div>
         </div>
         <div class="header-actions">
+            <button class="header-btn" onclick={handleOpenLinkDialog} title={arrangement.projectId ? 'Linked to Project' : 'Link to Project'} class:linked={arrangement.projectId}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                </svg>
+            </button>
             <button class="header-btn" onclick={handleNew} title="New">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -806,6 +845,42 @@
             </p>
         </div>
     </Sheet>
+
+    <!-- Link to Project Dialog -->
+    <Sheet bind:open={showLinkProjectDialog} onClose={() => showLinkProjectDialog = false} title="Link to Project">
+        <div class="link-project-content">
+            {#if arrangement.projectId}
+                <div class="current-link">
+                    <p>Currently linked to: <strong>{linkedProject?.name || 'Unknown Project'}</strong></p>
+                    <button class="unlink-btn" onclick={handleUnlinkProject}>Unlink</button>
+                </div>
+                <hr />
+            {/if}
+
+            {#if availableProjects.length > 0}
+                <p>Select a project to link this arrangement:</p>
+                <div class="project-list">
+                    {#each availableProjects as project (project.id)}
+                        <button
+                            class="project-item"
+                            class:selected={arrangement.projectId === project.id}
+                            onclick={() => handleLinkToProject(project.id)}
+                        >
+                            <span class="project-status" data-status={project.status}></span>
+                            <span class="project-name">{project.name}</span>
+                            <span class="project-date">{new Date(project.updatedAt).toLocaleDateString()}</span>
+                        </button>
+                    {/each}
+                </div>
+            {:else}
+                <div class="empty-state">
+                    <p>No projects yet.</p>
+                    <p>Create projects in the Hub to link arrangements to them.</p>
+                    <a href="{base}/" class="goto-hub-btn">Go to Hub</a>
+                </div>
+            {/if}
+        </div>
+    </Sheet>
 </div>
 
 <style>
@@ -917,6 +992,15 @@
     .header-btn:hover {
         background: var(--bg-tertiary, #333);
         color: var(--text-primary, #fff);
+    }
+
+    .header-btn.linked {
+        color: var(--accent-primary, #92d36e);
+    }
+
+    .header-btn.linked:hover {
+        background: var(--accent-primary, #92d36e);
+        color: var(--bg-primary, #1a1a1a);
     }
 
     /* Transport */
@@ -1343,6 +1427,137 @@
         background: var(--bg-tertiary, #2a2a2a);
         padding: 12px;
         border-radius: 6px;
+    }
+
+    /* Link to Project Dialog */
+    .link-project-content {
+        padding: 16px;
+    }
+
+    .link-project-content p {
+        margin: 0 0 12px;
+        color: var(--text-secondary, #aaa);
+        font-size: 13px;
+    }
+
+    .current-link {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px;
+        background: var(--bg-tertiary, #2a2a2a);
+        border-radius: 8px;
+        margin-bottom: 12px;
+    }
+
+    .current-link p {
+        margin: 0;
+    }
+
+    .unlink-btn {
+        padding: 6px 12px;
+        background: var(--bg-secondary, #333);
+        border: 1px solid var(--border-default, #444);
+        border-radius: 4px;
+        color: var(--text-secondary, #ccc);
+        cursor: pointer;
+        font-size: 12px;
+    }
+
+    .unlink-btn:hover {
+        background: var(--error-bg, #4a2020);
+        border-color: var(--error, #ff4444);
+        color: var(--error, #ff4444);
+    }
+
+    .project-list {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .project-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        background: var(--bg-secondary, #2a2a2a);
+        border: 1px solid var(--border-subtle, #333);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.15s;
+        text-align: left;
+    }
+
+    .project-item:hover {
+        background: var(--surface-hover, #333);
+        border-color: var(--accent-primary, #92d36e);
+    }
+
+    .project-item.selected {
+        background: var(--accent-primary, #92d36e);
+        border-color: var(--accent-primary, #92d36e);
+        color: var(--bg-primary, #1a1a1a);
+    }
+
+    .project-status {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--text-muted, #666);
+        flex-shrink: 0;
+    }
+
+    .project-status[data-status="idea"] { background: #888; }
+    .project-status[data-status="active"] { background: #4dabf7; }
+    .project-status[data-status="arrangement"] { background: #ffd43b; }
+    .project-status[data-status="mix"] { background: #ff922b; }
+    .project-status[data-status="master"] { background: #a855f7; }
+    .project-status[data-status="released"] { background: #51cf66; }
+    .project-status[data-status="archived"] { background: #495057; }
+
+    .project-name {
+        flex: 1;
+        font-weight: 500;
+        color: inherit;
+    }
+
+    .project-date {
+        font-size: 11px;
+        color: var(--text-muted, #888);
+    }
+
+    .project-item.selected .project-date {
+        color: var(--bg-tertiary, #333);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 24px;
+    }
+
+    .goto-hub-btn {
+        display: inline-block;
+        margin-top: 12px;
+        padding: 10px 20px;
+        background: var(--accent-primary, #92d36e);
+        color: var(--bg-primary, #1a1a1a);
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 600;
+    }
+
+    .goto-hub-btn:hover {
+        filter: brightness(1.1);
+    }
+
+    .link-project-content hr {
+        border: none;
+        border-top: 1px solid var(--border-subtle, #333);
+        margin: 12px 0;
     }
 
     /* Mobile */

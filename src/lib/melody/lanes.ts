@@ -99,6 +99,10 @@ export interface Arrangement {
     // Playback state (not persisted)
     loopStart?: number;
     loopEnd?: number;
+
+    // Project/Collection linking
+    projectId?: string;
+    collectionId?: string;
 }
 
 // ============================================
